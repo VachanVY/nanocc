@@ -1,4 +1,4 @@
-# regex
+<img width="1034" height="537" alt="image" src="https://github.com/user-attachments/assets/c2160004-2b4e-4b17-9a66-4e802162da89" /># regex
 ![sasas](cmake.png)
 ![sasas](regex_func.png)
 
@@ -27,3 +27,31 @@ What we want is for the `else`s to associate with the closest matching `if`
 <img width="955" height="544" alt="image" src="https://github.com/user-attachments/assets/649d7b1b-0df5-4d52-9579-35cd374a46fa" />
 
 <img width="955" height="578" alt="image" src="https://github.com/user-attachments/assets/cabbfc92-5f7f-4150-bbfc-bfcf28869041" />
+
+<img width="1026" height="501" alt="image" src="https://github.com/user-attachments/assets/9bb0ea25-bd77-451a-b79f-17510abd441c" />
+
+<img width="1034" height="537" alt="image" src="https://github.com/user-attachments/assets/488151cb-639b-4c62-a70a-e74c9c00cb75" />
+
+## Abstract Syntax Tree
+<img width="979" height="495" alt="image" src="https://github.com/user-attachments/assets/fa7a9732-abb1-424e-a02e-91c65bb751ac" />
+<img width="1123" height="612" alt="image" src="https://github.com/user-attachments/assets/bcac961f-a51e-41bb-8ee3-4bf0e63df23e" />
+<img width="760" height="497" alt="image" src="https://github.com/user-attachments/assets/23c6f3e7-a4f8-4b09-a91b-16fc21bc0927" />
+
+## Recursive Descent Parsing (top-down parsing algorithm)
+<img width="1054" height="477" alt="image" src="https://github.com/user-attachments/assets/3526762e-5113-41c2-b2c7-462a5946254d" />
+
+<img width="1018" height="504" alt="image" src="https://github.com/user-attachments/assets/0b7a7c18-738b-438a-b695-05514b1bb922" />
+<img width="1004" height="494" alt="image" src="https://github.com/user-attachments/assets/c54112d4-13f6-4193-abdf-03d295fca1bd" />
+
+---
+Match!
+
+<img width="891" height="484" alt="image" src="https://github.com/user-attachments/assets/3d15a47a-ff89-40e8-a5f5-d488a59f918f" />
+
+```
+...
+...
+...
+```
+
+<img width="877" height="506" alt="image" src="https://github.com/user-attachments/assets/7936ac18-a1f9-4d13-a1e9-d6ef98b739fc" />
