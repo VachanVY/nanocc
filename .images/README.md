@@ -48,10 +48,26 @@ Match!
 
 <img width="891" height="484" alt="image" src="https://github.com/user-attachments/assets/3d15a47a-ff89-40e8-a5f5-d488a59f918f" />
 
-```
 ...
-...
-...
-```
 
 <img width="877" height="506" alt="image" src="https://github.com/user-attachments/assets/7936ac18-a1f9-4d13-a1e9-d6ef98b739fc" />
+
+<img width="1053" height="564" alt="image" src="https://github.com/user-attachments/assets/65417d98-1aa6-4b13-b26a-cfffbe6580cd" />
+
+<img width="1133" height="570" alt="image" src="https://github.com/user-attachments/assets/442c7d4c-f5ae-4804-8112-af57d31389f8" />
+
+<img width="1040" height="565" alt="image" src="https://github.com/user-attachments/assets/3e185e47-6042-427a-be34-6dbb4533b1dd" />
+
+<img width="1057" height="584" alt="image" src="https://github.com/user-attachments/assets/760deb0c-2113-460d-bcb3-d240f3a22fda" />
+
+<img width="1725" height="910" alt="image" src="https://github.com/user-attachments/assets/b1f0717a-c9ff-4521-99de-06c4d17bc6d8" />
+
+---
+
+Left-recursive grammar does it from right to left, but Recursive Descent Parsing works from left to right, so Left-recursive grammar doesn't work for Recursive Descent Parsing\
+<img width="1103" height="502" alt="image" src="https://github.com/user-attachments/assets/a3309735-488a-49ea-9f9e-604a7c8bf979" />
+
+<img width="859" height="498" alt="image" src="https://github.com/user-attachments/assets/ba7c2dbf-41be-46f9-a1a8-64607f7d4cd3" />
+
+<img width="813" height="302" alt="image" src="https://github.com/user-attachments/assets/8a90d5c6-5d3a-45a2-8c13-843e27265006" />
+
