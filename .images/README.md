@@ -95,3 +95,36 @@ Left-recursive grammar does it from right to left, but Recursive Descent Parsing
 <img width="927" height="463" alt="image" src="https://github.com/user-attachments/assets/e0fb269d-fae6-4949-ad5b-6517e0466273" />
 
 <img width="1095" height="596" alt="image" src="https://github.com/user-attachments/assets/98ee7549-7ba9-4eb4-9879-dc052d710719" />
+
+---
+
+<img width="1911" height="933" alt="image" src="https://github.com/user-attachments/assets/6a8ec21c-bc36-4b51-9213-3928c1241868" />
+
+#### First Sets
+
+<img width="1656" height="1080" alt="image" src="https://github.com/user-attachments/assets/68c2bd5a-9853-4b8a-9615-63de08c7f0ef" />
+
+
+<img width="1523" height="727" alt="image" src="https://github.com/user-attachments/assets/4fe107bc-dc2e-42aa-843a-279fb45eba99" />
+
+But since `T` doesn't have a terminal, we can say `First(E) = First(T)` instead of `First(T)` being a subset of `First(E)` 
+
+<img width="1523" height="727" alt="image" src="https://github.com/user-attachments/assets/e303cae0-eff5-4347-8d7a-4d0fe0028eca" />
+
+#### Follow Sets
+
+<img width="1265" height="642" alt="image" src="https://github.com/user-attachments/assets/744abc1c-3b54-403d-806b-af96b0fc7594" />
+
+<img width="1505" height="894" alt="image" src="https://github.com/user-attachments/assets/a26bee3b-de42-4936-b827-e66a116d23ed" />
+
+We don't include `eps` in follow sets, but consider for **computing** follow sets
+
+<img width="1836" height="908" alt="image" src="https://github.com/user-attachments/assets/77ee3d42-7cd2-4508-aa52-e7be07a8c27c" />
+
+<img width="1836" height="908" alt="image" src="https://github.com/user-attachments/assets/674a81a6-4a51-4434-8c3b-47f2766cfe8b" />
+
+<img width="1769" height="676" alt="image" src="https://github.com/user-attachments/assets/270631ec-573c-4d9a-82f1-530a19a2e117" />
+
+<img width="1769" height="676" alt="image" src="https://github.com/user-attachments/assets/e08865f9-27d4-47c6-a524-df2f171afc99" />
+
+<img width="1769" height="676" alt="image" src="https://github.com/user-attachments/assets/7136e36d-2339-4e3e-8e3b-f2dfc11df9a0" />
