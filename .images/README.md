@@ -1,5 +1,7 @@
-# regex
+<img width="1060" height="601" alt="image" src="https://github.com/user-attachments/assets/805e9de0-0afa-4bdf-9594-0570e09e6e4b" /><img width="1060" height="601" alt="image" src="https://github.com/user-attachments/assets/2e32321e-b941-445b-a8c3-816e6988f41f" /># cmake
 ![sasas](cmake.png)
+
+# regex
 ![sasas](regex_func.png)
 
 # lexer 
@@ -71,3 +73,25 @@ Left-recursive grammar does it from right to left, but Recursive Descent Parsing
 
 <img width="813" height="302" alt="image" src="https://github.com/user-attachments/assets/8a90d5c6-5d3a-45a2-8c13-843e27265006" />
 
+---
+## LL LR Parsing
+
+<img width="1088" height="554" alt="image" src="https://github.com/user-attachments/assets/d85ed233-ded9-42b5-8bad-73bead5a5646" />
+
+<img width="913" height="204" alt="image" src="https://github.com/user-attachments/assets/65c4138f-d362-4ee9-88d8-df59ec45595a" />
+
+### Predictive Parsing
+
+> The general idea is we factor out the common prefix, one production deals with the prefix, and then we introduce a new terminal for the suffixes and just have multiple productions, one for each possible suffix. Delays decision about which production we're using, so instead of having to decide immediately which production to use 
+
+<img width="565" height="489" alt="image" src="https://github.com/user-attachments/assets/dddd71b8-4ab3-49d9-8eae-7a89dc2fdc95" />
+
+<img width="1060" height="601" alt="image" src="https://github.com/user-attachments/assets/361a2ea0-a339-45eb-b3da-cb3b85bd8275" />
+
+<img width="1061" height="549" alt="image" src="https://github.com/user-attachments/assets/a17c1aab-4701-4ccd-a99a-ac152782c4b0" />
+
+<img width="1020" height="585" alt="image" src="https://github.com/user-attachments/assets/3fadfeac-fc72-494a-9073-fec8885defaa" />
+
+<img width="927" height="463" alt="image" src="https://github.com/user-attachments/assets/e0fb269d-fae6-4949-ad5b-6517e0466273" />
+
+<img width="1095" height="596" alt="image" src="https://github.com/user-attachments/assets/98ee7549-7ba9-4eb4-9879-dc052d710719" />
