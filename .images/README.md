@@ -1,4 +1,4 @@
-<img width="1034" height="537" alt="image" src="https://github.com/user-attachments/assets/c2160004-2b4e-4b17-9a66-4e802162da89" /># regex
+# regex
 ![sasas](cmake.png)
 ![sasas](regex_func.png)
 
