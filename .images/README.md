@@ -1,4 +1,18 @@
-<img width="1060" height="601" alt="image" src="https://github.com/user-attachments/assets/805e9de0-0afa-4bdf-9594-0570e09e6e4b" /><img width="1060" height="601" alt="image" src="https://github.com/user-attachments/assets/2e32321e-b941-445b-a8c3-816e6988f41f" /># cmake
+# Modern C++
+[Smart Pointers Video](https://www.youtube.com/watch?v=UOB7-B2MfwA&list=PLlrATfBNZ98dudnM48yfGUldqGD0S4FFb&index=45)
+
+<!-- <img width="1244" height="309" alt="image" src="https://github.com/user-attachments/assets/c77a0927-ed04-419a-ba20-ee5c6d003038" /> -->
+Unique pointer is destroyed after its scope ends. You can't assign another object to an existing unique pointer
+
+<img width="1258" height="500" alt="image" src="https://github.com/user-attachments/assets/1eb9eb20-232b-4af0-875d-efa213d76473" />
+
+Shared pointer is destroyed after its reference count becomes 0
+
+<img width="1136" height="480" alt="image" src="https://github.com/user-attachments/assets/5ac684a8-43f8-4ab7-8e00-c330b8f84d9c" />
+
+
+
+# cmake
 ![sasas](cmake.png)
 
 # regex
