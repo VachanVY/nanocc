@@ -1,0 +1,4 @@
+BasedOnStyle: LLVM
+IndentWidth: 4
+BreakBeforeBraces: Attach       # K&R: braces on same line
+AllowShortIfStatementsOnASingleLine: false
