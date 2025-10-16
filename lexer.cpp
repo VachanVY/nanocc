@@ -86,9 +86,7 @@ std::deque<Token> lexer(const std::string &s) {
 // #include "utils.hpp"
 // int main(int argc, char *argv[]) {
 //     if (argc < 2) {
-//         std::println(stderr,
-//                      "Usage: {} [--lex|--parse|--validate|--tacky|--codegen]
-//                      "
+//         std::println(stderr, "Usage: {} [--lex|--parse|--validate|--tacky|--codegen]"
 //                      "<source_file>",
 //                      argv[0]);
 //         return 1;
