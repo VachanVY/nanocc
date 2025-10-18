@@ -13,7 +13,8 @@ class FunctionNode;
 class StatementNode;
 class ExprNode;
 class IdentifierNode;
-class IntNode;
+class ConstantNode;
+class UnaryNode;
 
 class Parser {
   private:
@@ -60,7 +61,10 @@ class StatementNode : public ASTNode {
 
 class ExprNode : public ASTNode {
   public:
-    std::unique_ptr<IntNode> integer;
+    std::unique_ptr<ConstantNode> constant;
+    std::unique_ptr<UnaryNode> unary;
+    std::unique_ptr<ExprNode> expr;
+
     void parse(std::deque<Token> &tokens, size_t &pos);
     void dump(int indent = 0) const override;
     std::unique_ptr<AsmIntructionNode> parse_asm_ast();
@@ -69,13 +73,23 @@ class ExprNode : public ASTNode {
 class IdentifierNode : public ASTNode {
   public:
     std::string name;
+
     void parse(std::deque<Token> &tokens, size_t &pos);
     void dump(int indent = 0) const override;
 };
 
-class IntNode : public ASTNode {
+class ConstantNode : public ASTNode {
   public:
     int val;
+
+    void parse(std::deque<Token> &tokens, size_t &pos);
+    void dump(int indent = 0) const override;
+};
+
+class UnaryNode : public ASTNode {
+  public:
+    std::string op_type;
+
     void parse(std::deque<Token> &tokens, size_t &pos);
     void dump(int indent = 0) const override;
 };

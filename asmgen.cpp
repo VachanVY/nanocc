@@ -1,14 +1,13 @@
 #include <memory>
+#include <print>
 #include <sstream>
 #include <stdexcept>
 #include <string>
 #include <vector>
-#include <print>
 
 #include "asmgen.hpp"
-#include "lexer.hpp"
 #include "parser.hpp"
-#include "utils.hpp"
+// #include "utils.hpp"
 
 std::unique_ptr<AsmProgramNode> ProgramNode::parse_asm_ast() {
     auto asm_program = std::make_unique<AsmProgramNode>();
@@ -46,7 +45,7 @@ std::vector<std::unique_ptr<AsmIntructionNode>> StatementNode::parse_asm_ast() {
 }
 
 std::unique_ptr<AsmIntructionNode> ExprNode::parse_asm_ast() {
-    if (!this->integer) {
+    if (!this->constant) {
         throw std::runtime_error(
             "ExprNode::parse_asm_ast currently supports only integer literals");
     }
@@ -54,7 +53,7 @@ std::unique_ptr<AsmIntructionNode> ExprNode::parse_asm_ast() {
     auto mov = std::make_unique<AsmMovNode>();
 
     auto src = std::make_unique<AsmImmediateNode>();
-    src->value = this->integer->val;
+    src->value = this->constant->val;
     mov->src = std::move(src);
 
     auto dest = std::make_unique<AsmRegisterNode>();

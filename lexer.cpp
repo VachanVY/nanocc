@@ -4,10 +4,15 @@
 #include <string>
 
 std::vector<std::pair<std::string, std::regex>> token_specs = {
-    // keywords should get more priority than identifiers, so lex them first
+    // "keywords" should get more priority than "identifiers", so lex them first
     {"int", std::regex("int\\b")},
     {"void", std::regex("void\\b")},
     {"return", std::regex("return\\b")},
+
+    // "unary operators"
+    {"tilde", std::regex("~")},
+    {"negate", std::regex("-")},
+    {"decrement", std::regex("--")},
 
     {"identifier", std::regex("[a-zA-Z_]\\w*\\b")}, // variable/function names
     {"constant", std::regex("[0-9]+\\b")},
@@ -81,3 +86,39 @@ std::deque<Token> lexer(const std::string &s) {
     }
     return tokens;
 }
+
+/*
+#include "utils.hpp"
+int main(int argc, char *argv[]) {
+    if (argc < 2) {
+        std::println(stderr,
+                     "Usage: {} [--lex|--parse|--validate|--tacky|--codegen]"
+                     "<source_file>",
+                     argv[0]);
+        return 1;
+    }
+
+    // Find the source file (non-flag argument)
+    std::string filename;
+    for (int i = 1; i < argc; i++) {
+        std::string arg = argv[i];
+        if (!arg.starts_with("--")) {
+            filename = arg;
+            break;
+        }
+    }
+
+    if (filename.empty()) {
+        std::println(stderr, "Error: No source file specified");
+        return 1;
+    }
+    auto contents = getFileContents(filename);
+    auto tokens = lexer(contents);
+
+    for(auto& [token_class, lexemes]: tokens){
+        std::println("{}, {}", token_class, lexemes);
+    }
+
+    return 0;
+}
+*/

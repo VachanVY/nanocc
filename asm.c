@@ -1,13 +1,28 @@
 int main(void){
-    return 42;
+    return ~(-42);
 }
+
+/*
+Program(
+  Function(
+    name='main'
+    body=Return(
+      Unary(~,
+        Unary(-,
+          Constant(42)
+        )
+      )
+    )
+  )
+)
+*/
 
 /*
 Program(
   FunctionNode(
     name='main'
     body=Return(
-        Int(2)
+        Constant(2)
       )
 )
 

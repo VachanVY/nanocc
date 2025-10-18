@@ -1,12 +1,13 @@
 #include <print>
 
-#include "utils.hpp"
-#include "lexer.hpp"
-#include "parser.hpp"
 #include "asmgen.hpp"
 #include "codegen.hpp"
+#include "lexer.hpp"
+#include "parser.hpp"
+#include "utils.hpp"
 
-// g++ -std=c++23 -I./include lexer.cpp parser.cpp asmgen.cpp codegen.cpp main.cpp -o main.out
+// g++ -std=c++23 -I./include lexer.cpp parser.cpp asmgen.cpp codegen.cpp
+// main.cpp -o main.out
 int main(int argc, char *argv[]) {
     if (argc < 2) {
         std::println(stderr,
@@ -58,8 +59,7 @@ int main(int argc, char *argv[]) {
     asm_file.close();
 
     // Assemble and link using gcc
-    std::string gcc_command =
-        "gcc " + asm_filename + " -o " + base_filename;
+    std::string gcc_command = "gcc " + asm_filename + " -o " + base_filename;
     int result = std::system(gcc_command.c_str());
 
     if (result != 0) {
