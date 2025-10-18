@@ -8,7 +8,8 @@ inline std::string getFileContents(const std::string &filename) {
     std::ifstream file(filename);
 
     if (!file.is_open()) {
-        throw std::runtime_error("Error: Could not open file '" + filename + "'");
+        throw std::runtime_error("Error: Could not open file '" + filename +
+                                 "'");
     }
 
     std::stringstream buffer;
