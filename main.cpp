@@ -1,0 +1,71 @@
+#include <print>
+
+#include "utils.hpp"
+#include "lexer.hpp"
+#include "parser.hpp"
+#include "asmgen.hpp"
+#include "codegen.hpp"
+
+// g++ -std=c++23 -I./include lexer.cpp parser.cpp asmgen.cpp codegen.cpp main.cpp -o main.out
+int main(int argc, char *argv[]) {
+    if (argc < 2) {
+        std::println(stderr,
+                     "Usage: {} [--lex|--parse|--validate|--tacky|--codegen]"
+                     "<source_file>",
+                     argv[0]);
+        return 1;
+    }
+
+    // Find the source file (non-flag argument)
+    std::string filename;
+    for (int i = 1; i < argc; i++) {
+        std::string arg = argv[i];
+        if (!arg.starts_with("--")) {
+            filename = arg;
+            break;
+        }
+    }
+
+    if (filename.empty()) {
+        std::println(stderr, "Error: No source file specified");
+        return 1;
+    }
+
+    const std::string source = getFileContents(filename);
+    auto tokens = lexer(source);
+    auto program = parse(tokens);
+    auto asm_program = program->parse_asm_ast();
+
+    // Generate assembly output
+    std::ostringstream output;
+    emit_program(*asm_program, output);
+
+    // Get the base filename without extension
+    std::string base_filename = filename;
+    size_t dot_pos = base_filename.rfind('.');
+    if (dot_pos != std::string::npos) {
+        base_filename = base_filename.substr(0, dot_pos);
+    }
+
+    // Write assembly to .s file
+    std::string asm_filename = base_filename + ".s";
+    std::ofstream asm_file(asm_filename);
+    if (!asm_file) {
+        std::println(stderr, "Error: Failed to write to {}", asm_filename);
+        return 1;
+    }
+    asm_file << output.str();
+    asm_file.close();
+
+    // Assemble and link using gcc
+    std::string gcc_command =
+        "gcc " + asm_filename + " -o " + base_filename;
+    int result = std::system(gcc_command.c_str());
+
+    if (result != 0) {
+        std::println(stderr, "Error: gcc failed with exit code {}", result);
+        return 1;
+    }
+
+    return 0;
+}

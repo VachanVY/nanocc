@@ -2,10 +2,11 @@
 
 #include <deque>
 #include <memory>
+#include <vector>
 
+#include "asmgen.hpp"
 #include "lexer.hpp"
 
-// Forward declarations for AST node classes
 class ASTNode;
 class ProgramNode;
 class FunctionNode;
@@ -35,15 +36,17 @@ class ProgramNode : public ASTNode {
 
     void parse(std::deque<Token> &tokens, size_t &pos);
     void dump(int indent = 0) const override;
+    std::unique_ptr<AsmProgramNode> parse_asm_ast();
 };
 
 class FunctionNode : public ASTNode {
   public:
-    std::unique_ptr<IdentifierNode> var;
-    std::unique_ptr<StatementNode> statement;
+    std::unique_ptr<IdentifierNode> var_identifier; // function name
+    std::unique_ptr<StatementNode> statement;       // statement inside function
 
     void parse(std::deque<Token> &tokens, size_t &pos);
     void dump(int indent = 0) const override;
+    std::unique_ptr<AsmFunctionNode> parse_asm_ast();
 };
 
 class StatementNode : public ASTNode {
@@ -52,6 +55,7 @@ class StatementNode : public ASTNode {
 
     void parse(std::deque<Token> &tokens, size_t &pos);
     void dump(int indent = 0) const override;
+    std::vector<std::unique_ptr<AsmIntructionNode>> parse_asm_ast();
 };
 
 class ExprNode : public ASTNode {
@@ -59,6 +63,7 @@ class ExprNode : public ASTNode {
     std::unique_ptr<IntNode> integer;
     void parse(std::deque<Token> &tokens, size_t &pos);
     void dump(int indent = 0) const override;
+    std::unique_ptr<AsmIntructionNode> parse_asm_ast();
 };
 
 class IdentifierNode : public ASTNode {
@@ -74,3 +79,5 @@ class IntNode : public ASTNode {
     void parse(std::deque<Token> &tokens, size_t &pos);
     void dump(int indent = 0) const override;
 };
+
+std::unique_ptr<ProgramNode> parse(std::deque<Token> &tokens);

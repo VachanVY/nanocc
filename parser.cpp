@@ -46,8 +46,8 @@ void ProgramNode::dump(int indent) const {
 
 void FunctionNode::parse(std::deque<Token> &tokens, size_t &pos) {
     expect(tokens, "int", pos);
-    var = std::make_unique<IdentifierNode>();
-    var->parse(tokens, pos); // parse function/variable name
+    var_identifier = std::make_unique<IdentifierNode>();
+    var_identifier->parse(tokens, pos); // parse function/variable name
     expect(tokens, "(", pos);
     expect(tokens, "void", pos);
     expect(tokens, ")", pos);
@@ -60,8 +60,8 @@ void FunctionNode::parse(std::deque<Token> &tokens, size_t &pos) {
 void FunctionNode::dump(int indent) const {
     print_indent(indent);
     std::println("FunctionNode(");
-    if (var) {
-        var->dump(indent + 1);
+    if (var_identifier) {
+        var_identifier->dump(indent + 1);
     }
     if (statement) {
         statement->dump(indent + 1);
@@ -89,7 +89,7 @@ void ExprNode::parse(std::deque<Token> &tokens, size_t &pos) {
 }
 
 void ExprNode::dump(int indent) const {
-    std::println("Expr(");
+    std::println("Return(");
     if (integer) {
         integer->dump(indent + 1);
     }
@@ -136,43 +136,4 @@ std::unique_ptr<ProgramNode> parse(std::deque<Token> &tokens) {
             actual, token_class));
     }
     return ast;
-}
-
-int main(int argc, char *argv[]) {
-    if (argc < 2) {
-        std::println(stderr,
-                     "Usage: {} [--lex|--parse|--validate|--tacky|--codegen]"
-                     "<source_file>",
-                     argv[0]);
-        return 1;
-    }
-
-    // Find the source file (non-flag argument)
-    std::string filename;
-    for (int i = 1; i < argc; i++) {
-        std::string arg = argv[i];
-        if (!arg.starts_with("--")) {
-            filename = arg;
-            break;
-        }
-    }
-
-    if (filename.empty()) {
-        std::println(stderr, "Error: No source file specified");
-        return 1;
-    }
-
-    try {
-        std::string content = getFileContents(filename);
-        auto tokens = lexer(content);
-        auto ast = parse(tokens);
-        ast->dump();
-
-        for (const auto &[token_class, string] : tokens) {
-            std::println("{}\t {}", token_class, string);
-        }
-    } catch (const std::exception &e) {
-        std::println(stderr, "{}", e.what());
-        return 1;
-    }
 }

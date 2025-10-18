@@ -1,5 +1,6 @@
 #pragma once
 
+#include <deque>
 #include <fstream>
 #include <print>
 #include <regex>
