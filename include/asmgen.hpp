@@ -15,6 +15,8 @@ class AsmIntructionNode;
 class AsmMovNode;
 class AsmRetNode;
 class AsmOperandNode;
+class AsmImmediateNode;
+class AsmRegisterNode;
 
 class AsmProgramNode : public AsmASTNode {
   public:

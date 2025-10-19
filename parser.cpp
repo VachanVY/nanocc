@@ -5,6 +5,7 @@
 
 #include "lexer.hpp"
 #include "parser.hpp"
+#include "utils.hpp"
 
 /*
 => what's the `parse` method for "X" doing?
@@ -14,12 +15,6 @@ variable in "X"
 => when ever we find a new a non-terminal variable in "X" create a node pointer
 for it and parse
 */
-
-void print_indent(int indent) {
-    for (int i = 0; i < indent; ++i) {
-        std::print("  ");
-    }
-}
 
 void expect(const std::deque<Token> &tokens, const std::string &expected,
             size_t &pos) {
@@ -191,7 +186,6 @@ std::unique_ptr<ProgramNode> parse(std::deque<Token> &tokens) {
 }
 
 /*
-#include "utils.hpp"
 int main(int argc, char *argv[]) {
     if (argc < 2) {
         std::println(stderr,

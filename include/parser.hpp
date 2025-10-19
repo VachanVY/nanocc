@@ -2,9 +2,12 @@
 
 #include <deque>
 #include <memory>
+#include <string>
+#include <variant>
 #include <vector>
 
 #include "asmgen.hpp"
+#include "irgen.hpp"
 #include "lexer.hpp"
 
 class ASTNode;
@@ -37,7 +40,8 @@ class ProgramNode : public ASTNode {
 
     void parse(std::deque<Token> &tokens, size_t &pos);
     void dump(int indent = 0) const override;
-    std::unique_ptr<AsmProgramNode> parse_asm_ast();
+    // std::unique_ptr<AsmProgramNode> parse_asm_ast();
+    std::unique_ptr<IRProgramNode> emit_ir();
 };
 
 class FunctionNode : public ASTNode {
@@ -47,7 +51,8 @@ class FunctionNode : public ASTNode {
 
     void parse(std::deque<Token> &tokens, size_t &pos);
     void dump(int indent = 0) const override;
-    std::unique_ptr<AsmFunctionNode> parse_asm_ast();
+    // std::unique_ptr<AsmFunctionNode> parse_asm_ast();
+    std::unique_ptr<IRFunctionNode> emit_ir();
 };
 
 class StatementNode : public ASTNode {
@@ -56,7 +61,8 @@ class StatementNode : public ASTNode {
 
     void parse(std::deque<Token> &tokens, size_t &pos);
     void dump(int indent = 0) const override;
-    std::vector<std::unique_ptr<AsmIntructionNode>> parse_asm_ast();
+    // std::vector<std::unique_ptr<AsmIntructionNode>> parse_asm_ast();
+    std::vector<std::unique_ptr<IRInstructionNode>> emit_ir();
 };
 
 class ExprNode : public ASTNode {
@@ -67,7 +73,9 @@ class ExprNode : public ASTNode {
 
     void parse(std::deque<Token> &tokens, size_t &pos);
     void dump(int indent = 0) const override;
-    std::unique_ptr<AsmIntructionNode> parse_asm_ast();
+    // std::unique_ptr<AsmIntructionNode> parse_asm_ast();
+    std::unique_ptr<IRValNode>
+    emit_ir(std::vector<std::unique_ptr<IRInstructionNode>> &instructions);
 };
 
 class IdentifierNode : public ASTNode {

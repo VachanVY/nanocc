@@ -18,3 +18,9 @@ inline std::string getFileContents(const std::string &filename) {
     file.close();
     return content;
 }
+
+inline void print_indent(int indent) {
+    for (int i = 0; i < indent; i++) {
+        std::print("  ");
+    }
+}
