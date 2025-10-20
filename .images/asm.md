@@ -7,3 +7,26 @@
     <img width="1600" height="522" alt="image" src="https://github.com/user-attachments/assets/2bbf2663-12de-4a76-934d-734e889ae425" />
 
 * <img width="1035" height="1586" alt="image" src="https://github.com/user-attachments/assets/5c420ab9-5e0b-4fb2-ab26-e0f8e7a80382" />
+
+* ```asm
+        .globl main
+    main:
+        ;
+        pushq %rbp
+        movq %rsp, %rbp
+        subq $8, %rsp
+        ;
+        movl $42, -4(%rbp)
+        negl -4(%rbp)
+  
+        movl -4(%rbp), %r10d
+        movl %r10d, -8(%rbp)
+  
+        notl -4(%rbp)
+        ;
+        movl -4(%rbp), %eax
+        movq %rbp, %rsp
+        popq %rbp
+        ret
+        .section .note.GNU-stack, "",@progbits
+    ```
