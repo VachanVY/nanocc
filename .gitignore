@@ -1,3 +1,4 @@
+*.html
 *learn/
 build/
 .vscode/settings.json
