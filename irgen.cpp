@@ -48,7 +48,7 @@ void IRFunctionNode::dump_ir(int indent) const {
     std::println("name='{}'", var_name);
     print_indent(indent + 1);
     std::println("instructions=[");
-    for (const auto &instr : instructions) {
+    for (const auto& instr : instructions) {
         if (instr) {
             instr->dump_ir(indent + 2);
         }
@@ -74,12 +74,9 @@ std::vector<std::unique_ptr<IRInstructionNode>> StatementNode::emit_ir() {
 }
 
 std::unique_ptr<IRValNode> // return the destination register
-ExprNode::emit_ir(
-    std::vector<std::unique_ptr<IRInstructionNode>> &instructions) {
-    static int temp_counter = 0;
-    auto get_tempvar = [&]() {
-        return std::string("tmp.") + std::to_string(temp_counter++);
-    };
+ExprNode::emit_ir(std::vector<std::unique_ptr<IRInstructionNode>>& instructions) {
+    static size_t temp_counter = 0;
+    auto get_tempvar = [&]() { return std::string("tmp.") + std::to_string(temp_counter++); };
 
     // case 1: constant literal
     if (constant) {
@@ -105,16 +102,17 @@ ExprNode::emit_ir(
         auto ir_unary = std::make_unique<IRUnaryNode>();
         ir_unary->op_type = unary->op_type; // "~" or "-"
         ir_unary->val_src = std::move(src_val);
-        ir_unary->val_dest = std::make_unique<IRVariableNode>();
-        static_cast<IRVariableNode &>(*ir_unary->val_dest).var_name = tmp;
+
+        auto val_dest = std::make_unique<IRVariableNode>();
+        val_dest->var_name = tmp;
+        ir_unary->val_dest = std::move(val_dest);
 
         instructions.push_back(std::move(ir_unary));
         return dest_return;
     }
 
-    throw std::runtime_error("Compiler Error: Raise Issue");
+    throw std::runtime_error("Compiler Error: Shouldn't pass here raise issue");
 }
-
 
 void IRRetNode::dump_ir(int indent) const {
     print_indent(indent);

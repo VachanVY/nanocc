@@ -1,5 +1,5 @@
 int main(void){
-    return ~(-42);
+    return ~(-(~(-42)));
 }
 
 /*
@@ -9,26 +9,28 @@ Program(
     body=Return(
       Unary(~,
         Unary(-,
-          Constant(42)
+          Unary(~,
+            Unary(-,
+              Constant(42)
+            )
+          )
         )
       )
     )
   )
-)
-*/
+)*/
 
 /*
-Program(
-  FunctionNode(
+IRProgram(
+  Function(
     name='main'
-    body=Return(
-        Constant(2)
-      )
+    instructions=[
+      tmp.0 = - 42
+      tmp.1 = ~ tmp.0
+      tmp.2 = - tmp.1
+      tmp.3 = ~ tmp.2
+      return tmp.3
+    ]
+  )
 )
-
-    .globl main
-main:
-    mov $42, %eax
-    ret
-
 */

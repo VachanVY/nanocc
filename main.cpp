@@ -8,7 +8,7 @@
 
 // g++ -std=c++23 -I./include lexer.cpp parser.cpp asmgen.cpp codegen.cpp
 // main.cpp -o main.out
-int main(int argc, char *argv[]) {
+int main(int argc, char* argv[]) {
     if (argc < 2) {
         std::println(stderr,
                      "Usage: {} [--lex|--parse|--validate|--tacky|--codegen]"
@@ -34,12 +34,24 @@ int main(int argc, char *argv[]) {
 
     const std::string source = getFileContents(filename);
     auto tokens = lexer(source);
-    auto program = parse(tokens);
-    auto asm_program = program->parse_asm_ast();
+    auto ast = parse(tokens);
+    ast->dump();
+    auto ir_ast = ast->emit_ir();
+    ir_ast->dump_ir();
+    auto asm_ast = ir_ast->emit_asm();
 
-    // Generate assembly output
+    // maps from `AsmPseudoNode::identifier` to assigned `AsmStackNode::offset`
+    std::unordered_map<std::string, int> pseudo_reg_map;
+    int stack_offset = 0; // offsets grow in 4-byte (int) increments // increment by 4 then use
+    asm_ast->resolvePseudoRegisters(pseudo_reg_map, stack_offset);
+    std::println("After resolving pseudo registers: {}", stack_offset);
+
+    asm_ast->fixUpInstructions(stack_offset);
+
+    // Emit assembly to string stream
     std::ostringstream output;
-    emit_program(*asm_program, output);
+    ;
+    asm_ast->emit_asm(output);
 
     // Get the base filename without extension
     std::string base_filename = filename;
@@ -58,7 +70,6 @@ int main(int argc, char *argv[]) {
     asm_file << output.str();
     asm_file.close();
 
-    // Assemble and link using gcc
     std::string gcc_command = "gcc " + asm_filename + " -o " + base_filename;
     int result = std::system(gcc_command.c_str());
 

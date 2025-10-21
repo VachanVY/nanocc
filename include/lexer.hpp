@@ -15,4 +15,4 @@ typedef struct {
 
 extern std::vector<std::pair<std::string, std::regex>> token_specs;
 
-std::deque<Token> lexer(const std::string &s);
+std::deque<Token> lexer(const std::string& s);

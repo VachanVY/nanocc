@@ -23,7 +23,7 @@ std::vector<std::pair<std::string, std::regex>> token_specs = {
     {";", std::regex(";")},
 };
 
-std::deque<Token> lexer(const std::string &s) {
+std::deque<Token> lexer(const std::string& s) {
     std::deque<Token> tokens;
     size_t pos = 0;
     while (pos < s.length()) {
@@ -57,14 +57,13 @@ std::deque<Token> lexer(const std::string &s) {
         size_t match_length = 0;
         std::string match;
         std::string class_type;
-        for (auto &[tokenClass, regex] : token_specs) {
+        for (auto& [tokenClass, regex] : token_specs) {
             std::smatch tmp_match;
             std::string remainder = s.substr(pos); // s[pos:]
             if (std::regex_search(remainder, tmp_match, regex,
                                   std::regex_constants::match_continuous)) {
-                if (tmp_match.length() >
-                    match_length) { // what if they are equal? how to decide
-                                    // which one?
+                if (tmp_match.length() > match_length) { // what if they are equal? how to decide
+                                                         // which one?
                     class_type = tokenClass;
                     match = tmp_match.str();
                     match_length = tmp_match.length();
@@ -74,8 +73,7 @@ std::deque<Token> lexer(const std::string &s) {
 
         // throw error if no regex matched
         if (match_length == 0) {
-            throw std::runtime_error("Unexpected Syntax error at position " +
-                                     std::to_string(pos));
+            throw std::runtime_error("Unexpected Syntax error at position " + std::to_string(pos));
         }
 
         // remove substr of the string now that it is tokenized

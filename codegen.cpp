@@ -1,58 +1,75 @@
-#include "codegen.hpp"
-#include "asmgen.hpp"
-#include "parser.hpp"
-#include "utils.hpp"
-#include <cstdlib>
 #include <fstream>
 
-void emit_operand(const AsmOperandNode *operand, std::ostream &os) {
-    if (const auto *imm = dynamic_cast<const AsmImmediateNode *>(operand)) {
-        os << "$" << imm->value;
-        return;
-    }
-    if (const auto *reg = dynamic_cast<const AsmRegisterNode *>(operand)) {
-        os << reg->name;
-        return;
-    }
-    throw std::runtime_error(
-        "Unsupported operand node encountered during emission");
-}
+#include "codegen.hpp"
+#include "asmgen.hpp"
+#include "utils.hpp"
 
-void emit_instruction(const AsmIntructionNode *instruction, std::ostream &os) {
-    if (const auto *mov = dynamic_cast<const AsmMovNode *>(instruction)) {
-        if (!mov->src || !mov->dest) {
-            throw std::runtime_error(
-                "AsmMovNode missing operands during emission");
-        }
-        os << TAB4 << "mov ";
-        emit_operand(mov->src.get(), os);
-        os << ", ";
-        emit_operand(mov->dest.get(), os);
-        os << '\n';
-        return;
-    }
-
-    if (dynamic_cast<const AsmRetNode *>(instruction)) {
-        os << TAB4 << "ret\n";
-        return;
-    }
-
-    throw std::runtime_error(
-        "Unsupported instruction node encountered during emission");
-}
-
-void emit_function(const AsmFunctionNode &func, std::ostream &os) {
-    os << TAB4 << ".globl " << func.name << "\n";
-    os << func.name << ":\n";
-    for (const auto &instruction : func.instructions) {
-        emit_instruction(instruction.get(), os);
-    }
-}
-
-void emit_program(const AsmProgramNode &program, std::ostream &os) {
-    if (!program.func) {
+void AsmProgramNode::emit_asm(std::ostream& os) {
+    if (!func) {
         throw std::runtime_error("Program contains no functions to emit");
     }
-    emit_function(*program.func, os);
+    func->emit_asm(os);
     os << TAB4 << ".section .note.GNU-stack, \"\",@progbits\n";
 }
+
+void AsmFunctionNode::emit_asm(std::ostream& os) {
+    os << TAB4 << ".globl " << name << "\n";
+    os << name << ":\n";
+    os << TAB4 << "pushq %rbp\n";
+    os << TAB4 << "movq %rsp, %rbp\n";
+    for (const auto& instruction : instructions) {
+        instruction->emit_asm(os);
+    }
+}
+
+// Instruction Nodes -- Start
+void AsmMovNode::emit_asm(std::ostream& os) {
+    if (!src || !dest) {
+        throw std::runtime_error("AsmMovNode missing operands during emission");
+    }
+    os << TAB4 << "movl ";
+    src->emit_asm(os);
+    os << ", ";
+    dest->emit_asm(os);
+    os << '\n';
+}
+
+void AsmUnaryNode::emit_asm(std::ostream& os) {
+    if (!operand) {
+        throw std::runtime_error("AsmUnaryNode missing operand during emission");
+    }
+    std::string mnemonic;
+    char ch = op_type.empty() ? '\0' : op_type[0];
+    switch (ch) {
+    case '-':
+        mnemonic = "negl";
+        break;
+    case '~':
+        mnemonic = "notl";
+        break;
+    default:
+        throw std::runtime_error("Unsupported unary op during emission: " + op_type);
+    }
+    os << TAB4 << mnemonic << " ";
+    operand->emit_asm(os);
+    os << '\n';
+}
+
+void AsmAllocateStackNode::emit_asm(std::ostream& os) {
+    os << TAB4 << "subq $" << stack_size << ", %rsp\n";
+}
+
+void AsmRetNode::emit_asm(std::ostream& os) {
+    os << TAB4 << "movq %rbp, %rsp\n";
+    os << TAB4 << "popq %rbp\n";
+    os << TAB4 << "ret\n"; 
+}
+// Instruction Nodes -- end
+
+// Operand Nodes -- Start
+void AsmImmediateNode::emit_asm(std::ostream& os) { os << "$" << value; }
+
+void AsmRegisterNode::emit_asm(std::ostream& os) { os << name; }
+
+void AsmStackNode::emit_asm(std::ostream& os) { os << "-" << offset << "(%rbp)"; }
+// Operand Nodes -- end

@@ -7,7 +7,7 @@
 #include "parser.hpp"
 #include "utils.hpp"
 
-/*
+/* Dev Docs
 => what's the `parse` method for "X" doing?
     * checks for syntax correctness and creates node for each non-terminal
 variable in "X"
@@ -16,24 +16,23 @@ variable in "X"
 for it and parse
 */
 
-void expect(const std::deque<Token> &tokens, const std::string &expected,
-            size_t &pos) {
+void expect(const std::deque<Token>& tokens, const std::string& expected, size_t& pos) {
     if (pos >= tokens.size()) {
-        throw std::runtime_error(std::format(
-            "Syntax Error: Expected '{}', but reached end of input", expected));
+        throw std::runtime_error(
+            std::format("Syntax Error: Expected '{}', but reached end of input", expected));
     }
-    const auto &[token_class, actual] = tokens[pos];
+    const auto& [token_class, actual] = tokens[pos];
 
     if (expected != actual) {
-        throw std::runtime_error(std::format(
-            "Syntax Error: Expected '{}', but found '{}': '{}' at pos:{}",
-            expected, token_class, actual, pos));
+        throw std::runtime_error(
+            std::format("Syntax Error: Expected '{}', but found '{}': '{}' at pos:{}", expected,
+                        token_class, actual, pos));
     }
     pos++;
 }
 
 // method definitions of parser.hpp
-void ProgramNode::parse(std::deque<Token> &tokens, size_t &pos) {
+void ProgramNode::parse(std::deque<Token>& tokens, size_t& pos) {
     func = std::make_unique<FunctionNode>();
     func->parse(tokens, pos);
 }
@@ -47,7 +46,7 @@ void ProgramNode::dump(int indent) const {
     std::println(")");
 }
 
-void FunctionNode::parse(std::deque<Token> &tokens, size_t &pos) {
+void FunctionNode::parse(std::deque<Token>& tokens, size_t& pos) {
     expect(tokens, "int", pos);
     var_identifier = std::make_unique<IdentifierNode>();
     var_identifier->parse(tokens, pos); // parse function/variable name
@@ -73,7 +72,7 @@ void FunctionNode::dump(int indent) const {
     std::println(")");
 }
 
-void StatementNode::parse(std::deque<Token> &tokens, size_t &pos) {
+void StatementNode::parse(std::deque<Token>& tokens, size_t& pos) {
     expect(tokens, "return", pos); // 6
     expr = std::make_unique<ExprNode>();
     expr->parse(tokens, pos);
@@ -90,8 +89,8 @@ void StatementNode::dump(int indent) const {
     std::println(")");
 }
 
-void ExprNode::parse(std::deque<Token> &tokens, size_t &pos) {
-    const auto &[token_class, lexeme] = tokens[pos];
+void ExprNode::parse(std::deque<Token>& tokens, size_t& pos) {
+    const auto& [token_class, lexeme] = tokens[pos];
     if (token_class == "constant") {
         constant = std::make_unique<ConstantNode>();
         constant->parse(tokens, pos);
@@ -129,11 +128,11 @@ void ExprNode::dump(int indent) const {
     }
 }
 
-void IdentifierNode::parse(std::deque<Token> &tokens, size_t &pos) {
-    const auto &[token_class, actual] = tokens[pos++];
+void IdentifierNode::parse(std::deque<Token>& tokens, size_t& pos) {
+    const auto& [token_class, actual] = tokens[pos++];
     if (token_class != "identifier") {
-        throw std::runtime_error(std::format(
-            "Syntax Error: Expected identifier but got '{}'", actual));
+        throw std::runtime_error(
+            std::format("Syntax Error: Expected identifier but got '{}'", actual));
     }
     name = actual;
 }
@@ -143,11 +142,11 @@ void IdentifierNode::dump(int indent) const {
     std::println("name='{}'", name);
 }
 
-void ConstantNode::parse(std::deque<Token> &tokens, size_t &pos) {
-    const auto &[token_class, actual] = tokens[pos++];
+void ConstantNode::parse(std::deque<Token>& tokens, size_t& pos) {
+    const auto& [token_class, actual] = tokens[pos++];
     if (token_class != "constant") {
-        throw std::runtime_error(std::format(
-            "Syntax Error: Expected constant integer but got '{}'", actual));
+        throw std::runtime_error(
+            std::format("Syntax Error: Expected constant integer but got '{}'", actual));
     }
     val = std::stoi(actual);
 }
@@ -157,12 +156,12 @@ void ConstantNode::dump(int indent) const {
     std::println("Constant({})", val);
 }
 
-void UnaryNode::parse(std::deque<Token> &tokens, size_t &pos) {
-    const auto &[token_class, actual] = tokens[pos++];
+void UnaryNode::parse(std::deque<Token>& tokens, size_t& pos) {
+    const auto& [token_class, actual] = tokens[pos++];
     if (!(token_class == "tilde" || token_class == "negate")) {
-        throw std::runtime_error(std::format(
-            "Syntax Error: Expected '~' or '-' but got '{}':'{}' at pos:{}",
-            token_class, actual, pos));
+        throw std::runtime_error(
+            std::format("Syntax Error: Expected '~' or '-' but got '{}':'{}' at pos:{}",
+                        token_class, actual, pos));
     }
     op_type = actual;
 }
@@ -172,15 +171,14 @@ void UnaryNode::dump(int indent) const {
     std::println("Unary({})", op_type);
 }
 
-std::unique_ptr<ProgramNode> parse(std::deque<Token> &tokens) {
+std::unique_ptr<ProgramNode> parse(std::deque<Token>& tokens) {
     size_t pos = 0;
     auto ast = std::make_unique<ProgramNode>();
     ast->parse(tokens, pos);
     if (pos != tokens.size()) {
-        const auto &[token_class, actual] = tokens[pos];
+        const auto& [token_class, actual] = tokens[pos];
         throw std::runtime_error(std::format(
-            "Syntax Error: Unexpected token '{}' of class '{}' at top level",
-            actual, token_class));
+            "Syntax Error: Unexpected token '{}' of class '{}' at top level", actual, token_class));
     }
     return ast;
 }
