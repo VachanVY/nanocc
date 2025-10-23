@@ -13,19 +13,16 @@
 class ASTNode;
 class ProgramNode;
 class FunctionNode;
+
 class StatementNode;
+
 class ExprNode;
-class IdentifierNode;
 class ConstantNode;
 class UnaryNode;
+class BinaryNode;
+class IdentifierNode;
 
-class Parser {
-  private:
-    /* data */
-  public:
-    Parser(/* args */);
-    size_t pos = 0;
-};
+class ExprFactorNode;
 
 /// @brief parse function for every Node type derived from this class
 class ASTNode {
@@ -40,7 +37,6 @@ class ProgramNode : public ASTNode {
 
     void parse(std::deque<Token>& tokens, size_t& pos);
     void dump(int indent = 0) const override;
-    // std::unique_ptr<AsmProgramNode> parse_asm_ast();
     std::unique_ptr<IRProgramNode> emit_ir();
 };
 
@@ -51,7 +47,6 @@ class FunctionNode : public ASTNode {
 
     void parse(std::deque<Token>& tokens, size_t& pos);
     void dump(int indent = 0) const override;
-    // std::unique_ptr<AsmFunctionNode> parse_asm_ast();
     std::unique_ptr<IRFunctionNode> emit_ir();
 };
 
@@ -61,21 +56,37 @@ class StatementNode : public ASTNode {
 
     void parse(std::deque<Token>& tokens, size_t& pos);
     void dump(int indent = 0) const override;
-    // std::vector<std::unique_ptr<AsmIntructionNode>> parse_asm_ast();
     std::vector<std::unique_ptr<IRInstructionNode>> emit_ir();
 };
 
 class ExprNode : public ASTNode {
   public:
+    // delete these later
+    // std::unique_ptr<ConstantNode> constant;
+    // std::unique_ptr<UnaryNode> unary;
+    // std::unique_ptr<ExprNode> expr;
+
+    // <exp> = <factor> | <expr> <binary> <expr>
+    // <exp> is of the form <factor> ( <binary> <expr> )*
+    std::unique_ptr<ExprFactorNode> left_exprf;
+    std::unique_ptr<BinaryNode> binop;
+    std::unique_ptr<ExprNode> right_expr;
+
+    void parse(std::deque<Token>& tokens, size_t& pos, int min_precedence = 0);
+    void dump(int indent = 0) const override;
+    std::unique_ptr<IRValNode>
+    emit_ir(std::vector<std::unique_ptr<IRInstructionNode>>& instructions);
+};
+
+class ExprFactorNode : public ExprNode {
+  public:
     std::unique_ptr<ConstantNode> constant;
     std::unique_ptr<UnaryNode> unary;
+    std::unique_ptr<ExprFactorNode> factor;
     std::unique_ptr<ExprNode> expr;
 
     void parse(std::deque<Token>& tokens, size_t& pos);
     void dump(int indent = 0) const override;
-    // std::unique_ptr<AsmIntructionNode> parse_asm_ast();
-    std::unique_ptr<IRValNode>
-    emit_ir(std::vector<std::unique_ptr<IRInstructionNode>>& instructions);
 };
 
 class IdentifierNode : public ASTNode {
@@ -97,6 +108,16 @@ class ConstantNode : public ASTNode {
 class UnaryNode : public ASTNode {
   public:
     std::string op_type;
+
+    void parse(std::deque<Token>& tokens, size_t& pos);
+    void dump(int indent = 0) const override;
+};
+
+class BinaryNode : public ExprFactorNode {
+  public:
+    std::string op_type;
+    std::unique_ptr<ExprNode> left;
+    std::unique_ptr<ExprNode> right;
 
     void parse(std::deque<Token>& tokens, size_t& pos);
     void dump(int indent = 0) const override;

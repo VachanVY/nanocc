@@ -11,8 +11,14 @@ std::vector<std::pair<std::string, std::regex>> token_specs = {
 
     // "unary operators"
     {"tilde", std::regex("~")},
-    {"negate", std::regex("-")},
     {"decrement", std::regex("--")},
+    // both unary and binary
+    {"negate", std::regex("-")},
+    // "binary operators"
+    {"plus", std::regex("\\+")},
+    {"star", std::regex("\\*")},
+    {"slash", std::regex("/")},
+    {"percent", std::regex("%")},
 
     {"identifier", std::regex("[a-zA-Z_]\\w*\\b")}, // variable/function names
     {"constant", std::regex("[0-9]+\\b")},
@@ -63,7 +69,7 @@ std::deque<Token> lexer(const std::string& s) {
             if (std::regex_search(remainder, tmp_match, regex,
                                   std::regex_constants::match_continuous)) {
                 if (tmp_match.length() > match_length) { // what if they are equal? how to decide
-                                                         // which one?
+                                                         // which one? // keep the first one
                     class_type = tokenClass;
                     match = tmp_match.str();
                     match_length = tmp_match.length();
