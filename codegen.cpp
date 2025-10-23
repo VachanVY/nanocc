@@ -62,7 +62,7 @@ void AsmAllocateStackNode::emit_asm(std::ostream& os) {
 void AsmRetNode::emit_asm(std::ostream& os) {
     os << TAB4 << "movq %rbp, %rsp\n";
     os << TAB4 << "popq %rbp\n";
-    os << TAB4 << "ret\n"; 
+    os << TAB4 << "ret\n";
 }
 // Instruction Nodes -- end
 

@@ -1,5 +1,5 @@
 int main(void){
-    return 1+2*3;
+    return ~1+2*3;
 }
 
 /*
@@ -7,13 +7,13 @@ Program(
   Function(
     name='main'
     body=Return(
-      Unary(~,
-        Unary(-,
-          Unary(~,
-            Unary(-,
-              Constant(42)
-            )
-          )
+      Binary(+,
+        Unary(~,
+          Constant(1)
+        )
+        Binary(*,
+          Constant(2)
+          Constant(3)
         )
       )
     )

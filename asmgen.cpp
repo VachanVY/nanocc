@@ -186,8 +186,7 @@ void AsmMovNode::fixUpInstructions(std::vector<std::unique_ptr<AsmInstructionNod
         second_move->src = tmp_reg;
         second_move->dest = this->dest;
         instructions.push_back(std::move(second_move));
-    }
-    else {
+    } else {
         // else push a copy of this instruction into the new list
         // TODO(VachanVY): Can I prevent this extra copy?
         auto copy = std::make_unique<AsmMovNode>();

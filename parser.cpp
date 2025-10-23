@@ -136,6 +136,7 @@ void ExprNode::parse(std::deque<Token>& tokens, size_t& pos, int min_precedence)
 
         left_exprf = std::move(factor);
     }
+    // the final result is we need is `left_exprf`
 }
 
 /// @brief <exp> is of the form <factor> ( <binary> <expr> )*
