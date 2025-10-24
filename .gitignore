@@ -1,7 +1,6 @@
 *.html
 *learn/
 build/
-.vscode/settings.json
 
 # CMake
 CMakeLists.txt.user
