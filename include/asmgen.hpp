@@ -138,7 +138,7 @@ class AsmOperandNode : public AsmASTNode {
 
 class AsmImmediateNode : public AsmOperandNode {
   public:
-    int value = 0;
+    std::string value;
     static bool classof(const AsmOperandNode* node) {
         return dynamic_cast<const AsmImmediateNode*>(node) != nullptr;
     }

@@ -87,6 +87,7 @@ std::deque<Token> lexer(const std::string& s) {
 
         // add to `tokens`
         tokens.push_back((Token){class_type, match});
+        // tokens.emplace_back(class_type, match); Does it work?
     }
     return tokens;
 }

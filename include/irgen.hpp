@@ -15,17 +15,14 @@ class IRProgramNode;
 
 class IRFunctionNode;
 
-class IRInstructionNode;
+class IRInstructionNode; // base class
 class IRRetNode;
 class IRUnaryNode;
+class IRBinaryNode;
 
-class IRValNode;
+class IRValNode; // base class
 class IRConstNode;
 class IRVariableNode;
-
-class IRUnaryNode;
-class IRComplementNode;
-class IRNegateNode;
 
 // skeleton of the defined class above
 class IRProgramNode : public IRNode {
@@ -54,7 +51,7 @@ class IRInstructionNode : public IRNode {
 
 class IRRetNode : public IRInstructionNode {
   public:
-    std::unique_ptr<IRValNode> val;
+    std::shared_ptr<IRValNode> val;
 
     void dump_ir(int indent) const override;
     std::vector<std::unique_ptr<AsmInstructionNode>> emit_asm() override;
@@ -70,23 +67,34 @@ class IRUnaryNode : public IRInstructionNode {
     std::vector<std::unique_ptr<AsmInstructionNode>> emit_asm() override;
 };
 
+class IRBinaryNode : public IRInstructionNode {
+  public:
+    std::string op_type;
+    std::shared_ptr<IRValNode> val_src1;
+    std::shared_ptr<IRValNode> val_src2;
+    std::shared_ptr<IRValNode> val_dest;
+
+    void dump_ir(int indent) const override;
+    std::vector<std::unique_ptr<AsmInstructionNode>> emit_asm() override { return {}; } // TODO
+};
+
 class IRValNode : public IRNode {
   public:
     virtual ~IRValNode() = default;
-    virtual std::string repr() const = 0;
+    virtual std::string dump_ir() const = 0;
     virtual std::shared_ptr<AsmOperandNode> emit_asm() = 0;
 };
 
 class IRConstNode : public IRValNode {
   public:
-    int val;
-    std::string repr() const override;
+    std::string val;
+    std::string dump_ir() const override;
     std::shared_ptr<AsmOperandNode> emit_asm() override; // return AsmImmediateNode
 };
 
 class IRVariableNode : public IRValNode {
   public:
     std::string var_name;
-    std::string repr() const override;
+    std::string dump_ir() const override;
     std::shared_ptr<AsmOperandNode> emit_asm() override; // return AsmPseudoNode
 };

@@ -12,12 +12,12 @@ std::unordered_map<std::string, int> op_precedence = {
     {"*", 50}, {"/", 50}, {"%", 50}, {"+", 45}, {"-", 45},
 };
 
-inline bool is_unary(const std::string& op) {
+inline bool isUnary(const std::string& op) {
     return op == "~" || op == "-";
     /* || op == "--"; */ // decrement only for lexing now
 }
 
-inline bool is_binop(const std::string& op) {
+inline bool isBinop(const std::string& op) {
     return op == "+" || op == "-" || op == "*" || op == "/" || op == "%";
 }
 
@@ -61,7 +61,7 @@ void ProgramNode::parse(std::deque<Token>& tokens, size_t& pos) {
 }
 
 void ProgramNode::dump(int indent) const {
-    print_indent(indent);
+    printIndent(indent);
     std::println("Program(");
     if (func) {
         func->dump(indent + 1);
@@ -83,7 +83,7 @@ void FunctionNode::parse(std::deque<Token>& tokens, size_t& pos) {
 }
 
 void FunctionNode::dump(int indent) const {
-    print_indent(indent);
+    printIndent(indent);
     std::println("Function(");
     if (var_identifier) {
         var_identifier->dump(indent + 1);
@@ -91,7 +91,7 @@ void FunctionNode::dump(int indent) const {
     if (statement) {
         statement->dump(indent + 1);
     }
-    print_indent(indent);
+    printIndent(indent);
     std::println(")");
 }
 
@@ -103,22 +103,21 @@ void StatementNode::parse(std::deque<Token>& tokens, size_t& pos) {
 }
 
 void StatementNode::dump(int indent) const {
-    print_indent(indent);
+    printIndent(indent);
     std::println("body=Return(");
     if (expr) {
         expr->dump(indent + 1);
     }
-    print_indent(indent);
+    printIndent(indent);
     std::println(")");
 }
 
 // precedence climbing parser for expressions
-// idk how i would come up with this algo on my own lol...
 void ExprNode::parse(std::deque<Token>& tokens, size_t& pos, int min_precedence) {
     left_exprf = std::make_unique<ExprFactorNode>();
     left_exprf->parse(tokens, pos);
 
-    while (pos < tokens.size() && is_binop(tokens[pos].lexemes) &&
+    while (pos < tokens.size() && isBinop(tokens[pos].lexemes) &&
            getPrecedence(tokens[pos].lexemes) >= min_precedence) {
         std::string op = tokens[pos].lexemes;
         int op_prec = getPrecedence(op);
@@ -151,7 +150,7 @@ void ExprFactorNode::parse(std::deque<Token>& tokens, size_t& pos) {
     if (token_class == "constant") {
         constant = std::make_unique<ConstantNode>();
         constant->parse(tokens, pos);
-    } else if (is_unary(lexeme)) {
+    } else if (isUnary(lexeme)) {
         unary = std::make_unique<UnaryNode>();
         unary->parse(tokens, pos);
         factor = std::make_unique<ExprFactorNode>();
@@ -173,10 +172,10 @@ void ExprFactorNode::dump(int indent) const {
         return;
     }
     if (unary && factor) {
-        print_indent(indent);
+        printIndent(indent);
         std::println("Unary({},", unary->op_type);
         factor->dump(indent + 1);
-        print_indent(indent);
+        printIndent(indent);
         std::println(")");
         return;
     }
@@ -196,7 +195,7 @@ void IdentifierNode::parse(std::deque<Token>& tokens, size_t& pos) {
 }
 
 void IdentifierNode::dump(int indent) const {
-    print_indent(indent);
+    printIndent(indent);
     std::println("name='{}'", name);
 }
 
@@ -206,17 +205,17 @@ void ConstantNode::parse(std::deque<Token>& tokens, size_t& pos) {
         throw std::runtime_error(
             std::format("Syntax Error: Expected constant integer but got '{}'", actual));
     }
-    val = std::stoi(actual);
+    val = actual;
 }
 
 void ConstantNode::dump(int indent) const {
-    print_indent(indent);
+    printIndent(indent);
     std::println("Constant({})", val);
 }
 
 void UnaryNode::parse(std::deque<Token>& tokens, size_t& pos) {
     const auto& [token_class, actual] = tokens[pos++];
-    if (!is_unary(actual)) {
+    if (!isUnary(actual)) {
         throw std::runtime_error(
             std::format("Syntax Error: Expected '~' or '-' but got '{}':'{}' at pos:{}",
                         token_class, actual, pos));
@@ -225,13 +224,13 @@ void UnaryNode::parse(std::deque<Token>& tokens, size_t& pos) {
 }
 
 void UnaryNode::dump(int indent) const {
-    print_indent(indent);
+    printIndent(indent);
     std::println("Unary({})", op_type);
 }
 
 void BinaryNode::parse(std::deque<Token>& tokens, size_t& pos) {
     const auto& [token_class, actual] = tokens[pos++];
-    if (!is_binop(actual)) {
+    if (!isBinop(actual)) {
         throw std::runtime_error(
             std::format("Syntax Error: Expected binary operator but got '{}' : '{}' at pos:{}",
                         token_class, actual, pos));
@@ -240,7 +239,7 @@ void BinaryNode::parse(std::deque<Token>& tokens, size_t& pos) {
 }
 
 void BinaryNode::dump(int indent) const {
-    print_indent(indent);
+    printIndent(indent);
     std::println("Binary({},", op_type);
     if (left) {
         left->dump(indent + 1);
@@ -248,7 +247,7 @@ void BinaryNode::dump(int indent) const {
     if (right) {
         right->dump(indent + 1);
     }
-    print_indent(indent);
+    printIndent(indent);
     std::println(")");
 }
 
@@ -296,6 +295,16 @@ int main(int argc, char* argv[]) {
     }
     auto ast = parse(tokens);
     ast->dump();
+    // std::println("has expr-factor->expr: {}",
+    //              ast->func->statement->expr->left_exprf->expr != nullptr);
+    // std::println("has binary operator: {}", ast->func->statement->expr->binop != nullptr);
+    // std::println("has right expression: {}", ast->func->statement->expr->right_expr != nullptr);
+    // std::println("{}",
+    //              dynamic_cast<BinaryNode*>(ast->func->statement->expr->left_exprf.get())->left !=
+    //                  nullptr);
+    // std::println("{}",
+    //              dynamic_cast<BinaryNode*>(ast->func->statement->expr->left_exprf.get())->right !=
+    //                  nullptr);
 
     return 0;
 }

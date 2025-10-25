@@ -69,12 +69,12 @@ class ExprNode : public ASTNode {
     // <exp> = <factor> | <expr> <binary> <expr>
     // <exp> is of the form <factor> ( <binary> <expr> )*
     std::unique_ptr<ExprFactorNode> left_exprf;
-    std::unique_ptr<BinaryNode> binop; // will be null since we move it to left_exprf
-    std::unique_ptr<ExprNode> right_expr; // will be null since we move it to left_exprf
+    std::unique_ptr<BinaryNode> binop;
+    std::unique_ptr<ExprNode> right_expr; // will be null since we move it to left_exprf, ig...
 
     void parse(std::deque<Token>& tokens, size_t& pos, int min_precedence = 0);
     void dump(int indent = 0) const override;
-    std::unique_ptr<IRValNode>
+    virtual std::shared_ptr<IRValNode> // runtime polymorphism for ExprFactorNode
     emit_ir(std::vector<std::unique_ptr<IRInstructionNode>>& instructions);
 };
 
@@ -83,10 +83,14 @@ class ExprFactorNode : public ExprNode {
     std::unique_ptr<ConstantNode> constant;
     std::unique_ptr<UnaryNode> unary;
     std::unique_ptr<ExprFactorNode> factor;
+    // for parenthesized expressions. // will be null after it's parsed
     std::unique_ptr<ExprNode> expr;
 
     void parse(std::deque<Token>& tokens, size_t& pos);
     void dump(int indent = 0) const override;
+    // runtime polymorphism for BinaryNode, (ConstantNode, UnaryNode, not sure about these...)
+    virtual std::shared_ptr<IRValNode>
+    emit_ir(std::vector<std::unique_ptr<IRInstructionNode>>& instructions);
 };
 
 class IdentifierNode : public ASTNode {
@@ -97,15 +101,15 @@ class IdentifierNode : public ASTNode {
     void dump(int indent = 0) const override;
 };
 
-class ConstantNode : public ASTNode {
+class ConstantNode : public ExprFactorNode {
   public:
-    int val;
+    std::string val;
 
     void parse(std::deque<Token>& tokens, size_t& pos);
     void dump(int indent = 0) const override;
 };
 
-class UnaryNode : public ASTNode {
+class UnaryNode : public ExprFactorNode {
   public:
     std::string op_type;
 
@@ -116,11 +120,15 @@ class UnaryNode : public ASTNode {
 class BinaryNode : public ExprFactorNode {
   public:
     std::string op_type;
-    std::unique_ptr<ExprNode> left;
-    std::unique_ptr<ExprNode> right;
+    std::unique_ptr<ExprNode> left;  // can also be ExprFactorNode
+    std::unique_ptr<ExprNode> right; // can also be ExprFactorNode... ig...
 
     void parse(std::deque<Token>& tokens, size_t& pos);
     void dump(int indent = 0) const override;
+    static bool classof(const ExprFactorNode* u) {
+        // BinaryNode is derived from ExprNode
+        return dynamic_cast<const BinaryNode*>(u) != nullptr;
+    }
 };
 
 std::unique_ptr<ProgramNode> parse(std::deque<Token>& tokens);
