@@ -55,6 +55,35 @@ void AsmUnaryNode::emit_asm(std::ostream& os) {
     os << '\n';
 }
 
+void AsmBinaryNode::emit_asm(std::ostream& os) {
+    if (this->op_type == "+") {
+        os << TAB4 << "addl ";
+    } else if (this->op_type == "-") {
+        os << TAB4 << "subl ";
+    } else if (this->op_type == "*") {
+        os << TAB4 << "imull ";
+    } else {
+        throw std::runtime_error("Unsupported binary op during emission: " + op_type);
+    }
+    this->src->emit_asm(os);
+    os << ", ";
+    this->dest->emit_asm(os);
+    os << '\n';
+}
+
+void AsmIdivNode::emit_asm(std::ostream& os) {
+    if (!divisor) {
+        throw std::runtime_error("AsmIdivNode missing divisor during emission");
+    }
+    os << TAB4 << "idivl ";
+    divisor->emit_asm(os);
+    os << '\n';
+}
+
+void AsmCdqNode::emit_asm(std::ostream& os) {
+    os << TAB4 << "cdq\n";
+}
+
 void AsmAllocateStackNode::emit_asm(std::ostream& os) {
     os << TAB4 << "subq $" << stack_size << ", %rsp\n";
 }

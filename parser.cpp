@@ -303,7 +303,8 @@ int main(int argc, char* argv[]) {
     //              dynamic_cast<BinaryNode*>(ast->func->statement->expr->left_exprf.get())->left !=
     //                  nullptr);
     // std::println("{}",
-    //              dynamic_cast<BinaryNode*>(ast->func->statement->expr->left_exprf.get())->right !=
+    //              dynamic_cast<BinaryNode*>(ast->func->statement->expr->left_exprf.get())->right
+!=
     //                  nullptr);
 
     return 0;

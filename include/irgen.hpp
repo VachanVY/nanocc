@@ -75,7 +75,7 @@ class IRBinaryNode : public IRInstructionNode {
     std::shared_ptr<IRValNode> val_dest;
 
     void dump_ir(int indent) const override;
-    std::vector<std::unique_ptr<AsmInstructionNode>> emit_asm() override { return {}; } // TODO
+    std::vector<std::unique_ptr<AsmInstructionNode>> emit_asm() override;
 };
 
 class IRValNode : public IRNode {

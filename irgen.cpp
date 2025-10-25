@@ -163,7 +163,7 @@ void IRBinaryNode::dump_ir(int indent) const {
 std::string IRConstNode::dump_ir() const { return val; }
 std::string IRVariableNode::dump_ir() const { return var_name; }
 
-// /*
+/*
 int main(int argc, char* argv[]) {
     if (argc < 2) {
         std::println(stderr,

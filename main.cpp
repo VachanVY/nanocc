@@ -50,7 +50,6 @@ int main(int argc, char* argv[]) {
 
     // Emit assembly to string stream
     std::ostringstream output;
-    ;
     asm_ast->emit_asm(output);
 
     // Get the base filename without extension

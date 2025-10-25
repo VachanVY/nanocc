@@ -39,3 +39,7 @@ IRProgram(
   )
 )
 */
+
+/*
+After resolving pseudo registers: 16
+*/

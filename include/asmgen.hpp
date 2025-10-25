@@ -17,10 +17,13 @@ class AsmFunctionNode;
 class AsmInstructionNode; // base class
 class AsmMovNode;
 class AsmUnaryNode;
+class AsmBinaryNode; // all bin ops except "/" and "%"
+class AsmIdivNode;   // for "/" and "%"
+class AsmCdqNode;    // for sign extension before idiv
 class AsmAllocateStackNode;
 class AsmRetNode;
 
-class AsmOperandNode; // base class
+class AsmOperandNode; // base class // always use via `shared_ptr`
 class AsmImmediateNode;
 class AsmRegisterNode;
 class AsmPseudoNode;
@@ -62,8 +65,8 @@ class AsmInstructionNode : public AsmASTNode {
     }
     virtual void resolvePseudoRegisters(std::unordered_map<std::string, int>& pseudo_reg_map,
                                         int& nxt_offset) = 0;
-    virtual void
-    fixUpInstructions(std::vector<std::unique_ptr<AsmInstructionNode>>& instructions) = 0;
+    virtual void fixUpInstructions(std::vector<std::unique_ptr<AsmInstructionNode>>& instructions) {
+    }; // default no-op
 
     virtual void emit_asm(std::ostream& os) = 0;
 };
@@ -93,9 +96,44 @@ class AsmUnaryNode : public AsmInstructionNode {
 
     void resolvePseudoRegisters(std::unordered_map<std::string, int>& pseudo_reg_map,
                                 int& nxt_offset) override;
-    void fixUpInstructions(std::vector<std::unique_ptr<AsmInstructionNode>>& instructions)
-        override{}; // no-op // NOTE(VachanVY): Can I use default behavior as no-op?
+    void emit_asm(std::ostream& os) override;
+};
 
+class AsmBinaryNode : public AsmInstructionNode {
+  public:
+    std::string op_type;
+    std::shared_ptr<AsmOperandNode> src;
+    std::shared_ptr<AsmOperandNode> dest;
+
+    static bool classof(const AsmInstructionNode* node) {
+        return dynamic_cast<const AsmBinaryNode*>(node) != nullptr;
+    }
+    void resolvePseudoRegisters(std::unordered_map<std::string, int>& pseudo_reg_map,
+                                int& nxt_offset) override;
+    void fixUpInstructions(std::vector<std::unique_ptr<AsmInstructionNode>>& instructions) override;
+    void emit_asm(std::ostream& os) override;
+};
+
+class AsmIdivNode : public AsmInstructionNode {
+  public:
+    std::shared_ptr<AsmOperandNode> divisor; // a/b (divisor = b; dividend = a)
+
+    static bool classof(const AsmInstructionNode* node) {
+        return dynamic_cast<const AsmIdivNode*>(node) != nullptr;
+    }
+    void resolvePseudoRegisters(std::unordered_map<std::string, int>& pseudo_reg_map,
+                                int& nxt_offset) override;
+    void fixUpInstructions(std::vector<std::unique_ptr<AsmInstructionNode>>& instructions) override;
+    void emit_asm(std::ostream& os) override;
+};
+
+class AsmCdqNode : public AsmInstructionNode {
+  public:
+    static bool classof(const AsmInstructionNode* node) {
+        return dynamic_cast<const AsmCdqNode*>(node) != nullptr;
+    }
+    void resolvePseudoRegisters(std::unordered_map<std::string, int>& pseudo_reg_map,
+                                int& nxt_offset) override {}; // no-op
     void emit_asm(std::ostream& os) override;
 };
 
@@ -106,9 +144,10 @@ class AsmAllocateStackNode : public AsmInstructionNode {
         return dynamic_cast<const AsmAllocateStackNode*>(node) != nullptr;
     }
     void resolvePseudoRegisters(std::unordered_map<std::string, int>& pseudo_reg_map,
-                                int& nxt_offset) override{}; // no-op
+                                int& nxt_offset) override {}; // no-op
     void fixUpInstructions(
-        std::vector<std::unique_ptr<AsmInstructionNode>>& instructions) override{}; // no-op
+      std::vector<std::unique_ptr<AsmInstructionNode>>& instructions) override {
+    }; // no-op
 
     void emit_asm(std::ostream& os) override;
 };
@@ -119,9 +158,9 @@ class AsmRetNode : public AsmInstructionNode {
         return dynamic_cast<const AsmRetNode*>(node) != nullptr;
     }
     void resolvePseudoRegisters(std::unordered_map<std::string, int>& pseudo_reg_map,
-                                int& nxt_offset) override{}; // no-op
+                                int& nxt_offset) override {}; // no-op
     void fixUpInstructions(
-        std::vector<std::unique_ptr<AsmInstructionNode>>& instructions) override{}; // no-op
+      std::vector<std::unique_ptr<AsmInstructionNode>>& instructions) override {}; // no-op
 
     void emit_asm(std::ostream& os) override;
 };
