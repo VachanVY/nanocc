@@ -76,6 +76,7 @@ int main(int argc, char* argv[]) {
         std::println(stderr, "Error: gcc failed with exit code {}", result);
         return 1;
     }
+    std::println("Successfully compiled to executable with result: {}", result);
 
     return 0;
 }
