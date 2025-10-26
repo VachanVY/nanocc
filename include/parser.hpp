@@ -61,11 +61,6 @@ class StatementNode : public ASTNode {
 
 class ExprNode : public ASTNode {
   public:
-    // delete these later
-    // std::unique_ptr<ConstantNode> constant;
-    // std::unique_ptr<UnaryNode> unary;
-    // std::unique_ptr<ExprNode> expr;
-
     // <exp> = <factor> | <expr> <binary> <expr>
     // <exp> is of the form <factor> ( <binary> <expr> )*
     std::unique_ptr<ExprFactorNode> left_exprf;

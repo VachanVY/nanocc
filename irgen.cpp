@@ -1,6 +1,8 @@
 #include <print>
 #include <string>
+#include <utility>
 
+#include "irgen.hpp"
 #include "parser.hpp"
 #include "utils.hpp"
 
@@ -35,12 +37,13 @@ void IRProgramNode::dump_ir(int indent) const {
 }
 
 std::unique_ptr<IRFunctionNode> FunctionNode::emit_ir() {
-    auto ir_func = std::make_unique<IRFunctionNode>();
-    ir_func->var_name = var_identifier->name;
+    std::vector<std::unique_ptr<IRInstructionNode>> instructions;
     if (statement) {
-        ir_func->instructions = statement->emit_ir();
+        instructions = statement->emit_ir();
     }
-    return ir_func;
+    auto ir_function = std::make_unique<IRFunctionNode>(
+        var_identifier->name, std::move(instructions));
+    return ir_function;
 }
 
 void IRFunctionNode::dump_ir(int indent) const {
@@ -69,9 +72,8 @@ std::vector<std::unique_ptr<IRInstructionNode>> StatementNode::emit_ir() {
     // for this iter
     auto dest_var = expr->emit_ir(ir_instructions);
     // emit return of the computed value
-    auto ret = std::make_unique<IRRetNode>();
-    ret->val = std::move(dest_var);
-    ir_instructions.push_back(std::move(ret));
+    auto ret_instruction = std::make_unique<IRRetNode>(std::move(dest_var));
+    ir_instructions.push_back(std::move(ret_instruction));
     return ir_instructions;
 }
 
@@ -95,36 +97,26 @@ ExprFactorNode::emit_ir(std::vector<std::unique_ptr<IRInstructionNode>>& instruc
         auto right_val = binop->right->emit_ir(instructions);
 
         std::string tmp = getTempVarName();
-        auto val_dest = std::make_shared<IRVariableNode>();
-        val_dest->var_name = tmp;
+        auto val_dest = std::make_shared<IRVariableNode>(tmp);
 
-        auto ir_binary = std::make_unique<IRBinaryNode>();
-        ir_binary->op_type = binop->op_type;
-        ir_binary->val_src1 = left_val;
-        ir_binary->val_src2 = right_val;
-        ir_binary->val_dest = val_dest;
-
+        auto ir_binary = std::make_unique<IRBinaryNode>(binop->op_type,
+                                                        left_val,
+                                                        right_val,
+                                                        val_dest);
         instructions.push_back(std::move(ir_binary));
         return val_dest;
     } else if (constant) {
-        auto ir_const = std::make_shared<IRConstNode>();
-        ir_const->val = constant->val;
+        auto ir_const = std::make_shared<IRConstNode>(constant->val);
         return ir_const;
     } else if (unary && factor) {
         // get inner most expression's value
         auto src_val = factor->emit_ir(instructions);
         std::string tmp = getTempVarName();
-        auto dest_var = std::make_shared<IRVariableNode>();
-        dest_var->var_name = tmp;
+        auto dest_var = std::make_shared<IRVariableNode>(tmp);
 
-        auto val_dest = std::make_shared<IRVariableNode>();
-        val_dest->var_name = tmp;
-
-        auto ir_unary = std::make_unique<IRUnaryNode>();
-        ir_unary->op_type = unary->op_type;
-        ir_unary->val_src = src_val;
-        ir_unary->val_dest = val_dest;
-
+        auto ir_unary = std::make_unique<IRUnaryNode>(unary->op_type,
+                                                      src_val,
+                                                      dest_var);
         instructions.push_back(std::move(ir_unary));
         return dest_var;
     } else if (expr) { // will be null after it's parsed
