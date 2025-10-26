@@ -46,6 +46,10 @@ class AsmFunctionNode : public AsmASTNode {
   public:
     std::string name;
     std::vector<std::unique_ptr<AsmInstructionNode>> instructions;
+
+    AsmFunctionNode() = default;
+    explicit AsmFunctionNode(std::string name) : name(std::move(name)) {}
+
     static bool classof(const AsmASTNode* node) {
         return dynamic_cast<const AsmFunctionNode*>(node) != nullptr;
     }
@@ -75,6 +79,11 @@ class AsmMovNode : public AsmInstructionNode {
   public:
     std::shared_ptr<AsmOperandNode> src;
     std::shared_ptr<AsmOperandNode> dest;
+
+    AsmMovNode() = default;
+    AsmMovNode(std::shared_ptr<AsmOperandNode> src, std::shared_ptr<AsmOperandNode> dest)
+        : src(std::move(src)), dest(std::move(dest)) {}
+
     static bool classof(const AsmInstructionNode* node) {
         return dynamic_cast<const AsmMovNode*>(node) != nullptr;
     }
@@ -90,6 +99,11 @@ class AsmUnaryNode : public AsmInstructionNode {
   public:
     std::string op_type;
     std::shared_ptr<AsmOperandNode> operand;
+
+    AsmUnaryNode() = default;
+    AsmUnaryNode(std::string op_type, std::shared_ptr<AsmOperandNode> operand)
+        : op_type(std::move(op_type)), operand(std::move(operand)) {}
+
     static bool classof(const AsmInstructionNode* node) {
         return dynamic_cast<const AsmUnaryNode*>(node) != nullptr;
     }
@@ -105,6 +119,11 @@ class AsmBinaryNode : public AsmInstructionNode {
     std::shared_ptr<AsmOperandNode> src;
     std::shared_ptr<AsmOperandNode> dest;
 
+    AsmBinaryNode() = default;
+    AsmBinaryNode(std::string op_type, std::shared_ptr<AsmOperandNode> src,
+                  std::shared_ptr<AsmOperandNode> dest)
+        : op_type(std::move(op_type)), src(std::move(src)), dest(std::move(dest)) {}
+
     static bool classof(const AsmInstructionNode* node) {
         return dynamic_cast<const AsmBinaryNode*>(node) != nullptr;
     }
@@ -117,6 +136,9 @@ class AsmBinaryNode : public AsmInstructionNode {
 class AsmIdivNode : public AsmInstructionNode {
   public:
     std::shared_ptr<AsmOperandNode> divisor; // a/b (divisor = b; dividend = a)
+
+    AsmIdivNode() = default;
+    explicit AsmIdivNode(std::shared_ptr<AsmOperandNode> divisor) : divisor(std::move(divisor)) {}
 
     static bool classof(const AsmInstructionNode* node) {
         return dynamic_cast<const AsmIdivNode*>(node) != nullptr;
@@ -140,13 +162,17 @@ class AsmCdqNode : public AsmInstructionNode {
 class AsmAllocateStackNode : public AsmInstructionNode {
   public:
     int stack_size = 0;
+
+    AsmAllocateStackNode() = default;
+    explicit AsmAllocateStackNode(int stack_size) : stack_size(stack_size) {}
+
     static bool classof(const AsmInstructionNode* node) {
         return dynamic_cast<const AsmAllocateStackNode*>(node) != nullptr;
     }
     void resolvePseudoRegisters(std::unordered_map<std::string, int>& pseudo_reg_map,
                                 int& nxt_offset) override {}; // no-op
-    void fixUpInstructions(
-      std::vector<std::unique_ptr<AsmInstructionNode>>& instructions) override {
+    void
+    fixUpInstructions(std::vector<std::unique_ptr<AsmInstructionNode>>& instructions) override {
     }; // no-op
 
     void emit_asm(std::ostream& os) override;
@@ -159,8 +185,9 @@ class AsmRetNode : public AsmInstructionNode {
     }
     void resolvePseudoRegisters(std::unordered_map<std::string, int>& pseudo_reg_map,
                                 int& nxt_offset) override {}; // no-op
-    void fixUpInstructions(
-      std::vector<std::unique_ptr<AsmInstructionNode>>& instructions) override {}; // no-op
+    void
+    fixUpInstructions(std::vector<std::unique_ptr<AsmInstructionNode>>& instructions) override {
+    }; // no-op
 
     void emit_asm(std::ostream& os) override;
 };
@@ -178,6 +205,10 @@ class AsmOperandNode : public AsmASTNode {
 class AsmImmediateNode : public AsmOperandNode {
   public:
     std::string value;
+
+    AsmImmediateNode() = default;
+    explicit AsmImmediateNode(std::string value) : value(std::move(value)) {}
+
     static bool classof(const AsmOperandNode* node) {
         return dynamic_cast<const AsmImmediateNode*>(node) != nullptr;
     }
@@ -188,6 +219,10 @@ class AsmImmediateNode : public AsmOperandNode {
 class AsmRegisterNode : public AsmOperandNode {
   public:
     std::string name;
+
+    AsmRegisterNode() = default;
+    explicit AsmRegisterNode(std::string name) : name(std::move(name)) {}
+
     static bool classof(const AsmOperandNode* node) {
         return dynamic_cast<const AsmRegisterNode*>(node) != nullptr;
     }
@@ -198,6 +233,10 @@ class AsmRegisterNode : public AsmOperandNode {
 class AsmPseudoNode : public AsmOperandNode {
   public:
     std::string identifier;
+
+    AsmPseudoNode() = default;
+    explicit AsmPseudoNode(std::string identifier) : identifier(std::move(identifier)) {}
+
     static bool classof(const AsmOperandNode* node) {
         return dynamic_cast<const AsmPseudoNode*>(node) != nullptr;
     }
@@ -212,6 +251,10 @@ class AsmStackNode : public AsmOperandNode {
     /// AsmStackNode
   public:
     int offset = 0; // negate while emitting asm
+
+    AsmStackNode() = default;
+    explicit AsmStackNode(int offset) : offset(offset) {}
+
     static bool classof(const AsmOperandNode* node) {
         return dynamic_cast<const AsmStackNode*>(node) != nullptr;
     }
