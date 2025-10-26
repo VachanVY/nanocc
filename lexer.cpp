@@ -1,32 +1,34 @@
 #include "lexer.hpp"
+#include <cctype>
 #include <print>
 #include <regex>
+#include <stdexcept>
 #include <string>
 
-std::vector<std::pair<std::string, std::regex>> token_specs = {
+std::vector<std::pair<TokenType, std::regex>> token_specs = {
     // "keywords" should get more priority than "identifiers", so lex them first
-    {"int", std::regex("int\\b")},
-    {"void", std::regex("void\\b")},
-    {"return", std::regex("return\\b")},
+    {TokenType::INT, std::regex("int\\b")},
+    {TokenType::VOID, std::regex("void\\b")},
+    {TokenType::RETURN, std::regex("return\\b")},
 
     // "unary operators"
-    {"tilde", std::regex("~")},
-    {"decrement", std::regex("--")},
+    {TokenType::TILDE, std::regex("~")},
+    {TokenType::DECREMENT, std::regex("--")},
     // both unary and binary
-    {"negate", std::regex("-")},
+    {TokenType::MINUS, std::regex("-")},
     // "binary operators"
-    {"plus", std::regex("\\+")},
-    {"star", std::regex("\\*")},
-    {"slash", std::regex("/")},
-    {"percent", std::regex("%")},
+    {TokenType::PLUS, std::regex("\\+")},
+    {TokenType::STAR, std::regex("\\*")},
+    {TokenType::SLASH, std::regex("/")},
+    {TokenType::PERCENT, std::regex("%")},
 
-    {"identifier", std::regex("[a-zA-Z_]\\w*\\b")}, // variable/function names
-    {"constant", std::regex("[0-9]+\\b")},
-    {"(", std::regex("\\(")},
-    {")", std::regex("\\)")},
-    {"{", std::regex("\\{")},
-    {"}", std::regex("\\}")},
-    {";", std::regex(";")},
+    {TokenType::IDENTIFIER, std::regex("[a-zA-Z_]\\w*\\b")}, // variable/function names
+    {TokenType::CONSTANT, std::regex("[0-9]+\\b")},
+    {TokenType::LPAREN, std::regex("\\(")},
+    {TokenType::RPAREN, std::regex("\\)")},
+    {TokenType::LBRACE, std::regex("\\{")},
+    {TokenType::RBRACE, std::regex("\\}")},
+    {TokenType::SEMICOLON, std::regex(";")},
 };
 
 std::deque<Token> lexer(const std::string& s) {
@@ -62,8 +64,9 @@ std::deque<Token> lexer(const std::string& s) {
 
         size_t match_length = 0;
         std::string match;
-        std::string class_type;
-        for (auto& [tokenClass, regex] : token_specs) {
+        TokenType class_type;
+        bool matched = false;
+        for (const auto& [tokenClass, regex] : token_specs) {
             std::smatch tmp_match;
             std::string remainder = s.substr(pos); // s[pos:]
             if (std::regex_search(remainder, tmp_match, regex,
@@ -73,12 +76,13 @@ std::deque<Token> lexer(const std::string& s) {
                     class_type = tokenClass;
                     match = tmp_match.str();
                     match_length = tmp_match.length();
+                    matched = true;
                 }
             }
         }
 
         // throw error if no regex matched
-        if (match_length == 0) {
+        if (!matched) {
             throw std::runtime_error("Unexpected Syntax error at position " + std::to_string(pos));
         }
 
@@ -120,8 +124,8 @@ int main(int argc, char *argv[]) {
     auto contents = getFileContents(filename);
     auto tokens = lexer(contents);
 
-    for(auto& [token_class, lexemes]: tokens){
-        std::println("{}, {}", token_class, lexemes);
+    for(auto& [token_type, lexeme]: tokens){
+        std::println("{}, {}", tokenTypeToString(token_type), lexeme);
     }
 
     return 0;

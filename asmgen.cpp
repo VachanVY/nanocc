@@ -386,8 +386,8 @@ int main(int argc, char* argv[]) {
     auto contents = getFileContents(filename);
     auto tokens = lexer(contents);
     size_t i = 0;
-    for (const auto& [token_class, lexemes] : tokens) {
-        std::println("{}, {}, {}", i++, token_class, lexemes);
+    for (const auto& [token_type, lexeme] : tokens) {
+        std::println("{}, {}, {}", i++, tokenTypeToString(token_type), lexeme);
     }
     auto ast = parse(tokens);
     ast->dump();

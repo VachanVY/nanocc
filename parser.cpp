@@ -39,17 +39,18 @@ variable in "X"
 for it and parse
 */
 
-void expect(const std::deque<Token>& tokens, const std::string& expected, size_t& pos) {
+void expect(const std::deque<Token>& tokens, TokenType expected, size_t& pos) {
     if (pos >= tokens.size()) {
         throw std::runtime_error(
-            std::format("Syntax Error: Expected '{}', but reached end of input", expected));
+            std::format("Syntax Error: Expected '{}', but reached end of input",
+                        tokenTypeToString(expected)));
     }
-    const auto& [token_class, actual] = tokens[pos];
+    const auto& [token_type, lexeme] = tokens[pos];
 
-    if (expected != actual) {
-        throw std::runtime_error(
-            std::format("Syntax Error: Expected '{}', but found '{}': '{}' at pos:{}", expected,
-                        token_class, actual, pos));
+    if (expected != token_type) {
+        throw std::runtime_error(std::format(
+            "Syntax Error: Expected '{}', but found '{}': '{}' at pos:{}",
+            tokenTypeToString(expected), tokenTypeToString(token_type), lexeme, pos));
     }
     pos++;
 }
@@ -70,16 +71,16 @@ void ProgramNode::dump(int indent) const {
 }
 
 void FunctionNode::parse(std::deque<Token>& tokens, size_t& pos) {
-    expect(tokens, "int", pos);
+    expect(tokens, TokenType::INT, pos);
     var_identifier = std::make_unique<IdentifierNode>();
     var_identifier->parse(tokens, pos); // parse function/variable name
-    expect(tokens, "(", pos);
-    expect(tokens, "void", pos);
-    expect(tokens, ")", pos);
-    expect(tokens, "{", pos);
+    expect(tokens, TokenType::LPAREN, pos);
+    expect(tokens, TokenType::VOID, pos);
+    expect(tokens, TokenType::RPAREN, pos);
+    expect(tokens, TokenType::LBRACE, pos);
     statement = std::make_unique<StatementNode>();
     statement->parse(tokens, pos);
-    expect(tokens, "}", pos);
+    expect(tokens, TokenType::RBRACE, pos);
 }
 
 void FunctionNode::dump(int indent) const {
@@ -96,10 +97,10 @@ void FunctionNode::dump(int indent) const {
 }
 
 void StatementNode::parse(std::deque<Token>& tokens, size_t& pos) {
-    expect(tokens, "return", pos);
+    expect(tokens, TokenType::RETURN, pos);
     expr = std::make_unique<ExprNode>();
     expr->parse(tokens, pos);
-    expect(tokens, ";", pos);
+    expect(tokens, TokenType::SEMICOLON, pos);
 }
 
 void StatementNode::dump(int indent) const {
@@ -117,9 +118,9 @@ void ExprNode::parse(std::deque<Token>& tokens, size_t& pos, int min_precedence)
     left_exprf = std::make_unique<ExprFactorNode>();
     left_exprf->parse(tokens, pos);
 
-    while (pos < tokens.size() && isBinop(tokens[pos].lexemes) &&
-           getPrecedence(tokens[pos].lexemes) >= min_precedence) {
-        std::string op = tokens[pos].lexemes;
+    while (pos < tokens.size() && isBinop(tokens[pos].lexeme) &&
+           getPrecedence(tokens[pos].lexeme) >= min_precedence) {
+        std::string op = tokens[pos].lexeme;
         int op_prec = getPrecedence(op);
 
         binop = std::make_unique<BinaryNode>();
@@ -146,8 +147,8 @@ void ExprNode::dump(int indent) const {
 }
 
 void ExprFactorNode::parse(std::deque<Token>& tokens, size_t& pos) {
-    const auto& [token_class, lexeme] = tokens[pos];
-    if (token_class == "constant") {
+    const auto& [token_type, lexeme] = tokens[pos];
+    if (token_type == TokenType::CONSTANT) {
         constant = std::make_unique<ConstantNode>();
         constant->parse(tokens, pos);
     } else if (isUnary(lexeme)) {
@@ -155,12 +156,12 @@ void ExprFactorNode::parse(std::deque<Token>& tokens, size_t& pos) {
         unary->parse(tokens, pos);
         factor = std::make_unique<ExprFactorNode>();
         factor->parse(tokens, pos);
-    } else if (token_class == "(") {
-        expect(tokens, "(", pos);
+    } else if (token_type == TokenType::LPAREN) {
+        expect(tokens, TokenType::LPAREN, pos);
         expr = std::make_unique<ExprNode>();
         // 0 init precedence when parsing a factor
         expr->parse(tokens, pos, 0);
-        expect(tokens, ")", pos);
+        expect(tokens, TokenType::RPAREN, pos);
     } else {
         throw std::runtime_error("Syntax Error: Malformed Expression Factor");
     }
@@ -186,8 +187,8 @@ void ExprFactorNode::dump(int indent) const {
 }
 
 void IdentifierNode::parse(std::deque<Token>& tokens, size_t& pos) {
-    const auto& [token_class, actual] = tokens[pos++];
-    if (token_class != "identifier") {
+    const auto& [token_type, actual] = tokens[pos++];
+    if (token_type != TokenType::IDENTIFIER) {
         throw std::runtime_error(
             std::format("Syntax Error: Expected identifier but got '{}'", actual));
     }
@@ -200,8 +201,8 @@ void IdentifierNode::dump(int indent) const {
 }
 
 void ConstantNode::parse(std::deque<Token>& tokens, size_t& pos) {
-    const auto& [token_class, actual] = tokens[pos++];
-    if (token_class != "constant") {
+    const auto& [token_type, actual] = tokens[pos++];
+    if (token_type != TokenType::CONSTANT) {
         throw std::runtime_error(
             std::format("Syntax Error: Expected constant integer but got '{}'", actual));
     }
@@ -214,11 +215,11 @@ void ConstantNode::dump(int indent) const {
 }
 
 void UnaryNode::parse(std::deque<Token>& tokens, size_t& pos) {
-    const auto& [token_class, actual] = tokens[pos++];
+    const auto& [token_type, actual] = tokens[pos++];
     if (!isUnary(actual)) {
         throw std::runtime_error(
             std::format("Syntax Error: Expected '~' or '-' but got '{}':'{}' at pos:{}",
-                        token_class, actual, pos));
+                        tokenTypeToString(token_type), actual, pos));
     }
     op_type = actual;
 }
@@ -229,11 +230,11 @@ void UnaryNode::dump(int indent) const {
 }
 
 void BinaryNode::parse(std::deque<Token>& tokens, size_t& pos) {
-    const auto& [token_class, actual] = tokens[pos++];
+    const auto& [token_type, actual] = tokens[pos++];
     if (!isBinop(actual)) {
         throw std::runtime_error(
             std::format("Syntax Error: Expected binary operator but got '{}' : '{}' at pos:{}",
-                        token_class, actual, pos));
+                        tokenTypeToString(token_type), actual, pos));
     }
     op_type = actual;
 }
@@ -256,9 +257,10 @@ std::unique_ptr<ProgramNode> parse(std::deque<Token>& tokens) {
     auto ast = std::make_unique<ProgramNode>();
     ast->parse(tokens, pos);
     if (pos != tokens.size()) {
-        const auto& [token_class, actual] = tokens[pos];
+        const auto& [token_type, actual] = tokens[pos];
         throw std::runtime_error(std::format(
-            "Syntax Error: Unexpected token '{}' of class '{}' at top level", actual, token_class));
+            "Syntax Error: Unexpected token '{}' of class '{}' at top level", actual,
+            tokenTypeToString(token_type)));
     }
     return ast;
 }
@@ -290,8 +292,8 @@ int main(int argc, char* argv[]) {
     auto contents = getFileContents(filename);
     auto tokens = lexer(contents);
     size_t i = 0;
-    for (const auto& [token_class, lexemes] : tokens) {
-        std::println("{}, {}, {}", i++, token_class, lexemes);
+    for (const auto& [token_type, lexeme] : tokens) {
+        std::println("{}, {}, {}", i++, tokenTypeToString(token_type), lexeme);
     }
     auto ast = parse(tokens);
     ast->dump();
