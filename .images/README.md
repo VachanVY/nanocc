@@ -26,6 +26,7 @@ Weak pointers: you can ask a weak pointer, Are you there or dead... it doesn't i
 # lexer 
 ![sasas](token.png)
 ![sasas](regex_cheat_sheet.png)
+<img width="828" height="816" alt="image" src="https://github.com/user-attachments/assets/a99d2db4-1c32-4cd5-89ad-3839d1458212" />
 ![sasas](lexical_analysis.png)
 ![sasas](lex_regex_nfa_dfa_table.png)
 
