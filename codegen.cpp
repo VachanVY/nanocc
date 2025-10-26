@@ -80,9 +80,7 @@ void AsmIdivNode::emit_asm(std::ostream& os) {
     os << '\n';
 }
 
-void AsmCdqNode::emit_asm(std::ostream& os) {
-    os << TAB4 << "cdq\n";
-}
+void AsmCdqNode::emit_asm(std::ostream& os) { os << TAB4 << "cdq\n"; }
 
 void AsmAllocateStackNode::emit_asm(std::ostream& os) {
     os << TAB4 << "subq $" << stack_size << ", %rsp\n";

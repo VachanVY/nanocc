@@ -41,16 +41,15 @@ for it and parse
 
 void expect(const std::deque<Token>& tokens, TokenType expected, size_t& pos) {
     if (pos >= tokens.size()) {
-        throw std::runtime_error(
-            std::format("Syntax Error: Expected '{}', but reached end of input",
-                        tokenTypeToString(expected)));
+        throw std::runtime_error(std::format(
+            "Syntax Error: Expected '{}', but reached end of input", tokenTypeToString(expected)));
     }
     const auto& [token_type, lexeme] = tokens[pos];
 
     if (expected != token_type) {
-        throw std::runtime_error(std::format(
-            "Syntax Error: Expected '{}', but found '{}': '{}' at pos:{}",
-            tokenTypeToString(expected), tokenTypeToString(token_type), lexeme, pos));
+        throw std::runtime_error(
+            std::format("Syntax Error: Expected '{}', but found '{}': '{}' at pos:{}",
+                        tokenTypeToString(expected), tokenTypeToString(token_type), lexeme, pos));
     }
     pos++;
 }
@@ -258,9 +257,9 @@ std::unique_ptr<ProgramNode> parse(std::deque<Token>& tokens) {
     ast->parse(tokens, pos);
     if (pos != tokens.size()) {
         const auto& [token_type, actual] = tokens[pos];
-        throw std::runtime_error(std::format(
-            "Syntax Error: Unexpected token '{}' of class '{}' at top level", actual,
-            tokenTypeToString(token_type)));
+        throw std::runtime_error(
+            std::format("Syntax Error: Unexpected token '{}' of class '{}' at top level", actual,
+                        tokenTypeToString(token_type)));
     }
     return ast;
 }

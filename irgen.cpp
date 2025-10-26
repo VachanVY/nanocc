@@ -41,8 +41,8 @@ std::unique_ptr<IRFunctionNode> FunctionNode::emit_ir() {
     if (statement) {
         instructions = statement->emit_ir();
     }
-    auto ir_function = std::make_unique<IRFunctionNode>(
-        var_identifier->name, std::move(instructions));
+    auto ir_function =
+        std::make_unique<IRFunctionNode>(var_identifier->name, std::move(instructions));
     return ir_function;
 }
 
@@ -99,10 +99,8 @@ ExprFactorNode::emit_ir(std::vector<std::unique_ptr<IRInstructionNode>>& instruc
         std::string tmp = getTempVarName();
         auto val_dest = std::make_shared<IRVariableNode>(tmp);
 
-        auto ir_binary = std::make_unique<IRBinaryNode>(binop->op_type,
-                                                        left_val,
-                                                        right_val,
-                                                        val_dest);
+        auto ir_binary =
+            std::make_unique<IRBinaryNode>(binop->op_type, left_val, right_val, val_dest);
         instructions.push_back(std::move(ir_binary));
         return val_dest;
     } else if (constant) {
@@ -114,9 +112,7 @@ ExprFactorNode::emit_ir(std::vector<std::unique_ptr<IRInstructionNode>>& instruc
         std::string tmp = getTempVarName();
         auto dest_var = std::make_shared<IRVariableNode>(tmp);
 
-        auto ir_unary = std::make_unique<IRUnaryNode>(unary->op_type,
-                                                      src_val,
-                                                      dest_var);
+        auto ir_unary = std::make_unique<IRUnaryNode>(unary->op_type, src_val, dest_var);
         instructions.push_back(std::move(ir_unary));
         return dest_var;
     } else if (expr) { // will be null after it's parsed

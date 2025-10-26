@@ -31,18 +31,15 @@ inline void printIndent(int indent) {
 // LLVM-style...
 // TODO(VachanVY): As of now the `classof` methods use dynamic_cast internally.
 // This is a temporary solution and may be replaced with a more efficient
-template <typename To, typename From> 
-inline bool isa(const From* u) {
+template <typename To, typename From> inline bool isa(const From* u) {
     return u != nullptr && To::classof(u);
 }
 
-template <typename To, typename From>
-inline To *cast(From *Val) {
-  assert(isa<To>(Val) && "cast<T>() argument of wrong type!");
-  return static_cast<To *>(Val);
+template <typename To, typename From> inline To* cast(From* Val) {
+    assert(isa<To>(Val) && "cast<T>() argument of wrong type!");
+    return static_cast<To*>(Val);
 }
 
-template <typename To, typename From> 
-inline To *dyn_cast(From *u) {
+template <typename To, typename From> inline To* dyn_cast(From* u) {
     return isa<To>(u) ? cast<To>(u) : nullptr;
 }

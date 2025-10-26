@@ -82,7 +82,8 @@ std::vector<std::unique_ptr<AsmInstructionNode>> IRBinaryNode::emit_asm() {
         auto idiv_instr = std::make_unique<AsmIdivNode>(divisor);
         instructions.push_back(std::move(idiv_instr));
 
-        auto result_reg = (this->op_type == "/") ? eax_reg : std::make_shared<AsmRegisterNode>("%edx");
+        auto result_reg =
+            (this->op_type == "/") ? eax_reg : std::make_shared<AsmRegisterNode>("%edx");
         auto mov_res_instr = std::make_unique<AsmMovNode>(result_reg, dest);
         instructions.push_back(std::move(mov_res_instr));
     } else if (this->op_type == "+" || this->op_type == "-" || this->op_type == "*") {
@@ -238,7 +239,7 @@ void AsmMovNode::fixUpInstructions(std::vector<std::unique_ptr<AsmInstructionNod
 
         auto first_move = std::make_unique<AsmMovNode>(this->src, tmp_reg);
         instructions.push_back(std::move(first_move));
-        
+
         auto second_move = std::make_unique<AsmMovNode>(tmp_reg, this->dest);
         instructions.push_back(std::move(second_move));
     } else {
@@ -263,7 +264,7 @@ void AsmBinaryNode::fixUpInstructions(
         auto tmp_reg = std::make_shared<AsmRegisterNode>("%r10d");
         auto move_instr = std::make_unique<AsmMovNode>(this->src, tmp_reg);
         instructions.push_back(std::move(move_instr));
-        
+
         auto binary_instr = std::make_unique<AsmBinaryNode>(this->op_type, tmp_reg, this->dest);
         instructions.push_back(std::move(binary_instr));
     } else if (this->op_type == "*" && dest_is_stack) {
@@ -274,10 +275,10 @@ void AsmBinaryNode::fixUpInstructions(
         auto tmp_reg = std::make_shared<AsmRegisterNode>("%r11d");
         auto first_move = std::make_unique<AsmMovNode>(this->dest, tmp_reg);
         instructions.push_back(std::move(first_move));
-        
+
         auto imul_instr = std::make_unique<AsmBinaryNode>(this->op_type, this->src, tmp_reg);
         instructions.push_back(std::move(imul_instr));
-        
+
         auto final_move = std::make_unique<AsmMovNode>(tmp_reg, this->dest);
         instructions.push_back(std::move(final_move));
     } else {
@@ -293,7 +294,7 @@ void AsmIdivNode::fixUpInstructions(
         auto tmp_reg = std::make_shared<AsmRegisterNode>("%r10d");
         auto mov_instr = std::make_unique<AsmMovNode>(this->divisor, tmp_reg);
         instructions.push_back(std::move(mov_instr));
-        
+
         auto idiv_instr = std::make_unique<AsmIdivNode>(tmp_reg);
         instructions.push_back(std::move(idiv_instr));
         return;
