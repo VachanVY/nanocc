@@ -8,62 +8,62 @@
 #include <string>
 #include <vector>
 
+#define TOKEN_LIST \
+    X(INT, "int") \
+    X(VOID, "void") \
+    X(RETURN, "return") \
+    \
+    X(TILDE, "~") \
+    X(DECREMENT, "--") \
+    X(NOT, "!") \
+    \
+    X(MINUS, "-") \
+    \
+    X(PLUS, "+") \
+    X(STAR, "*") \
+    X(SLASH, "/") \
+    X(PERCENT, "%") \
+    X(AND, "&&") \
+    X(OR, "||") \
+    \
+    X(EQUAL, "==") \
+    X(NOT_EQUAL, "!=") \
+    X(LESSTHAN, "<") \
+    X(GREATERTHAN, ">") \
+    X(LESS_EQUAL, "<=") \
+    X(GREATER_EQUAL, ">=") \
+    \
+    X(IDENTIFIER, "identifier") \
+    X(CONSTANT, "constant") \
+    X(LPAREN, "(") \
+    X(RPAREN, ")") \
+    X(LBRACE, "{") \
+    X(RBRACE, "}") \
+    X(SEMICOLON, ";")
+
+
 enum class TokenType {
-    INT,    // int
-    VOID,   // void
-    RETURN, // return
-
-    TILDE,     // ~
-    DECREMENT, // --
-
-    MINUS, // -
-
-    PLUS,    // +
-    STAR,    // *
-    SLASH,   // /
-    PERCENT, // %
-
-    IDENTIFIER, // identifier
-    CONSTANT,   // constant
-    LPAREN,     // (
-    RPAREN,     // )
-    LBRACE,     // {
-    RBRACE,     // }
-    SEMICOLON,  // ;
+#define X(name, str) name,
+    TOKEN_LIST
+#undef X
 };
+
 
 struct Token {
     TokenType type;     // token category produced by the lexer
     std::string lexeme; // source text matched for that token
 };
 
-extern std::vector<std::pair<TokenType, std::regex>> token_specs;
+extern std::pair<TokenType, std::regex> token_specs[];
 
 inline std::string_view tokenTypeToString(TokenType type) {
-    static constexpr std::string names[] = {"int",    // TokenType::INT
-                                            "void",   // TokenType::VOID
-                                            "return", // TokenType::RETURN
-
-                                            "~",  // TokenType::TILDE
-                                            "--", // TokenType::DECREMENT
-
-                                            "-", // TokenType::MINUS
-
-                                            "+", // TokenType::PLUS
-                                            "*", // TokenType::STAR
-                                            "/", // TokenType::SLASH
-                                            "%", // TokenType::PERCENT
-
-                                            "identifier", // TokenType::IDENTIFIER
-                                            "constant",   // TokenType::CONSTANT
-                                            "(",          // TokenType::LPAREN
-                                            ")",          // TokenType::RPAREN
-                                            "{",          // TokenType::LBRACE
-                                            "}",          // TokenType::RBRACE
-                                            ";"};         // TokenType::SEMICOLON
-
-    const auto index = static_cast<std::size_t>(type);
-    return names[index];
+    switch (type) {
+#define X(name, str) case TokenType::name: return str;
+        TOKEN_LIST
+#undef X
+    }
+    throw std::runtime_error("Unknown TokenType");
 }
+
 
 std::deque<Token> lexer(const std::string& s);

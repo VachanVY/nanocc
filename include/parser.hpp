@@ -65,7 +65,9 @@ class ExprNode : public ASTNode {
     // <exp> is of the form <factor> ( <binary> <expr> )*
     std::unique_ptr<ExprFactorNode> left_exprf;
     std::unique_ptr<BinaryNode> binop;
-    std::unique_ptr<ExprNode> right_expr; // will be null since we move it to left_exprf, ig...
+    std::unique_ptr<ExprNode> right_expr; // will be null since we move it to left_exprf
+    // TODO(VachanVY) remove `right_expr` from here, anyway will be null.
+    // define and use locally in parse()
 
     void parse(std::deque<Token>& tokens, size_t& pos, int min_precedence = 0);
     void dump(int indent = 0) const override;

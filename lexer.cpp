@@ -1,11 +1,12 @@
-#include "lexer.hpp"
 #include <cctype>
 #include <print>
 #include <regex>
 #include <stdexcept>
 #include <string>
 
-std::vector<std::pair<TokenType, std::regex>> token_specs = {
+#include "lexer.hpp"
+
+std::pair<TokenType, std::regex> token_specs[] = {
     // "keywords" should get more priority than "identifiers", so lex them first
     {TokenType::INT, std::regex("int\\b")},
     {TokenType::VOID, std::regex("void\\b")},
@@ -14,6 +15,7 @@ std::vector<std::pair<TokenType, std::regex>> token_specs = {
     // "unary operators"
     {TokenType::TILDE, std::regex("~")},
     {TokenType::DECREMENT, std::regex("--")},
+    {TokenType::NOT, std::regex("!")},
     // both unary and binary
     {TokenType::MINUS, std::regex("-")},
     // "binary operators"
@@ -21,6 +23,15 @@ std::vector<std::pair<TokenType, std::regex>> token_specs = {
     {TokenType::STAR, std::regex("\\*")},
     {TokenType::SLASH, std::regex("/")},
     {TokenType::PERCENT, std::regex("%")},
+    {TokenType::AND, std::regex("&&")},
+    {TokenType::OR, std::regex("\\|\\|")},
+
+    {TokenType::EQUAL, std::regex("==")},
+    {TokenType::NOT_EQUAL, std::regex("!=")},
+    {TokenType::LESSTHAN, std::regex("<")},
+    {TokenType::GREATERTHAN, std::regex(">")},
+    {TokenType::LESS_EQUAL, std::regex("<=")},
+    {TokenType::GREATER_EQUAL, std::regex(">=")},
 
     {TokenType::IDENTIFIER, std::regex("[a-zA-Z_]\\w*\\b")}, // variable/function names
     {TokenType::CONSTANT, std::regex("[0-9]+\\b")},
@@ -90,8 +101,7 @@ std::deque<Token> lexer(const std::string& s) {
         pos += match_length;
 
         // add to `tokens`
-        tokens.push_back((Token){class_type, match});
-        // tokens.emplace_back(class_type, match); Does it work?
+        tokens.emplace_back(class_type, match);
     }
     return tokens;
 }

@@ -8,25 +8,26 @@
 #include "utils.hpp"
 
 namespace { // some helper vars/functions
-std::unordered_map<std::string, int> op_precedence = {
+static const std::unordered_map<std::string, int> BINOP_PRECEDENCE = {
     {"*", 50}, {"/", 50}, {"%", 50}, {"+", 45}, {"-", 45},
+    {"<", 35}, {"<=", 35}, {">", 35}, {">=", 35}, {"==", 30}, 
+    {"!=", 30}, {"&&", 10}, {"||", 5},
 };
 
 inline bool isUnary(const std::string& op) {
-    return op == "~" || op == "-";
+    return op == "~" || op == "-" || op == "!";
     /* || op == "--"; */ // decrement only for lexing now
 }
 
-inline bool isBinop(const std::string& op) {
-    return op == "+" || op == "-" || op == "*" || op == "/" || op == "%";
+inline int getPrecedence(const std::string& op) {
+    auto it = BINOP_PRECEDENCE.find(op);
+    if (it == BINOP_PRECEDENCE.end())
+        throw std::runtime_error("Invalid operator: " + op);
+    return it->second;
 }
 
-inline int getPrecedence(const std::string& op) {
-    try {
-        return op_precedence.at(op);
-    } catch (const std::out_of_range& e) {
-        throw std::runtime_error("Invalid operator for precedence lookup: " + op);
-    }
+inline bool isBinop(const std::string& op) {
+    return BINOP_PRECEDENCE.contains(op);
 }
 } // namespace
 
@@ -131,7 +132,7 @@ void ExprNode::parse(std::deque<Token>& tokens, size_t& pos, int min_precedence)
         auto factor = std::make_unique<BinaryNode>();
         factor->left = std::move(left_exprf);
         factor->right = std::move(right_expr);
-        factor->op_type = op;
+        factor->op_type = op; 
 
         left_exprf = std::move(factor);
     }
@@ -147,15 +148,15 @@ void ExprNode::dump(int indent) const {
 
 void ExprFactorNode::parse(std::deque<Token>& tokens, size_t& pos) {
     const auto& [token_type, lexeme] = tokens[pos];
-    if (token_type == TokenType::CONSTANT) {
+    if (token_type == TokenType::CONSTANT) {      // <constant>
         constant = std::make_unique<ConstantNode>();
         constant->parse(tokens, pos);
-    } else if (isUnary(lexeme)) {
+    } else if (isUnary(lexeme)) {                 // <unary> <factor>
         unary = std::make_unique<UnaryNode>();
         unary->parse(tokens, pos);
         factor = std::make_unique<ExprFactorNode>();
         factor->parse(tokens, pos);
-    } else if (token_type == TokenType::LPAREN) {
+    } else if (token_type == TokenType::LPAREN) { // "(<expr>)"
         expect(tokens, TokenType::LPAREN, pos);
         expr = std::make_unique<ExprNode>();
         // 0 init precedence when parsing a factor
@@ -217,7 +218,7 @@ void UnaryNode::parse(std::deque<Token>& tokens, size_t& pos) {
     const auto& [token_type, actual] = tokens[pos++];
     if (!isUnary(actual)) {
         throw std::runtime_error(
-            std::format("Syntax Error: Expected '~' or '-' but got '{}':'{}' at pos:{}",
+            std::format("Syntax Error: Expected a unary operator but got '{}':'{}' at pos:{}",
                         tokenTypeToString(token_type), actual, pos));
     }
     op_type = actual;
@@ -264,7 +265,7 @@ std::unique_ptr<ProgramNode> parse(std::deque<Token>& tokens) {
     return ast;
 }
 
-/*
+// /*
 int main(int argc, char* argv[]) {
     if (argc < 2) {
         std::println(stderr,
@@ -296,18 +297,6 @@ int main(int argc, char* argv[]) {
     }
     auto ast = parse(tokens);
     ast->dump();
-    // std::println("has expr-factor->expr: {}",
-    //              ast->func->statement->expr->left_exprf->expr != nullptr);
-    // std::println("has binary operator: {}", ast->func->statement->expr->binop != nullptr);
-    // std::println("has right expression: {}", ast->func->statement->expr->right_expr != nullptr);
-    // std::println("{}",
-    //              dynamic_cast<BinaryNode*>(ast->func->statement->expr->left_exprf.get())->left !=
-    //                  nullptr);
-    // std::println("{}",
-    //              dynamic_cast<BinaryNode*>(ast->func->statement->expr->left_exprf.get())->right
-!=
-    //                  nullptr);
-
     return 0;
 }
-*/
+// */
