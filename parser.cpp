@@ -265,7 +265,7 @@ std::unique_ptr<ProgramNode> parse(std::deque<Token>& tokens) {
     return ast;
 }
 
-// /*
+/*
 int main(int argc, char* argv[]) {
     if (argc < 2) {
         std::println(stderr,
@@ -299,4 +299,4 @@ int main(int argc, char* argv[]) {
     ast->dump();
     return 0;
 }
-// */
+*/

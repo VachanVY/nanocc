@@ -19,10 +19,10 @@ class StatementNode;
 class ExprNode;
 class ConstantNode;
 class UnaryNode;
-class BinaryNode;
+class BinaryNode; // derived from ExprFactorNode
 class IdentifierNode;
 
-class ExprFactorNode;
+class ExprFactorNode; // derived from ExprNode
 
 /// @brief parse function for every Node type derived from this class
 class ASTNode {

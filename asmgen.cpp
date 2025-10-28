@@ -107,6 +107,27 @@ std::shared_ptr<AsmOperandNode> IRConstNode::emit_asm() {
 std::shared_ptr<AsmOperandNode> IRVariableNode::emit_asm() {
     return std::make_shared<AsmPseudoNode>(this->var_name);
 }
+
+// temp stub implementations for testing irgen.cpp
+std::vector<std::unique_ptr<AsmInstructionNode>> IRCopyNode::emit_asm() {
+    return std::vector<std::unique_ptr<AsmInstructionNode>>();
+}
+
+std::vector<std::unique_ptr<AsmInstructionNode>> IRJumpNode::emit_asm() {
+    return std::vector<std::unique_ptr<AsmInstructionNode>>();
+}
+
+std::vector<std::unique_ptr<AsmInstructionNode>> IRJumpIfZeroNode::emit_asm() {
+    return std::vector<std::unique_ptr<AsmInstructionNode>>();
+}
+
+std::vector<std::unique_ptr<AsmInstructionNode>> IRJumpIfNotZeroNode::emit_asm() {
+    return std::vector<std::unique_ptr<AsmInstructionNode>>();
+}
+
+std::vector<std::unique_ptr<AsmInstructionNode>> IRLabelNode::emit_asm() {
+    return std::vector<std::unique_ptr<AsmInstructionNode>>();
+}
 // Emit Assembly Functions -- End
 
 // Resolve Pseudo Registers -- Start
