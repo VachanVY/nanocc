@@ -1,5 +1,5 @@
 int main(void) {
-    return (10 + 1) && (3 * 4);
+    return (1 + 1) && (1 - 1);
 }
 
 /*
@@ -9,27 +9,24 @@ Program(
     body=Return(
       Binary(&&,
         Binary(+,
-          Constant(10)
+          Constant(1)
           Constant(1)
         )
-        Binary(*,
-          Constant(3)
-          Constant(4)
+        Binary(-,
+          Constant(1)
+          Constant(1)
         )
       )
     )
   )
 )
-*/
-
-/*
 IRProgram(
   Function(
     name='main'
     instructions=[
-      tmp.1 = 10 + 1
+      tmp.1 = 1 + 1
       jump_if_zero tmp.1, short.0
-      tmp.2 = 3 * 4
+      tmp.2 = 1 - 1
       jump_if_zero tmp.2, short.0
       tmp.0 = 1
       jump end.1
@@ -40,4 +37,6 @@ IRProgram(
     ]
   )
 )
+After resolving pseudo registers: 12
+Successfully compiled to executable with result: 0
 */

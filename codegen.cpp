@@ -71,6 +71,14 @@ void AsmBinaryNode::emit_asm(std::ostream& os) {
     os << '\n';
 }
 
+void AsmCmpNode::emit_asm(std::ostream& os) {
+    os << TAB4 << "cmpl ";
+    this->src1->emit_asm(os);
+    os << ", ";
+    this->src2->emit_asm(os);
+    os << '\n';
+}
+
 void AsmIdivNode::emit_asm(std::ostream& os) {
     if (!divisor) {
         throw std::runtime_error("AsmIdivNode missing divisor during emission");
@@ -81,6 +89,22 @@ void AsmIdivNode::emit_asm(std::ostream& os) {
 }
 
 void AsmCdqNode::emit_asm(std::ostream& os) { os << TAB4 << "cdq\n"; }
+
+void AsmJmpNode::emit_asm(std::ostream& os) { os << TAB4 << "jmp " << this->label << "\n"; }
+
+void AsmJmpCCNode::emit_asm(std::ostream& os) {
+    os << TAB4 << "j" << this->cond_code << " " << this->label << "\n";
+}
+
+void AsmSetCCNode::emit_asm(std::ostream& os) {
+    os << TAB4 << "set" << this->cond_code << " ";
+    this->dest->emit_asm(os);
+    os << "\n";
+}
+
+void AsmLabelNode::emit_asm(std::ostream& os) {
+    os << "  " << this->label << ":\n"; // no `TAB4` for labels
+}
 
 void AsmAllocateStackNode::emit_asm(std::ostream& os) {
     os << TAB4 << "subq $" << stack_size << ", %rsp\n";

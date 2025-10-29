@@ -2,25 +2,21 @@
 main:
     pushq %rbp
     movq %rsp, %rbp
-    subq $16, %rsp
-    movl $2, -4(%rbp)
-    movl -4(%rbp), %r11d
-    imull $3, %r11d
-    movl %r11d, -4(%rbp)
-    movl -4(%rbp), %eax
-    cdq
-    movl $4, %r10d
-    idivl %r10d
-    movl %eax, -8(%rbp)
-    movl -8(%rbp), %r10d
-    movl %r10d, -12(%rbp)
-    movl -12(%rbp), %r11d
-    imull $5, %r11d
-    movl %r11d, -12(%rbp)
-    movl $1, -16(%rbp)
-    movl -12(%rbp), %r10d
-    addl %r10d, -16(%rbp)
-    movl -16(%rbp), %eax
+    subq $12, %rsp
+    movl $1, -4(%rbp) # -4(%rbp) = 1
+    addl $1, -4(%rbp) # -4(%rbp) = 1+1 = 2
+    cmpl $0, -4(%rbp) # compare -4(%rbp) and 0
+    je short.0        # if equal, jump to short.0
+    movl $1, -8(%rbp) # -8(%rbp) = 1
+    subl $1, -8(%rbp) # -8(%rbp) = 1-1 = 0
+    cmpl $0, -8(%rbp) # compare -8(%rbp) and 0
+    je short.0        # if equal, jump to short.0
+    movl $1, -12(%rbp) # else move 1 to -12(%rbp)
+    jmp end.1         # jump to end.1
+  short.0:
+    movl $0, -12(%rbp) # move 0 to -12(%rbp)
+  end.1:
+    movl -12(%rbp), %eax # move -12(%rbp) to %eax
     movq %rbp, %rsp
     popq %rbp
     ret

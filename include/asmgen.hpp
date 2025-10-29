@@ -18,8 +18,13 @@ class AsmInstructionNode; // base class
 class AsmMovNode;
 class AsmUnaryNode;
 class AsmBinaryNode; // all bin ops except "/" and "%"
-class AsmIdivNode;   // for "/" and "%"
-class AsmCdqNode;    // for sign extension before idiv
+class AsmCmpNode;
+class AsmIdivNode; // for "/" and "%"
+class AsmCdqNode;  // for sign extension before idiv
+class AsmJmpNode;
+class AsmJmpCCNode;
+class AsmSetCCNode;
+class AsmLabelNode;
 class AsmAllocateStackNode;
 class AsmRetNode;
 
@@ -68,7 +73,7 @@ class AsmInstructionNode : public AsmASTNode {
         return dynamic_cast<const AsmInstructionNode*>(node) != nullptr;
     }
     virtual void resolvePseudoRegisters(std::unordered_map<std::string, int>& pseudo_reg_map,
-                                        int& nxt_offset) = 0;
+                                        int& nxt_offset){}; // default no-op
     virtual void fixUpInstructions(
         std::vector<std::unique_ptr<AsmInstructionNode>>& instructions){}; // default no-op
 
@@ -133,6 +138,26 @@ class AsmBinaryNode : public AsmInstructionNode {
     void emit_asm(std::ostream& os) override;
 };
 
+class AsmCmpNode : public AsmInstructionNode {
+  public:
+    // compare src2 - src1
+    std::shared_ptr<AsmOperandNode> src1;
+    std::shared_ptr<AsmOperandNode> src2;
+
+    AsmCmpNode() = default;
+    AsmCmpNode(std::shared_ptr<AsmOperandNode> src, std::shared_ptr<AsmOperandNode> dest)
+        : src1(std::move(src)), src2(std::move(dest)) {}
+
+    static bool classof(const AsmInstructionNode* node) {
+        return dynamic_cast<const AsmCmpNode*>(node) != nullptr;
+    }
+
+    void resolvePseudoRegisters(std::unordered_map<std::string, int>& pseudo_reg_map,
+                                int& nxt_offset) override;
+    void fixUpInstructions(std::vector<std::unique_ptr<AsmInstructionNode>>& instructions) override;
+    void emit_asm(std::ostream& os) override;
+};
+
 class AsmIdivNode : public AsmInstructionNode {
   public:
     std::shared_ptr<AsmOperandNode> divisor; // a/b (divisor = b; dividend = a)
@@ -156,6 +181,66 @@ class AsmCdqNode : public AsmInstructionNode {
     }
     void resolvePseudoRegisters(std::unordered_map<std::string, int>& pseudo_reg_map,
                                 int& nxt_offset) override{}; // no-op
+    void emit_asm(std::ostream& os) override;
+};
+
+class AsmJmpNode : public AsmInstructionNode {
+  public:
+    std::string label;
+
+    AsmJmpNode() = default;
+    explicit AsmJmpNode(std::string label) : label(std::move(label)) {}
+
+    static bool classof(const AsmInstructionNode* node) {
+        return dynamic_cast<const AsmJmpNode*>(node) != nullptr;
+    }
+    void emit_asm(std::ostream& os) override;
+};
+
+class AsmJmpCCNode : public AsmInstructionNode {
+  public:
+    std::string cond_code;
+    std::string label;
+
+    AsmJmpCCNode() = default;
+    AsmJmpCCNode(std::string cond_code, std::string label)
+        : cond_code(std::move(cond_code)), label(std::move(label)) {}
+
+    static bool classof(const AsmInstructionNode* node) {
+        return dynamic_cast<const AsmJmpCCNode*>(node) != nullptr;
+    }
+    void emit_asm(std::ostream& os) override;
+};
+
+class AsmSetCCNode : public AsmInstructionNode {
+  public:
+    std::string cond_code;
+    std::shared_ptr<AsmOperandNode> dest;
+
+    AsmSetCCNode() = default;
+    AsmSetCCNode(std::string cond_code, std::shared_ptr<AsmOperandNode> dest)
+        : cond_code(std::move(cond_code)), dest(std::move(dest)) {}
+
+    static bool classof(const AsmInstructionNode* node) {
+        return dynamic_cast<const AsmSetCCNode*>(node) != nullptr;
+    }
+
+    void resolvePseudoRegisters(std::unordered_map<std::string, int>& pseudo_reg_map,
+                                int& nxt_offset) override;
+    void emit_asm(std::ostream& os) override;
+};
+
+class AsmLabelNode : public AsmInstructionNode {
+  public:
+    std::string label;
+
+    AsmLabelNode() = default;
+    explicit AsmLabelNode(std::string label) : label(std::move(label)) {}
+
+    static bool classof(const AsmInstructionNode* node) {
+        return dynamic_cast<const AsmLabelNode*>(node) != nullptr;
+    }
+
     void emit_asm(std::ostream& os) override;
 };
 

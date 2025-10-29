@@ -87,15 +87,15 @@ ExprNode::emit_ir(std::vector<std::unique_ptr<IRInstructionNode>>& instructions)
 
 namespace { // helper functions to handle binary short-circuiting operators
 // Generate unique temporary VARIABLE names
-auto getTempVarName = []() { 
+auto getTempVarName = []() {
     static size_t temp_var_counter = 0;
-    return "tmp." + std::to_string(temp_var_counter++); 
+    return "tmp." + std::to_string(temp_var_counter++);
 };
 
-std::shared_ptr<IRValNode> handleRelationalOps(
-    BinaryNode* binop, // raw pointer be careful // TODO(VachanVY): anyway to NOT use raw pointer here?
-    std::vector<std::unique_ptr<IRInstructionNode>>& instructions
-){
+std::shared_ptr<IRValNode>
+handleRelationalOps(BinaryNode* binop, // raw pointer be careful // TODO(VachanVY): anyway to NOT
+                                       // use raw pointer here?
+                    std::vector<std::unique_ptr<IRInstructionNode>>& instructions) {
     // left and right are ExprNode // can be ExprFactorNode too...
     // runtime polymorphism...
     auto left_val = binop->left->emit_ir(instructions);
@@ -104,75 +104,58 @@ std::shared_ptr<IRValNode> handleRelationalOps(
     std::string tmp = getTempVarName();
     auto val_dest = std::make_shared<IRVariableNode>(tmp);
 
-    auto ir_binary =
-        std::make_unique<IRBinaryNode>(binop->op_type, left_val, right_val, val_dest);
+    auto ir_binary = std::make_unique<IRBinaryNode>(binop->op_type, left_val, right_val, val_dest);
     instructions.push_back(std::move(ir_binary));
     return val_dest;
 }
 
 auto getLabelName = [](const std::string& prefix) {
+    assert(!prefix.empty() && "Label prefix cannot be empty");
     static size_t label_counter = 0;
     return prefix + "." + std::to_string(label_counter++);
 };
 
-std::shared_ptr<IRValNode> handleShortCircuitOps(
-    BinaryNode* binop,
-    std::vector<std::unique_ptr<IRInstructionNode>>& instructions
-){
+std::shared_ptr<IRValNode>
+handleShortCircuitOps(BinaryNode* binop,
+                      std::vector<std::unique_ptr<IRInstructionNode>>& instructions) {
     assert(binop->op_type == "&&" || binop->op_type == "||" && "Not a short-circuit operator");
     auto result = std::make_shared<IRVariableNode>(getTempVarName());
-    
+
     std::string short_label = getLabelName("short");
     std::string end_label = getLabelName("end");
-    
+
     bool is_and = (binop->op_type == "&&");
-    
+
     auto left_val = binop->left->emit_ir(instructions);
     // jump to short-circuit if left determines the result
     if (is_and) {
-        instructions.push_back(
-            std::make_unique<IRJumpIfZeroNode>(left_val, short_label)
-        );
+        instructions.push_back(std::make_unique<IRJumpIfZeroNode>(left_val, short_label));
     } else {
-        instructions.push_back(
-            std::make_unique<IRJumpIfNotZeroNode>(left_val, short_label)
-        );
+        instructions.push_back(std::make_unique<IRJumpIfNotZeroNode>(left_val, short_label));
     }
 
     auto right_val = binop->right->emit_ir(instructions);
     // jump to short-circuit if right determines the result
     if (is_and) {
-        instructions.push_back(
-            std::make_unique<IRJumpIfZeroNode>(right_val, short_label)
-        );
+        instructions.push_back(std::make_unique<IRJumpIfZeroNode>(right_val, short_label));
     } else {
-        instructions.push_back(
-            std::make_unique<IRJumpIfNotZeroNode>(right_val, short_label)
-        );
+        instructions.push_back(std::make_unique<IRJumpIfNotZeroNode>(right_val, short_label));
     }
 
     // both conditions passed: AND is true, OR is false
     instructions.push_back(
-        std::make_unique<IRCopyNode>(
-            std::make_shared<IRConstNode>(is_and ? "1" : "0"), 
-            result
-        )
-    );
+        std::make_unique<IRCopyNode>(std::make_shared<IRConstNode>(is_and ? "1" : "0"), result));
     instructions.push_back(std::make_unique<IRJumpNode>(end_label));
-    
+
     // short-circuit label: AND is false, OR is true
     instructions.push_back(std::make_unique<IRLabelNode>(short_label));
     instructions.push_back(
-        std::make_unique<IRCopyNode>(
-            std::make_shared<IRConstNode>(is_and ? "0" : "1"), 
-            result
-        )
-    );
+        std::make_unique<IRCopyNode>(std::make_shared<IRConstNode>(is_and ? "0" : "1"), result));
 
     instructions.push_back(std::make_unique<IRLabelNode>(end_label));
     return result;
 }
-} // namespace 
+} // namespace
 
 // return the destination register
 std::shared_ptr<IRValNode>
@@ -254,14 +237,14 @@ void IRJumpIfNotZeroNode::dump_ir(int indent) const {
 
 void IRLabelNode::dump_ir(int indent) const {
     assert(indent > 0);
-    printIndent(indent-1);
+    printIndent(indent - 1);
     std::println("{}:", label_name);
 }
 
 std::string IRConstNode::dump_ir() const { return val; }
 std::string IRVariableNode::dump_ir() const { return var_name; }
 
-// /*
+/*
 int main(int argc, char* argv[]) {
     if (argc < 2) {
         std::println(stderr,

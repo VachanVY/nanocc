@@ -9,9 +9,8 @@
 
 namespace { // some helper vars/functions
 static const std::unordered_map<std::string, int> BINOP_PRECEDENCE = {
-    {"*", 50}, {"/", 50}, {"%", 50}, {"+", 45}, {"-", 45},
-    {"<", 35}, {"<=", 35}, {">", 35}, {">=", 35}, {"==", 30}, 
-    {"!=", 30}, {"&&", 10}, {"||", 5},
+    {"*", 50}, {"/", 50},  {"%", 50},  {"+", 45},  {"-", 45},  {"<", 35}, {"<=", 35},
+    {">", 35}, {">=", 35}, {"==", 30}, {"!=", 30}, {"&&", 10}, {"||", 5},
 };
 
 inline bool isUnary(const std::string& op) {
@@ -26,9 +25,7 @@ inline int getPrecedence(const std::string& op) {
     return it->second;
 }
 
-inline bool isBinop(const std::string& op) {
-    return BINOP_PRECEDENCE.contains(op);
-}
+inline bool isBinop(const std::string& op) { return BINOP_PRECEDENCE.contains(op); }
 } // namespace
 
 /* Dev Docs
@@ -132,7 +129,7 @@ void ExprNode::parse(std::deque<Token>& tokens, size_t& pos, int min_precedence)
         auto factor = std::make_unique<BinaryNode>();
         factor->left = std::move(left_exprf);
         factor->right = std::move(right_expr);
-        factor->op_type = op; 
+        factor->op_type = op;
 
         left_exprf = std::move(factor);
     }
@@ -148,10 +145,10 @@ void ExprNode::dump(int indent) const {
 
 void ExprFactorNode::parse(std::deque<Token>& tokens, size_t& pos) {
     const auto& [token_type, lexeme] = tokens[pos];
-    if (token_type == TokenType::CONSTANT) {      // <constant>
+    if (token_type == TokenType::CONSTANT) { // <constant>
         constant = std::make_unique<ConstantNode>();
         constant->parse(tokens, pos);
-    } else if (isUnary(lexeme)) {                 // <unary> <factor>
+    } else if (isUnary(lexeme)) { // <unary> <factor>
         unary = std::make_unique<UnaryNode>();
         unary->parse(tokens, pos);
         factor = std::make_unique<ExprFactorNode>();

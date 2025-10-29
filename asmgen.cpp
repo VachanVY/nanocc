@@ -10,6 +10,13 @@
 #include "irgen.hpp"
 #include "utils.hpp"
 
+/*
+Contains Implementations of:
+* emit_asm methods for IR nodes to generate corresponding ASM nodes
+* resolvePseudoRegisters methods for ASM nodes to resolve pseudo registers
+* fixUpInstructions methods for ASM nodes to fix instructions needing multiple steps
+*/
+
 // Emit Assembly Functions -- Start
 std::unique_ptr<AsmProgramNode> IRProgramNode::emit_asm() {
     auto asm_program = std::make_unique<AsmProgramNode>();
@@ -51,24 +58,54 @@ std::vector<std::unique_ptr<AsmInstructionNode>> IRRetNode::emit_asm() {
 
 std::vector<std::unique_ptr<AsmInstructionNode>> IRUnaryNode::emit_asm() {
     auto instructions = std::vector<std::unique_ptr<AsmInstructionNode>>();
+    if (this->op_type == "!") { // relational op
+        auto src = this->val_src->emit_asm();
+        auto dest = this->val_dest->emit_asm();
 
-    auto dest = this->val_dest->emit_asm();
-    auto src = this->val_src->emit_asm();
+        auto cmp_instr = std::make_unique<AsmCmpNode>(std::make_shared<AsmImmediateNode>("0"), src);
+        instructions.push_back(std::move(cmp_instr));
 
-    auto mov_instr = std::make_unique<AsmMovNode>(src, dest);
-    instructions.push_back(std::move(mov_instr));
+        auto mov_instr =
+            std::make_unique<AsmMovNode>(std::make_shared<AsmImmediateNode>("0"), dest);
+        instructions.push_back(std::move(mov_instr));
 
-    auto unary_instr = std::make_unique<AsmUnaryNode>(this->op_type, dest);
-    instructions.push_back(std::move(unary_instr));
-    return instructions;
+        auto setcc_instr = std::make_unique<AsmSetCCNode>("e", dest);
+        instructions.push_back(std::move(setcc_instr));
+        return instructions;
+    } else if (this->op_type == "~" || this->op_type == "-") {
+        auto dest = this->val_dest->emit_asm();
+        auto src = this->val_src->emit_asm();
+
+        auto mov_instr = std::make_unique<AsmMovNode>(src, dest);
+        instructions.push_back(std::move(mov_instr));
+
+        auto unary_instr = std::make_unique<AsmUnaryNode>(this->op_type, dest);
+        instructions.push_back(std::move(unary_instr));
+        return instructions;
+    } else {
+        throw std::runtime_error("IRUnaryNode::emit_asm: Unsupported op_type " + this->op_type);
+    }
 }
+
+namespace {
+static const std::unordered_map<std::string, std::string> RELATIONAL_OPS = {
+    {"==", "e"}, {"!=", "ne"}, {"<", "l"}, {"<=", "le"}, {">", "g"}, {">=", "ge"}};
+
+const std::string getCondCode(const std::string& op_type) {
+    auto it = RELATIONAL_OPS.find(op_type);
+    if (it == RELATIONAL_OPS.end()) {
+        throw std::runtime_error("getCondCode: Unsupported relational operator " + op_type);
+    }
+    return it->second;
+}
+} // namespace
 
 std::vector<std::unique_ptr<AsmInstructionNode>> IRBinaryNode::emit_asm() {
     auto instructions = std::vector<std::unique_ptr<AsmInstructionNode>>();
     // AsmOperandNode::emit_asm returns imm/pseudo if const/variable
     auto dest = this->val_dest->emit_asm();
 
-    // separate handling for (+, -, *) and (/, %)
+    // separate handling for (+, -, *), (/, %) and (==, !=, <, >, <=, >= {relational ops})
     if (this->op_type == "/" || this->op_type == "%") {
         auto eax_reg = std::make_shared<AsmRegisterNode>("%eax");
         auto src1 = this->val_src1->emit_asm();
@@ -94,6 +131,20 @@ std::vector<std::unique_ptr<AsmInstructionNode>> IRBinaryNode::emit_asm() {
         auto src2 = this->val_src2->emit_asm();
         auto binary_instr = std::make_unique<AsmBinaryNode>(this->op_type, src2, dest);
         instructions.push_back(std::move(binary_instr));
+    } else if (RELATIONAL_OPS.contains(this->op_type)) {
+        auto src1 = this->val_src1->emit_asm();
+        auto src2 = this->val_src2->emit_asm();
+        auto dest = this->val_dest->emit_asm();
+
+        auto cmp_instr = std::make_unique<AsmCmpNode>(src2, src1);
+        instructions.push_back(std::move(cmp_instr));
+
+        auto move_instr =
+            std::make_unique<AsmMovNode>(std::make_shared<AsmImmediateNode>("0"), dest);
+        instructions.push_back(std::move(move_instr));
+
+        auto setcc_instr = std::make_unique<AsmSetCCNode>(getCondCode(this->op_type), dest);
+        instructions.push_back(std::move(setcc_instr));
     } else {
         throw std::runtime_error("IRBinaryNode::emit_asm: Unsupported op_type " + this->op_type);
     }
@@ -110,23 +161,55 @@ std::shared_ptr<AsmOperandNode> IRVariableNode::emit_asm() {
 
 // temp stub implementations for testing irgen.cpp
 std::vector<std::unique_ptr<AsmInstructionNode>> IRCopyNode::emit_asm() {
-    return std::vector<std::unique_ptr<AsmInstructionNode>>();
+    auto instructions = std::vector<std::unique_ptr<AsmInstructionNode>>();
+    auto src = this->val_src->emit_asm();
+    auto dest = this->val_dest->emit_asm();
+
+    auto mov_instr = std::make_unique<AsmMovNode>(src, dest);
+    instructions.push_back(std::move(mov_instr));
+    return instructions;
 }
 
 std::vector<std::unique_ptr<AsmInstructionNode>> IRJumpNode::emit_asm() {
-    return std::vector<std::unique_ptr<AsmInstructionNode>>();
+    auto instructions = std::vector<std::unique_ptr<AsmInstructionNode>>();
+    auto jmp_instr = std::make_unique<AsmJmpNode>(this->target_label);
+    instructions.push_back(std::move(jmp_instr));
+    return instructions;
 }
 
+namespace { // helper function for conditional jumps; `IRJumpIfZeroNode` and `IRJumpIfNotZeroNode`
+std::vector<std::unique_ptr<AsmInstructionNode>>
+emit_jump_if(const std::string& cc, // condition code
+             const std::shared_ptr<IRValNode>& condition, const std::string& target_label) {
+    std::vector<std::unique_ptr<AsmInstructionNode>> instructions;
+    auto cond_asm = condition->emit_asm();
+
+    // compare condition with 0
+    instructions.push_back(
+        std::make_unique<AsmCmpNode>(std::make_shared<AsmImmediateNode>("0"), cond_asm));
+
+    // conditional jump
+    instructions.push_back(std::make_unique<AsmJmpCCNode>(cc, target_label));
+
+    return instructions;
+}
+} // namespace
+
 std::vector<std::unique_ptr<AsmInstructionNode>> IRJumpIfZeroNode::emit_asm() {
-    return std::vector<std::unique_ptr<AsmInstructionNode>>();
+    auto instructions = emit_jump_if("e", this->condition, this->target_label);
+    return instructions;
 }
 
 std::vector<std::unique_ptr<AsmInstructionNode>> IRJumpIfNotZeroNode::emit_asm() {
-    return std::vector<std::unique_ptr<AsmInstructionNode>>();
+    auto instructions = emit_jump_if("ne", this->condition, this->target_label);
+    return instructions;
 }
 
 std::vector<std::unique_ptr<AsmInstructionNode>> IRLabelNode::emit_asm() {
-    return std::vector<std::unique_ptr<AsmInstructionNode>>();
+    auto instructions = std::vector<std::unique_ptr<AsmInstructionNode>>();
+    auto label_instr = std::make_unique<AsmLabelNode>(this->label_name);
+    instructions.push_back(std::move(label_instr));
+    return instructions;
 }
 // Emit Assembly Functions -- End
 
@@ -153,7 +236,8 @@ namespace { // no-name namespace for helper function
 /// @param stack_offset The current stack offset.
 /// @return A shared pointer to the resolved stack node.
 std::shared_ptr<AsmStackNode>
-_resolvePseudoRegister(AsmPseudoNode* pseudo_src, // careful: raw pointer
+_resolvePseudoRegister(AsmPseudoNode* pseudo_src, // TODO(VachanVY): careful: raw pointer, can we
+                                                  // avoid using raw pointer?
                        std::unordered_map<std::string, int>& pseudo_reg_map, int& stack_offset) {
     // check if pseudo register already assigned in map
     bool assigned = pseudo_reg_map.contains(pseudo_src->identifier);
@@ -163,7 +247,7 @@ _resolvePseudoRegister(AsmPseudoNode* pseudo_src, // careful: raw pointer
         return std::make_shared<AsmStackNode>(pseudo_reg_map[pseudo_src->identifier]);
     } else {
         // else if not assigned, bump the stack pointer first,
-        // then assign that new location
+        // then assign that to new location
         stack_offset += 4;
         pseudo_reg_map[pseudo_src->identifier] = stack_offset;
         return std::make_shared<AsmStackNode>(stack_offset);
@@ -210,6 +294,27 @@ void AsmIdivNode::resolvePseudoRegisters(std::unordered_map<std::string, int>& p
         this->divisor = stack_node;
     }
 }
+
+void AsmCmpNode::resolvePseudoRegisters(std::unordered_map<std::string, int>& pseudo_reg_map,
+                                        int& stack_offset) {
+    if (auto pseudo_src = dyn_cast<AsmPseudoNode>(this->src1.get())) {
+        auto stack_node = _resolvePseudoRegister(pseudo_src, pseudo_reg_map, stack_offset);
+        this->src1 = stack_node;
+    }
+    if (auto pseudo_dest = dyn_cast<AsmPseudoNode>(this->src2.get())) {
+        auto stack_node = _resolvePseudoRegister(pseudo_dest, pseudo_reg_map, stack_offset);
+        this->src2 = stack_node;
+    }
+}
+
+void AsmSetCCNode::resolvePseudoRegisters(std::unordered_map<std::string, int>& pseudo_reg_map,
+                                          int& stack_offset) {
+    if (auto pseudo_dest = dyn_cast<AsmPseudoNode>(this->dest.get())) {
+        auto stack_node = _resolvePseudoRegister(pseudo_dest, pseudo_reg_map, stack_offset);
+        this->dest = stack_node;
+    }
+}
+
 // Resolve Pseudo Registers -- End
 
 // Fix Instructions -- Start
@@ -225,22 +330,12 @@ void AsmFunctionNode::fixUpInstructions(const int& stack_size) {
     std::vector<std::unique_ptr<AsmInstructionNode>> new_instructions;
     new_instructions.push_back(std::move(allocate_stack));
     for (auto& instr : this->instructions) {
-        if (auto* mov = dyn_cast<AsmMovNode>(instr.get())) {
-            mov->fixUpInstructions(new_instructions);
-            continue;
+        if (isa<AsmMovNode>(instr.get()) || isa<AsmBinaryNode>(instr.get()) ||
+            isa<AsmIdivNode>(instr.get()) || isa<AsmCmpNode>(instr.get())) {
+            instr->fixUpInstructions(new_instructions);
+        } else {
+            new_instructions.push_back(std::move(instr));
         }
-
-        if (auto* binary = dyn_cast<AsmBinaryNode>(instr.get())) {
-            binary->fixUpInstructions(new_instructions);
-            continue;
-        }
-
-        if (auto* idiv = dyn_cast<AsmIdivNode>(instr.get())) {
-            idiv->fixUpInstructions(new_instructions);
-            continue;
-        }
-
-        new_instructions.push_back(std::move(instr));
     }
     this->instructions = std::move(new_instructions);
 }
@@ -309,6 +404,7 @@ void AsmBinaryNode::fixUpInstructions(
 }
 
 /// @brief handles the case when divisor of `idiv` is an immediate value.
+/// @param instructions
 void AsmIdivNode::fixUpInstructions(
     std::vector<std::unique_ptr<AsmInstructionNode>>& instructions) {
     if (isa<AsmImmediateNode>(this->divisor.get())) {
@@ -324,6 +420,36 @@ void AsmIdivNode::fixUpInstructions(
     auto copy = std::make_unique<AsmIdivNode>(this->divisor);
     instructions.push_back(std::move(copy));
 }
+
+/// @brief `cmp` can't take both operands as memory addresses. Also can't take immediate value as
+/// destination.
+/// @param instructions
+void AsmCmpNode::fixUpInstructions(std::vector<std::unique_ptr<AsmInstructionNode>>& instructions) {
+    if (isa<AsmStackNode>(this->src1.get()) && isa<AsmStackNode>(this->src2.get())) {
+        auto tmp_reg = std::make_shared<AsmRegisterNode>("%r10d");
+        auto move_instr = std::make_unique<AsmMovNode>(this->src1, tmp_reg);
+        instructions.push_back(std::move(move_instr));
+
+        auto cmp_instr = std::make_unique<AsmCmpNode>(tmp_reg, this->src2);
+        instructions.push_back(std::move(cmp_instr));
+        return;
+    }
+    if (isa<AsmImmediateNode>(this->src2.get())) {
+        // Eg:
+        // Cmp(src, Imm(5)) ==Convert=to==>
+        // Move(Imm(5), TmpReg); Cmp(src, TmpReg)
+        auto tmp_reg = std::make_shared<AsmRegisterNode>("%r10d");
+        auto move_instr = std::make_unique<AsmMovNode>(this->src2, tmp_reg);
+        instructions.push_back(std::move(move_instr));
+
+        auto cmp_instr = std::make_unique<AsmCmpNode>(this->src1, tmp_reg);
+        instructions.push_back(std::move(cmp_instr));
+        return;
+    }
+    auto copy = std::make_unique<AsmCmpNode>(this->src1, this->src2);
+    instructions.push_back(std::move(copy));
+}
+
 // Fix Instructions -- End
 
 /*
