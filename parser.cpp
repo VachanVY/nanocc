@@ -110,7 +110,23 @@ void StatementNode::dump(int indent) const {
     std::println(")");
 }
 
-// precedence climbing parser for expressions
+/*````
+parse_exp(1 + 2 * 3, min_prec=0)
+    parse 1
+    "+" ≥ 0 → enter loop
+    parse "+"
+    parse_exp(2 * 3, min_prec=46): "*" ≥ 46 → parse 2*3 → Bin(*, 2, 3) |◍◍◍◍|
+    Result: Bin(+, 1, Bin(*, 2, 3))
+
+parse_exp(1 * 2 + 3, min_prec=0)
+    parse 1
+    "*" ≥ 0 → enter loop
+    parse "*"
+    parse_exp(2 + 3, min_prec=51): "+" < 51 → return 2 |◍◍◍◍|
+    Result so far: Bin(*, 1, 2)
+    "+" ≥ 0 → continue loop, parse +3
+    Result: Bin(+, Bin(*, 1, 2), 3)
+```*/
 void ExprNode::parse(std::deque<Token>& tokens, size_t& pos, int min_precedence) {
     left_exprf = std::make_unique<ExprFactorNode>();
     left_exprf->parse(tokens, pos);
@@ -124,7 +140,7 @@ void ExprNode::parse(std::deque<Token>& tokens, size_t& pos, int min_precedence)
         binop->parse(tokens, pos);
 
         right_expr = std::make_unique<ExprNode>();
-        right_expr->parse(tokens, pos, op_prec + 1);
+        right_expr->parse(tokens, pos, op_prec + 1); // |◍◍◍◍|
 
         auto factor = std::make_unique<BinaryNode>();
         factor->left = std::move(left_exprf);
