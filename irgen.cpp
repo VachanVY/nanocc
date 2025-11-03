@@ -20,27 +20,32 @@ use shared_ptr for IRValNode (and its derived classes)
 
 std::unique_ptr<IRProgramNode> ProgramNode::emit_ir() {
     auto ir_program = std::make_unique<IRProgramNode>();
-    if (func) {
-        ir_program->func = func->emit_ir();
-    }
+    ir_program->func = func->emit_ir();
     return ir_program;
 }
 
 void IRProgramNode::dump_ir(int indent) const {
     printIndent(indent);
     std::println("IRProgram(");
-    if (func) {
-        func->dump_ir(indent + 1);
-    }
+    func->dump_ir(indent + 1);
     printIndent(indent);
     std::println(")");
 }
 
 std::unique_ptr<IRFunctionNode> FunctionNode::emit_ir() {
+    // a function has many blocks => many instructions
     std::vector<std::unique_ptr<IRInstructionNode>> instructions;
-    if (statement) {
-        instructions = statement->emit_ir();
+    for (const auto& block : body) {
+        auto block_instructions = block->emit_ir();
+        for (auto& instr : block_instructions) {
+            instructions.push_back(std::move(instr));
+        }
     }
+    // edge case: ensure function ends with a return; always return 0 no matter what
+    // if the func already ends with a return, this is redundant but okay for now
+    auto ret0 = std::make_unique<IRRetNode>(std::make_shared<IRConstNode>("0"));
+    instructions.push_back(std::move(ret0));
+
     auto ir_function =
         std::make_unique<IRFunctionNode>(var_identifier->name, std::move(instructions));
     return ir_function;
@@ -64,49 +69,102 @@ void IRFunctionNode::dump_ir(int indent) const {
     std::println(")");
 }
 
+std::vector<std::unique_ptr<IRInstructionNode>> BlockNode::emit_ir() {
+    std::vector<std::unique_ptr<IRInstructionNode>> ir_instructions;
+    if (declaration) {
+        auto decl_instructions = declaration->emit_ir();
+        for (auto& instr : decl_instructions) {
+            ir_instructions.push_back(std::move(instr));
+        }
+    } else if (statement) {
+        auto stmt_instructions = statement->emit_ir();
+        for (auto& instr : stmt_instructions) {
+            ir_instructions.push_back(std::move(instr));
+        }
+    } else
+        throw std::runtime_error("IR Generation Error: Empty BlockNode");
+    return ir_instructions;
+}
+
+std::vector<std::unique_ptr<IRInstructionNode>> DeclarationNode::emit_ir() {
+    std::vector<std::unique_ptr<IRInstructionNode>> ir_instructions;
+    if (init_expr) {
+        // get the value of the initialization expression
+        auto dest_var = init_expr->emit_ir(ir_instructions);
+        // emit copy instruction to assign the value to the variable
+        auto ir_var = std::make_shared<IRVariableNode>(var_identifier->name);
+        auto ir_copy = std::make_unique<IRCopyNode>(
+            std::move(dest_var), std::move(ir_var));
+        ir_instructions.push_back(std::move(ir_copy));
+    }
+    // else, no initialization => no IR needed (default to 0)
+    return ir_instructions;
+}
+
 std::vector<std::unique_ptr<IRInstructionNode>> StatementNode::emit_ir() {
     std::vector<std::unique_ptr<IRInstructionNode>> ir_instructions;
 
-    // get ir from Expr Node; `emit_tacky` func from the book;
+    // get ir from `ExprNode`; `emit_tacky` func from the book;
     // returns the destination register of prev operation i.e source register
     // for this iter
-    auto dest_var = expr->emit_ir(ir_instructions);
+    if (return_stmt) {
+        auto ret_instructions = return_stmt->emit_ir();
+        for (auto& instr : ret_instructions) {
+            ir_instructions.push_back(std::move(instr));
+        }
+    } else if (expression_stmt) {
+        auto expr_instructions = expression_stmt->emit_ir();
+        for (auto& instr : expr_instructions) {
+            ir_instructions.push_back(std::move(instr));
+        }
+    } else {
+        if (!null_stmt) { // do nothing for null statement
+            throw std::runtime_error("IR Generation Error: Malformed StatementNode");
+        }
+    }
+    return ir_instructions;
+}
+
+std::vector<std::unique_ptr<IRInstructionNode>> ReturnNode::emit_ir() {
+    std::vector<std::unique_ptr<IRInstructionNode>> ir_instructions;
+    auto dest_var = ret_expr->emit_ir(ir_instructions);
     // emit return of the computed value
     auto ret_instruction = std::make_unique<IRRetNode>(std::move(dest_var));
     ir_instructions.push_back(std::move(ret_instruction));
     return ir_instructions;
 }
 
+std::vector<std::unique_ptr<IRInstructionNode>> ExpressionNode::emit_ir() {
+    std::vector<std::unique_ptr<IRInstructionNode>> ir_instructions;
+    // this will return a new temporary variable holding the expression result
+    // but we won't use it that again in the IR Generation
+    auto dest_var = expr->emit_ir(ir_instructions);
+    return ir_instructions;
+}
+
+std::vector<std::unique_ptr<IRInstructionNode>> NullNode::emit_ir() {
+    return {}; // no-op for null statement
+}
+
 std::shared_ptr<IRValNode> // return the destination register
 ExprNode::emit_ir(std::vector<std::unique_ptr<IRInstructionNode>>& instructions) {
-    if (left_exprf) {
-        return left_exprf->emit_ir(instructions);
-    }
-    throw std::runtime_error("IR Generation Error: Malformed Expression");
+    assert(left_exprf && "IR Generation Error: Malformed Expression");
+    return left_exprf->emit_ir(instructions);
 }
 
 namespace { // helper functions to handle binary short-circuiting operators
-// Generate unique temporary VARIABLE names
-auto getTempVarName = []() {
-    static size_t temp_var_counter = 0;
-    return "tmp." + std::to_string(temp_var_counter++);
-};
+/// @brief handle non-short-circuiting binary operations
+std::shared_ptr<IRValNode> handleOtherBinOps(
+    BinaryNode* binop, // TODO(VachanVY): anyway to NOT use raw pointer here?
+    std::vector<std::unique_ptr<IRInstructionNode>>& instructions) {
+    auto left_val = binop->left_expr->emit_ir(instructions);
+    auto right_val = binop->right_expr->emit_ir(instructions);
 
-std::shared_ptr<IRValNode>
-handleRelationalOps(BinaryNode* binop, // raw pointer be careful // TODO(VachanVY): anyway to NOT
-                                       // use raw pointer here?
-                    std::vector<std::unique_ptr<IRInstructionNode>>& instructions) {
-    // left and right are ExprNode // can be ExprFactorNode too...
-    // runtime polymorphism...
-    auto left_val = binop->left->emit_ir(instructions);
-    auto right_val = binop->right->emit_ir(instructions);
-
-    std::string tmp = getTempVarName();
+    std::string tmp = getUniqueName("tmp");
     auto val_dest = std::make_shared<IRVariableNode>(tmp);
 
-    auto ir_binary = std::make_unique<IRBinaryNode>(binop->op_type, left_val, right_val, val_dest);
-    instructions.push_back(std::move(ir_binary));
-    return val_dest;
+    auto ir_binary = std::make_unique<IRBinaryNode>(binop->op_type, left_val, right_val,
+    val_dest); instructions.push_back(std::move(ir_binary)); return val_dest;
 }
 
 auto getLabelName = [](const std::string& prefix) {
@@ -119,14 +177,14 @@ std::shared_ptr<IRValNode>
 handleShortCircuitOps(BinaryNode* binop,
                       std::vector<std::unique_ptr<IRInstructionNode>>& instructions) {
     assert(binop->op_type == "&&" || binop->op_type == "||" && "Not a short-circuit operator");
-    auto result = std::make_shared<IRVariableNode>(getTempVarName());
+    auto result = std::make_shared<IRVariableNode>(getUniqueName("tmp"));
 
     std::string short_label = getLabelName("short");
     std::string end_label = getLabelName("end");
 
     bool is_and = (binop->op_type == "&&");
 
-    auto left_val = binop->left->emit_ir(instructions);
+    auto left_val = binop->left_expr->emit_ir(instructions);
     // jump to short-circuit if left determines the result
     if (is_and) {
         instructions.push_back(std::make_unique<IRJumpIfZeroNode>(left_val, short_label));
@@ -134,7 +192,7 @@ handleShortCircuitOps(BinaryNode* binop,
         instructions.push_back(std::make_unique<IRJumpIfNotZeroNode>(left_val, short_label));
     }
 
-    auto right_val = binop->right->emit_ir(instructions);
+    auto right_val = binop->right_expr->emit_ir(instructions);
     // jump to short-circuit if right determines the result
     if (is_and) {
         instructions.push_back(std::make_unique<IRJumpIfZeroNode>(right_val, short_label));
@@ -158,30 +216,39 @@ handleShortCircuitOps(BinaryNode* binop,
 } // namespace
 
 // return the destination register
-std::shared_ptr<IRValNode>
-ExprFactorNode::emit_ir(std::vector<std::unique_ptr<IRInstructionNode>>& instructions) {
+std::shared_ptr<IRValNode> ExprFactorNode::emit_ir(
+    std::vector<std::unique_ptr<IRInstructionNode>>& instructions) {
     if (auto binop = dyn_cast<BinaryNode>(this)) {
         if (binop->op_type == "&&" || binop->op_type == "||") {
             return handleShortCircuitOps(binop, instructions);
         } else {
-            return handleRelationalOps(binop, instructions);
+            return handleOtherBinOps(binop, instructions);
         }
+    } else if (auto assignop = dyn_cast<AssignmentNode>(this)) {
+        // evaluate rhs expr, add it's instructions to the list, then
+        // evaluate lhs expr to get the variable to assign to result of rhs. add instructions to list on the way...
+        auto right_val = assignop->right_expr->emit_ir(instructions); // result of the rhs expr
+        auto left_val = assignop->left_expr->emit_ir(instructions);   // VarNode->emit_ir()
+
+        auto ir_copy = std::make_unique<IRCopyNode>(right_val, left_val); // left_val <= right_val
+        instructions.push_back(std::move(ir_copy));
+        return left_val;
+    } else if (var_identifier) {
+        auto ir_var = std::make_shared<IRVariableNode>(var_identifier->var_name->name);
+        return ir_var;
     } else if (constant) {
         auto ir_const = std::make_shared<IRConstNode>(constant->val);
         return ir_const;
-    } else if (unary && factor) {
+    } else if (unary) {
         // get inner most expression's value
-        auto src_val = factor->emit_ir(instructions);
-        std::string tmp = getTempVarName();
+        auto src_val = unary->operand->emit_ir(instructions);
+        std::string tmp = getUniqueName("tmp");
         auto dest_var = std::make_shared<IRVariableNode>(tmp);
 
         auto ir_unary = std::make_unique<IRUnaryNode>(unary->op_type, src_val, dest_var);
         instructions.push_back(std::move(ir_unary));
         return dest_var;
-    } else if (expr) { // will be null after it's parsed
-        // will it ever reach here?
-        // ig no because the program will get stuck in an infinite recursion
-        // let's see...
+    } else if (expr) {
         return expr->emit_ir(instructions);
     }
     throw std::runtime_error("IR Generation Error: Malformed Expression Factor");
@@ -276,6 +343,10 @@ int main(int argc, char* argv[]) {
     }
     auto ast = parse(tokens);
     ast->dump();
+    SymbolTable sym_table;
+    ast->resolveTypes(sym_table);
+    ast->dump();
+
     auto ir = ast->emit_ir();
     ir->dump_ir();
 

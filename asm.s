@@ -3,32 +3,30 @@ main:
     pushq %rbp
     movq %rsp, %rbp
     subq $24, %rsp
-    movl $0, %r10d
-    cmpl $0, %r10d
-    movl $0, -4(%rbp)
-    sete -4(%rbp)
-    cmpl $0, -4(%rbp)
-    je short.0
-    movl $2, -8(%rbp)
-    addl $1, -8(%rbp)
-    cmpl $1, -8(%rbp)
-    movl $0, -12(%rbp)
-    setg -12(%rbp)
-    movl $3, %r10d
-    cmpl -12(%rbp), %r10d
+    movl $1, -4(%rbp)
+    movl -4(%rbp), %r10d
+    movl %r10d, -8(%rbp)
+    movl -8(%rbp), %r11d
+    imull $2, %r11d
+    movl %r11d, -8(%rbp)
+    movl -8(%rbp), %r10d
+    movl %r10d, -4(%rbp)
+    movl -4(%rbp), %r10d
+    movl %r10d, -4(%rbp)
+    movl -4(%rbp), %r10d
+    movl %r10d, -12(%rbp)
     movl $0, -16(%rbp)
-    sete -16(%rbp)
-    cmpl $0, -16(%rbp)
-    je short.0
-    movl $1, -20(%rbp)
-    jmp end.1
-  short.0:
-    movl $0, -20(%rbp)
-  end.1:
-    movl -20(%rbp), %r10d
-    movl %r10d, -24(%rbp)
-    addl $1, -24(%rbp)
-    movl -24(%rbp), %eax
+    movl -4(%rbp), %r10d
+    movl %r10d, -20(%rbp)
+    addl $3, -20(%rbp)
+    cmpl $0, -4(%rbp)
+    movl $0, -24(%rbp)
+    sete -24(%rbp)
+    movl -4(%rbp), %eax
+    movq %rbp, %rsp
+    popq %rbp
+    ret
+    movl $0, %eax
     movq %rbp, %rsp
     popq %rbp
     ret

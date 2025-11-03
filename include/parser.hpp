@@ -9,20 +9,30 @@
 #include "asmgen.hpp"
 #include "irgen.hpp"
 #include "lexer.hpp"
+#include "checker.hpp"
 
 class ASTNode;
 class ProgramNode;
 class FunctionNode;
+class BlockNode;
 
-class StatementNode;
+class StatementNode; // derived from BlockNode
+class ReturnNode;
+class ExpressionNode;
+class NullNode;
+
+class DeclarationNode; // derived from BlockNode
 
 class ExprNode;
+
+class ExprFactorNode; // derived from ExprNode // helper class
+class VarNode;
 class ConstantNode;
 class UnaryNode;
-class BinaryNode; // derived from ExprFactorNode
-class IdentifierNode;
+class BinaryNode;
+class AssignmentNode;
 
-class ExprFactorNode; // derived from ExprNode
+class IdentifierNode; // Do we need this? Just a string would do?
 
 /// @brief parse function for every Node type derived from this class
 class ASTNode {
@@ -37,23 +47,79 @@ class ProgramNode : public ASTNode {
 
     void parse(std::deque<Token>& tokens, size_t& pos);
     void dump(int indent = 0) const override;
+    void resolveTypes(SymbolTable& sym_table);
     std::unique_ptr<IRProgramNode> emit_ir();
 };
 
 class FunctionNode : public ASTNode {
   public:
     std::unique_ptr<IdentifierNode> var_identifier; // function name
-    std::unique_ptr<StatementNode> statement;       // statement inside function
+    std::vector<std::unique_ptr<BlockNode>> body;   // list of statements/declarations
 
     void parse(std::deque<Token>& tokens, size_t& pos);
     void dump(int indent = 0) const override;
+    void resolveTypes(SymbolTable& sym_table);
     std::unique_ptr<IRFunctionNode> emit_ir();
 };
 
-class StatementNode : public ASTNode {
+class BlockNode : public ASTNode {
+  public:
+    std::unique_ptr<StatementNode> statement;
+    std::unique_ptr<DeclarationNode> declaration;
+
+    void parse(std::deque<Token>& tokens, size_t& pos);
+    void dump(int indent = 0) const override;
+    void resolveTypes(SymbolTable& sym_table);
+    std::vector<std::unique_ptr<IRInstructionNode>> emit_ir();
+};
+
+class DeclarationNode : public BlockNode {
+  public:
+    std::unique_ptr<IdentifierNode> var_identifier;
+    std::unique_ptr<ExprNode> init_expr; // OPTIONAL
+
+    void parse(std::deque<Token>& tokens, size_t& pos);
+    void dump(int indent = 0) const override;
+    void resolveTypes(SymbolTable& sym_table);
+    std::vector<std::unique_ptr<IRInstructionNode>> emit_ir();
+};
+
+class StatementNode : public BlockNode {
+  public:
+    std::unique_ptr<ReturnNode> return_stmt;
+    std::unique_ptr<ExpressionNode> expression_stmt;
+    std::unique_ptr<NullNode> null_stmt;
+
+    void parse(std::deque<Token>& tokens, size_t& pos);
+    void dump(int indent = 0) const override;
+    void resolveTypes(SymbolTable& sym_table);
+    std::vector<std::unique_ptr<IRInstructionNode>> emit_ir();
+};
+
+class ReturnNode : public StatementNode {
+  public:
+    std::unique_ptr<ExprNode> ret_expr;
+
+    void parse(std::deque<Token>& tokens, size_t& pos);
+    void dump(int indent = 0) const override;
+    void resolveTypes(SymbolTable& sym_table);
+    std::vector<std::unique_ptr<IRInstructionNode>> emit_ir();
+};
+
+// for non-return statements
+class ExpressionNode : public StatementNode {
   public:
     std::unique_ptr<ExprNode> expr;
 
+    void parse(std::deque<Token>& tokens, size_t& pos);
+    void dump(int indent = 0) const override;
+    void resolveTypes(SymbolTable& sym_table);
+    std::vector<std::unique_ptr<IRInstructionNode>> emit_ir();
+};
+
+// for null statements (i.e., just a semicolon)
+class NullNode : public ExpressionNode {
+  public:
     void parse(std::deque<Token>& tokens, size_t& pos);
     void dump(int indent = 0) const override;
     std::vector<std::unique_ptr<IRInstructionNode>> emit_ir();
@@ -64,38 +130,28 @@ class ExprNode : public ASTNode {
     // <exp> = <factor> | <expr> <binary> <expr>
     // <exp> is of the form <factor> ( <binary> <expr> )*
     std::unique_ptr<ExprFactorNode> left_exprf;
-    std::unique_ptr<BinaryNode> binop;
-    std::unique_ptr<ExprNode> right_expr; // will be null since we move it to left_exprf
-    // TODO(VachanVY) remove `right_expr` from here, anyway will be null.
-    // define and use locally in parse()
 
     void parse(std::deque<Token>& tokens, size_t& pos, int min_precedence = 0);
     void dump(int indent = 0) const override;
+    void resolveTypes(SymbolTable& sym_table);
     virtual std::shared_ptr<IRValNode> // runtime polymorphism for ExprFactorNode
     emit_ir(std::vector<std::unique_ptr<IRInstructionNode>>& instructions);
 };
 
 class ExprFactorNode : public ExprNode {
   public:
-    std::unique_ptr<ConstantNode> constant;
-    std::unique_ptr<UnaryNode> unary;
-    std::unique_ptr<ExprFactorNode> factor;
-    // for parenthesized expressions. // will be null after it's parsed
-    std::unique_ptr<ExprNode> expr;
+    std::unique_ptr<ConstantNode> constant;  // <int>: a constant integer
+    std::unique_ptr<VarNode> var_identifier; // <identifier>
+    std::unique_ptr<UnaryNode> unary;        // <unary> <factor>
+    std::unique_ptr<ExprNode> expr;          // "(" <expr> ")"
 
     void parse(std::deque<Token>& tokens, size_t& pos);
     void dump(int indent = 0) const override;
-    // runtime polymorphism for BinaryNode, (ConstantNode, UnaryNode, not sure about these...)
+    virtual void resolveTypes(SymbolTable& sym_table);
+    // runtime polymorphism for BinaryNode, AssignmentNode,
+    // (ConstantNode, UnaryNode, not sure about these...)
     virtual std::shared_ptr<IRValNode>
     emit_ir(std::vector<std::unique_ptr<IRInstructionNode>>& instructions);
-};
-
-class IdentifierNode : public ASTNode {
-  public:
-    std::string name;
-
-    void parse(std::deque<Token>& tokens, size_t& pos);
-    void dump(int indent = 0) const override;
 };
 
 class ConstantNode : public ExprFactorNode {
@@ -104,28 +160,73 @@ class ConstantNode : public ExprFactorNode {
 
     void parse(std::deque<Token>& tokens, size_t& pos);
     void dump(int indent = 0) const override;
+    void resolveTypes(SymbolTable& sym_table) override{};
+};
+
+class VarNode : public ExprFactorNode {
+  public:
+    std::unique_ptr<IdentifierNode> var_name;
+
+    void parse(std::deque<Token>& tokens, size_t& pos);
+    void dump(int indent = 0) const override;
+    void resolveTypes(SymbolTable& sym_table) override;
+    static bool classof(const ExprFactorNode* u) {
+        return dynamic_cast<const VarNode*>(u) != nullptr;
+    }
 };
 
 class UnaryNode : public ExprFactorNode {
   public:
     std::string op_type;
+    std::unique_ptr<ExprFactorNode> operand;
 
     void parse(std::deque<Token>& tokens, size_t& pos);
     void dump(int indent = 0) const override;
+    void resolveTypes(SymbolTable& sym_table) override;
 };
 
 class BinaryNode : public ExprFactorNode {
   public:
     std::string op_type;
-    std::unique_ptr<ExprNode> left;  // can also be ExprFactorNode
-    std::unique_ptr<ExprNode> right; // can also be ExprFactorNode... ig...
+    std::unique_ptr<ExprNode> left_expr;  // can also be ExprFactorNode
+    std::unique_ptr<ExprNode> right_expr; // can also be ExprFactorNode... ig...
+
+    BinaryNode() = default;
+    BinaryNode(std::string op, std::unique_ptr<ExprNode> left, std::unique_ptr<ExprNode> right)
+        : op_type(std::move(op)), left_expr(std::move(left)), right_expr(std::move(right)) {}
 
     void parse(std::deque<Token>& tokens, size_t& pos);
     void dump(int indent = 0) const override;
+    void resolveTypes(SymbolTable& sym_table) override;
     static bool classof(const ExprFactorNode* u) {
-        // BinaryNode is derived from ExprNode
         return dynamic_cast<const BinaryNode*>(u) != nullptr;
     }
+};
+
+class AssignmentNode : public ExprFactorNode {
+  public:
+    std::unique_ptr<ExprNode> left_expr;
+    std::unique_ptr<ExprNode> right_expr;
+
+    AssignmentNode() = default;
+    AssignmentNode(std::unique_ptr<ExprNode> left, std::unique_ptr<ExprNode> right)
+        : left_expr(std::move(left)), right_expr(std::move(right)) {}
+
+    void parse(std::deque<Token>& tokens, size_t& pos);
+    void dump(int indent = 0) const override;
+    void resolveTypes(SymbolTable& sym_table) override;
+    static bool classof(const ExprFactorNode* u) {
+        return dynamic_cast<const AssignmentNode*>(u) != nullptr;
+    }
+};
+
+class IdentifierNode : public ASTNode {
+  public:
+    std::string name;
+
+    void parse(std::deque<Token>& tokens, size_t& pos);
+    void dump(int indent = 0) const override { dump(indent, true); };
+    void dump(int indent, bool new_line) const;
 };
 
 std::unique_ptr<ProgramNode> parse(std::deque<Token>& tokens);

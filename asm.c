@@ -1,54 +1,111 @@
 int main(void) {
-    return (0 == 0 && 3 == 2 + 1 > 1) + 1;
+  int b;
+  int a = 1;
+  a = a * 2;
+  b = a = a;
+  int c = 0;
+  // !a = 3; gives error
+  a+3; !a;
+  return a;
 }
 
 /*
 Program(
   Function(
     name='main'
-    body=Return(
-      Binary(+,
-        Binary(&&,
-          Binary(==,
-            Constant(0)
-            Constant(0)
-          )
-          Binary(==,
-            Constant(3)
-            Binary(>,
-              Binary(+,
-                Constant(2)
-                Constant(1)
-              )
-              Constant(1)
-            )
+    body=(
+      Declaration(
+        name='b')
+      Declaration(
+        name='a'
+        Constant(1)
+      )
+      Expression(
+        Assignment(
+          Var(name='a')
+          Binary(*,
+            Var(name='a')
+            Constant(2)
           )
         )
-        Constant(1)
+      )
+      Expression(
+        Assignment(
+          Var(name='b')
+          Assignment(
+            Var(name='a')
+            Var(name='a')
+          )
+        )
+      )
+      Declaration(
+        name='c'
+        Constant(0)
+      )
+      Expression(
+        Binary(+,
+          Var(name='a')
+          Constant(3)
+        )
+      )
+      Expression(
+        Unary(!
+          Var(name='a')
+        )
+      )
+      Return(
+        Constant(0)
       )
     )
   )
 )
-IRProgram(
+Program(
   Function(
     name='main'
-    instructions=[
-      tmp.1 = 0 == 0
-      jump_if_zero tmp.1, short.0
-      tmp.2 = 2 + 1
-      tmp.3 = tmp.2 > 1
-      tmp.4 = 3 == tmp.3
-      jump_if_zero tmp.4, short.0
-      tmp.0 = 1
-      jump end.1
-    short.0:
-      tmp.0 = 0
-    end.1:
-      tmp.5 = tmp.0 + 1
-      return tmp.5
-    ]
+    body=(
+      Declaration(
+        name='b.0')
+      Declaration(
+        name='a.1'
+        Constant(1)
+      )
+      Expression(
+        Assignment(
+          Var(name='a.1')
+          Binary(*,
+            Var(name='a.1')
+            Constant(2)
+          )
+        )
+      )
+      Expression(
+        Assignment(
+          Var(name='b.0')
+          Assignment(
+            Var(name='a.1')
+            Var(name='a.1')
+          )
+        )
+      )
+      Declaration(
+        name='c.2'
+        Constant(0)
+      )
+      Expression(
+        Binary(+,
+          Var(name='a.1')
+          Constant(3)
+        )
+      )
+      Expression(
+        Unary(!
+          Var(name='a.1')
+        )
+      )
+      Return(
+        Constant(0)
+      )
+    )
   )
 )
-After resolving pseudo registers: 24
-Successfully compiled to executable with result: 0
 */

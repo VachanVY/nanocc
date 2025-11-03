@@ -24,9 +24,15 @@ constexpr auto TAB4 = "    ";
 
 inline void printIndent(int indent) {
     for (int i = 0; i < indent; i++) {
-        std::print("  ");
+        std::printf("  ");
     }
 }
+
+inline std::string getUniqueName(const std::string& prefix) {
+    static int counter = 0;
+    // is the dot (.) okay? keeps it unique...
+    return prefix + "." + std::to_string(counter++);
+};
 
 // LLVM-style...
 // TODO(VachanVY): As of now the `classof` methods use dynamic_cast internally.

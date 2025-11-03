@@ -105,6 +105,7 @@ class IRBinaryNode : public IRInstructionNode {
     std::vector<std::unique_ptr<AsmInstructionNode>> emit_asm() override;
 };
 
+/// @brief val_src => val_dest
 class IRCopyNode : public IRInstructionNode {
   public:
     std::shared_ptr<IRValNode> val_src;

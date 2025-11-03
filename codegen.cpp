@@ -4,37 +4,37 @@
 #include "asmgen.hpp"
 #include "utils.hpp"
 
-void AsmProgramNode::emit_asm(std::ostream& os) {
+void AsmProgramNode::generateAsm(std::ostream& os) {
     if (!func) {
         throw std::runtime_error("Program contains no functions to emit");
     }
-    func->emit_asm(os);
+    func->generateAsm(os);
     os << TAB4 << ".section .note.GNU-stack, \"\",@progbits\n";
 }
 
-void AsmFunctionNode::emit_asm(std::ostream& os) {
+void AsmFunctionNode::generateAsm(std::ostream& os) {
     os << TAB4 << ".globl " << name << "\n";
     os << name << ":\n";
     os << TAB4 << "pushq %rbp\n";
     os << TAB4 << "movq %rsp, %rbp\n";
     for (const auto& instruction : instructions) {
-        instruction->emit_asm(os);
+        instruction->generateAsm(os);
     }
 }
 
 // Instruction Nodes -- Start
-void AsmMovNode::emit_asm(std::ostream& os) {
+void AsmMovNode::generateAsm(std::ostream& os) {
     if (!src || !dest) {
         throw std::runtime_error("AsmMovNode missing operands during emission");
     }
     os << TAB4 << "movl ";
-    src->emit_asm(os);
+    src->generateAsm(os);
     os << ", ";
-    dest->emit_asm(os);
+    dest->generateAsm(os);
     os << '\n';
 }
 
-void AsmUnaryNode::emit_asm(std::ostream& os) {
+void AsmUnaryNode::generateAsm(std::ostream& os) {
     if (!operand) {
         throw std::runtime_error("AsmUnaryNode missing operand during emission");
     }
@@ -51,11 +51,11 @@ void AsmUnaryNode::emit_asm(std::ostream& os) {
         throw std::runtime_error("Unsupported unary op during emission: " + op_type);
     }
     os << TAB4 << mnemonic << " ";
-    operand->emit_asm(os);
+    operand->generateAsm(os);
     os << '\n';
 }
 
-void AsmBinaryNode::emit_asm(std::ostream& os) {
+void AsmBinaryNode::generateAsm(std::ostream& os) {
     if (this->op_type == "+") {
         os << TAB4 << "addl ";
     } else if (this->op_type == "-") {
@@ -65,52 +65,52 @@ void AsmBinaryNode::emit_asm(std::ostream& os) {
     } else {
         throw std::runtime_error("Unsupported binary op during emission: " + op_type);
     }
-    this->src->emit_asm(os);
+    this->src->generateAsm(os);
     os << ", ";
-    this->dest->emit_asm(os);
+    this->dest->generateAsm(os);
     os << '\n';
 }
 
-void AsmCmpNode::emit_asm(std::ostream& os) {
+void AsmCmpNode::generateAsm(std::ostream& os) {
     os << TAB4 << "cmpl ";
-    this->src1->emit_asm(os);
+    this->src1->generateAsm(os);
     os << ", ";
-    this->src2->emit_asm(os);
+    this->src2->generateAsm(os);
     os << '\n';
 }
 
-void AsmIdivNode::emit_asm(std::ostream& os) {
+void AsmIdivNode::generateAsm(std::ostream& os) {
     if (!divisor) {
         throw std::runtime_error("AsmIdivNode missing divisor during emission");
     }
     os << TAB4 << "idivl ";
-    divisor->emit_asm(os);
+    divisor->generateAsm(os);
     os << '\n';
 }
 
-void AsmCdqNode::emit_asm(std::ostream& os) { os << TAB4 << "cdq\n"; }
+void AsmCdqNode::generateAsm(std::ostream& os) { os << TAB4 << "cdq\n"; }
 
-void AsmJmpNode::emit_asm(std::ostream& os) { os << TAB4 << "jmp " << this->label << "\n"; }
+void AsmJmpNode::generateAsm(std::ostream& os) { os << TAB4 << "jmp " << this->label << "\n"; }
 
-void AsmJmpCCNode::emit_asm(std::ostream& os) {
+void AsmJmpCCNode::generateAsm(std::ostream& os) {
     os << TAB4 << "j" << this->cond_code << " " << this->label << "\n";
 }
 
-void AsmSetCCNode::emit_asm(std::ostream& os) {
+void AsmSetCCNode::generateAsm(std::ostream& os) {
     os << TAB4 << "set" << this->cond_code << " ";
-    this->dest->emit_asm(os);
+    this->dest->generateAsm(os);
     os << "\n";
 }
 
-void AsmLabelNode::emit_asm(std::ostream& os) {
+void AsmLabelNode::generateAsm(std::ostream& os) {
     os << "  " << this->label << ":\n"; // no `TAB4` for labels
 }
 
-void AsmAllocateStackNode::emit_asm(std::ostream& os) {
+void AsmAllocateStackNode::generateAsm(std::ostream& os) {
     os << TAB4 << "subq $" << stack_size << ", %rsp\n";
 }
 
-void AsmRetNode::emit_asm(std::ostream& os) {
+void AsmRetNode::generateAsm(std::ostream& os) {
     os << TAB4 << "movq %rbp, %rsp\n";
     os << TAB4 << "popq %rbp\n";
     os << TAB4 << "ret\n";
@@ -118,9 +118,9 @@ void AsmRetNode::emit_asm(std::ostream& os) {
 // Instruction Nodes -- end
 
 // Operand Nodes -- Start
-void AsmImmediateNode::emit_asm(std::ostream& os) { os << "$" << value; }
+void AsmImmediateNode::generateAsm(std::ostream& os) { os << "$" << value; }
 
-void AsmRegisterNode::emit_asm(std::ostream& os) { os << name; }
+void AsmRegisterNode::generateAsm(std::ostream& os) { os << name; }
 
-void AsmStackNode::emit_asm(std::ostream& os) { os << "-" << offset << "(%rbp)"; }
+void AsmStackNode::generateAsm(std::ostream& os) { os << "-" << offset << "(%rbp)"; }
 // Operand Nodes -- end

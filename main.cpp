@@ -36,6 +36,9 @@ int main(int argc, char* argv[]) {
     auto tokens = lexer(source);
     auto ast = parse(tokens);
     ast->dump();
+    SymbolTable sym_table;
+    ast->resolveTypes(sym_table);
+    ast->dump();
     auto ir_ast = ast->emit_ir();
     ir_ast->dump_ir();
     auto asm_ast = ir_ast->emit_asm();
@@ -50,7 +53,7 @@ int main(int argc, char* argv[]) {
 
     // Emit assembly to string stream
     std::ostringstream output;
-    asm_ast->emit_asm(output);
+    asm_ast->generateAsm(output);
 
     // Get the base filename without extension
     std::string base_filename = filename;

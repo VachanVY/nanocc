@@ -10,8 +10,7 @@
 namespace { // some helper vars/functions
 static const std::unordered_map<std::string, int> BINOP_PRECEDENCE = {
     {"*", 50}, {"/", 50},  {"%", 50},  {"+", 45},  {"-", 45},  {"<", 35}, {"<=", 35},
-    {">", 35}, {">=", 35}, {"==", 30}, {"!=", 30}, {"&&", 10}, {"||", 5},
-};
+    {">", 35}, {">=", 35}, {"==", 30}, {"!=", 30}, {"&&", 10}, {"||", 5}, {"=", 1}};
 
 inline bool isUnary(const std::string& op) {
     return op == "~" || op == "-" || op == "!";
@@ -54,59 +53,151 @@ void expect(const std::deque<Token>& tokens, TokenType expected, size_t& pos) {
 
 // method definitions of parser.hpp
 void ProgramNode::parse(std::deque<Token>& tokens, size_t& pos) {
-    func = std::make_unique<FunctionNode>();
-    func->parse(tokens, pos);
+    this->func = std::make_unique<FunctionNode>();
+    this->func->parse(tokens, pos);
 }
 
 void ProgramNode::dump(int indent) const {
     printIndent(indent);
     std::println("Program(");
-    if (func) {
-        func->dump(indent + 1);
-    }
+    this->func->dump(indent + 1);
     std::println(")");
 }
 
 void FunctionNode::parse(std::deque<Token>& tokens, size_t& pos) {
     expect(tokens, TokenType::INT, pos);
-    var_identifier = std::make_unique<IdentifierNode>();
-    var_identifier->parse(tokens, pos); // parse function/variable name
+    this->var_identifier = std::make_unique<IdentifierNode>();
+    this->var_identifier->parse(tokens, pos); // parse function/variable name
     expect(tokens, TokenType::LPAREN, pos);
     expect(tokens, TokenType::VOID, pos);
     expect(tokens, TokenType::RPAREN, pos);
     expect(tokens, TokenType::LBRACE, pos);
-    statement = std::make_unique<StatementNode>();
-    statement->parse(tokens, pos);
+    while (tokens[pos].type != TokenType::RBRACE) {
+        auto block = std::make_unique<BlockNode>();
+        block->parse(tokens, pos);
+        this->body.push_back(std::move(block));
+    }
     expect(tokens, TokenType::RBRACE, pos);
 }
 
 void FunctionNode::dump(int indent) const {
     printIndent(indent);
     std::println("Function(");
-    if (var_identifier) {
-        var_identifier->dump(indent + 1);
+    this->var_identifier->dump(indent + 1);
+    printIndent(indent + 1);
+    std::println("body=(");
+    for (const auto& block : this->body) {
+        if (block) {
+            block->dump(indent + 2);
+        }
     }
-    if (statement) {
-        statement->dump(indent + 1);
+    printIndent(indent + 1);
+    std::println(")"); // end of body
+    printIndent(indent);
+    std::println(")"); // end of Function
+}
+
+void BlockNode::parse(std::deque<Token>& tokens, size_t& pos) {
+    if (tokens[pos].type == TokenType::INT) { // int <var_name>; | int <var_name> = <expr>;
+        this->declaration = std::make_unique<DeclarationNode>();
+        this->declaration->parse(tokens, pos);
+    } else {
+        this->statement = std::make_unique<StatementNode>();
+        this->statement->parse(tokens, pos);
+    }
+}
+
+void BlockNode::dump(int indent) const {
+    if (this->declaration) {
+        this->declaration->dump(indent);
+    } else if (this->statement) {
+        this->statement->dump(indent);
+    }
+}
+
+void StatementNode::parse(std::deque<Token>& tokens, size_t& pos) {
+    if (tokens[pos].type == TokenType::RETURN) {
+        this->return_stmt = std::make_unique<ReturnNode>();
+        this->return_stmt->parse(tokens, pos);
+    } else if (tokens[pos].type == TokenType::SEMICOLON) {
+        this->null_stmt = std::make_unique<NullNode>();
+        this->null_stmt->parse(tokens, pos);
+    } else {
+        this->expression_stmt = std::make_unique<ExpressionNode>();
+        this->expression_stmt->parse(tokens, pos);
+    }
+}
+
+void StatementNode::dump(int indent) const {
+    if (this->return_stmt) {
+        this->return_stmt->dump(indent);
+    } else if (this->null_stmt) {
+        this->null_stmt->dump(indent);
+    } else {
+        this->expression_stmt->dump(indent);
+    }
+}
+
+void ReturnNode::parse(std::deque<Token>& tokens, size_t& pos) {
+    expect(tokens, TokenType::RETURN, pos);
+    this->ret_expr = std::make_unique<ExprNode>();
+    this->ret_expr->parse(tokens, pos);
+    expect(tokens, TokenType::SEMICOLON, pos);
+}
+
+void ReturnNode::dump(int indent) const {
+    printIndent(indent);
+    std::println("Return(");
+    if (this->ret_expr) {
+        this->ret_expr->dump(indent + 1);
     }
     printIndent(indent);
     std::println(")");
 }
 
-void StatementNode::parse(std::deque<Token>& tokens, size_t& pos) {
-    expect(tokens, TokenType::RETURN, pos);
-    expr = std::make_unique<ExprNode>();
-    expr->parse(tokens, pos);
+void ExpressionNode::parse(std::deque<Token>& tokens, size_t& pos) {
+    this->expr = std::make_unique<ExprNode>();
+    this->expr->parse(tokens, pos);
     expect(tokens, TokenType::SEMICOLON, pos);
 }
 
-void StatementNode::dump(int indent) const {
+void ExpressionNode::dump(int indent) const {
     printIndent(indent);
-    std::println("body=Return(");
-    if (expr) {
-        expr->dump(indent + 1);
+    std::println("Expression(");
+    this->expr->dump(indent + 1);
+    printIndent(indent);
+    std::println(")");
+}
+
+void NullNode::parse(std::deque<Token>& tokens, size_t& pos) {
+    expect(tokens, TokenType::SEMICOLON, pos);
+}
+
+void NullNode::dump(int indent) const {
+    printIndent(indent);
+    std::println(";"); // represent null statement
+}
+
+void DeclarationNode::parse(std::deque<Token>& tokens, size_t& pos) {
+    expect(tokens, TokenType::INT, pos);
+    this->var_identifier = std::make_unique<IdentifierNode>();
+    this->var_identifier->parse(tokens, pos);
+    if (tokens[pos].type == TokenType::ASSIGN) {
+        expect(tokens, TokenType::ASSIGN, pos);
+        this->init_expr = std::make_unique<ExprNode>();
+        this->init_expr->parse(tokens, pos);
     }
+    expect(tokens, TokenType::SEMICOLON, pos);
+}
+
+void DeclarationNode::dump(int indent) const {
     printIndent(indent);
+    std::println("Declaration(");
+    this->var_identifier->dump(indent + 1, this->init_expr != nullptr);
+    if (this->init_expr) { // OPTIONAL
+        this->init_expr->dump(indent + 1);
+        printIndent(indent);
+    }
     std::println(")");
 }
 
@@ -128,52 +219,69 @@ parse_exp(1 * 2 + 3, min_prec=0)
     Result: Bin(+, Bin(*, 1, 2), 3)
 ```*/
 void ExprNode::parse(std::deque<Token>& tokens, size_t& pos, int min_precedence) {
-    left_exprf = std::make_unique<ExprFactorNode>();
-    left_exprf->parse(tokens, pos);
+    this->left_exprf = std::make_unique<ExprFactorNode>();
+    this->left_exprf->parse(tokens, pos);
 
     while (pos < tokens.size() && isBinop(tokens[pos].lexeme) &&
            getPrecedence(tokens[pos].lexeme) >= min_precedence) {
-        std::string op = tokens[pos].lexeme;
+        const auto& [token_type, op] = tokens[pos];
         int op_prec = getPrecedence(op);
 
-        binop = std::make_unique<BinaryNode>();
-        binop->parse(tokens, pos);
+        // RIGHT ASSOCIATIVE OPERATORS
+        if (token_type == TokenType::ASSIGN) {
+            expect(tokens, TokenType::ASSIGN, pos); // consume '='
 
-        right_expr = std::make_unique<ExprNode>();
-        right_expr->parse(tokens, pos, op_prec + 1); // |◍◍◍◍|
+            auto right_expr = std::make_unique<ExprNode>();
+            right_expr->parse(tokens, pos, op_prec);
 
-        auto factor = std::make_unique<BinaryNode>();
-        factor->left = std::move(left_exprf);
-        factor->right = std::move(right_expr);
-        factor->op_type = op;
+            // wrap `left_exprf` in an `ExprNode`
+            auto left_expr = std::make_unique<ExprNode>();
+            left_expr->left_exprf = std::move(this->left_exprf);
 
-        left_exprf = std::move(factor);
+            this->left_exprf =
+                std::make_unique<AssignmentNode>(std::move(left_expr), std::move(right_expr));
+        }
+        // LEFT ASSOCIATIVE OPERATORS
+        else {
+            expect(tokens, token_type, pos); // consume operator
+
+            auto right_expr = std::make_unique<ExprNode>();
+            // the + 1 makes this left associative
+            right_expr->parse(tokens, pos, op_prec + 1); // |◍◍◍◍|
+
+            // wrap `left_exprf` in an `ExprNode`
+            auto left_expr = std::make_unique<ExprNode>();
+            left_expr->left_exprf = std::move(this->left_exprf);
+
+            this->left_exprf =
+                std::make_unique<BinaryNode>(op, std::move(left_expr), std::move(right_expr));
+        }
     }
     // the final result is we need is `left_exprf`
 }
 
 /// @brief <exp> is of the form <factor> ( <binary> <expr> )*
-void ExprNode::dump(int indent) const {
-    if (left_exprf) {
-        left_exprf->dump(indent);
-    }
-}
+void ExprNode::dump(int indent) const { this->left_exprf->dump(indent); }
 
 void ExprFactorNode::parse(std::deque<Token>& tokens, size_t& pos) {
     const auto& [token_type, lexeme] = tokens[pos];
-    if (token_type == TokenType::CONSTANT) { // <constant>
-        constant = std::make_unique<ConstantNode>();
-        constant->parse(tokens, pos);
+    if (token_type == TokenType::CONSTANT) { // <int>: a constant integer
+        this->constant = std::make_unique<ConstantNode>();
+        this->constant->parse(tokens, pos);
+    } else if (token_type == TokenType::IDENTIFIER) { // <identifier>
+        this->var_identifier = std::make_unique<VarNode>();
+        this->var_identifier->parse(tokens, pos);
     } else if (isUnary(lexeme)) { // <unary> <factor>
-        unary = std::make_unique<UnaryNode>();
-        unary->parse(tokens, pos);
-        factor = std::make_unique<ExprFactorNode>();
-        factor->parse(tokens, pos);
-    } else if (token_type == TokenType::LPAREN) { // "(<expr>)"
+        this->unary = std::make_unique<UnaryNode>();
+        this->unary->parse(tokens, pos);
+        // should I keep the below lines in `UnaryNode::parse`?
+        this->unary->operand = std::make_unique<ExprFactorNode>();
+        this->unary->operand->parse(tokens, pos);
+    } else if (token_type == TokenType::LPAREN) { // "(" <expr> ")"
         expect(tokens, TokenType::LPAREN, pos);
-        expr = std::make_unique<ExprNode>();
+        this->expr = std::make_unique<ExprNode>();
         // 0 init precedence when parsing a factor
-        expr->parse(tokens, pos, 0);
+        this->expr->parse(tokens, pos, 0);
         expect(tokens, TokenType::RPAREN, pos);
     } else {
         throw std::runtime_error("Syntax Error: Malformed Expression Factor");
@@ -181,22 +289,29 @@ void ExprFactorNode::parse(std::deque<Token>& tokens, size_t& pos) {
 }
 
 void ExprFactorNode::dump(int indent) const {
-    if (constant) {
-        constant->dump(indent);
-        return;
+    if (this->constant) {
+        this->constant->dump(indent);
+    } else if (this->var_identifier) {
+        this->var_identifier->dump(indent);
+    } else if (this->unary) {
+        this->unary->dump(indent);
+    } else if (this->expr) {
+        this->expr->dump(indent);
+    } else {
+        throw std::runtime_error("Malformed Expression Factor during dump");
     }
-    if (unary && factor) {
-        printIndent(indent);
-        std::println("Unary({},", unary->op_type);
-        factor->dump(indent + 1);
-        printIndent(indent);
-        std::println(")");
-        return;
-    }
-    if (expr) {
-        expr->dump(indent);
-        return;
-    }
+}
+
+void VarNode::parse(std::deque<Token>& tokens, size_t& pos) {
+    this->var_name = std::make_unique<IdentifierNode>();
+    this->var_name->parse(tokens, pos);
+}
+
+void VarNode::dump(int indent) const {
+    printIndent(indent);
+    std::print("Var(");
+    this->var_name->dump(0, false);
+    std::println(")");
 }
 
 void IdentifierNode::parse(std::deque<Token>& tokens, size_t& pos) {
@@ -205,12 +320,15 @@ void IdentifierNode::parse(std::deque<Token>& tokens, size_t& pos) {
         throw std::runtime_error(
             std::format("Syntax Error: Expected identifier but got '{}'", actual));
     }
-    name = actual;
+    this->name = actual;
 }
 
-void IdentifierNode::dump(int indent) const {
+void IdentifierNode::dump(int indent, bool new_line) const {
     printIndent(indent);
-    std::println("name='{}'", name);
+    std::print("name='{}'", this->name);
+    if (new_line) {
+        std::println();
+    }
 }
 
 void ConstantNode::parse(std::deque<Token>& tokens, size_t& pos) {
@@ -219,12 +337,12 @@ void ConstantNode::parse(std::deque<Token>& tokens, size_t& pos) {
         throw std::runtime_error(
             std::format("Syntax Error: Expected constant integer but got '{}'", actual));
     }
-    val = actual;
+    this->val = actual;
 }
 
 void ConstantNode::dump(int indent) const {
     printIndent(indent);
-    std::println("Constant({})", val);
+    std::println("Constant({})", this->val);
 }
 
 void UnaryNode::parse(std::deque<Token>& tokens, size_t& pos) {
@@ -234,12 +352,15 @@ void UnaryNode::parse(std::deque<Token>& tokens, size_t& pos) {
             std::format("Syntax Error: Expected a unary operator but got '{}':'{}' at pos:{}",
                         tokenTypeToString(token_type), actual, pos));
     }
-    op_type = actual;
+    this->op_type = actual;
 }
 
 void UnaryNode::dump(int indent) const {
     printIndent(indent);
-    std::println("Unary({})", op_type);
+    std::println("Unary({}", this->op_type);
+    this->operand->dump(indent + 1);
+    printIndent(indent);
+    std::println(")");
 }
 
 void BinaryNode::parse(std::deque<Token>& tokens, size_t& pos) {
@@ -249,18 +370,31 @@ void BinaryNode::parse(std::deque<Token>& tokens, size_t& pos) {
             std::format("Syntax Error: Expected binary operator but got '{}' : '{}' at pos:{}",
                         tokenTypeToString(token_type), actual, pos));
     }
-    op_type = actual;
+    this->op_type = actual;
 }
 
 void BinaryNode::dump(int indent) const {
     printIndent(indent);
-    std::println("Binary({},", op_type);
-    if (left) {
-        left->dump(indent + 1);
-    }
-    if (right) {
-        right->dump(indent + 1);
-    }
+    std::println("Binary({},", this->op_type);
+    this->left_expr->dump(indent + 1);
+    this->right_expr->dump(indent + 1);
+    printIndent(indent);
+    std::println(")");
+}
+
+void AssignmentNode::parse(std::deque<Token>& tokens, size_t& pos) {
+    this->left_expr = std::make_unique<ExprNode>();
+    this->left_expr->parse(tokens, pos);
+    expect(tokens, TokenType::ASSIGN, pos);
+    this->right_expr = std::make_unique<ExprNode>();
+    this->right_expr->parse(tokens, pos);
+}
+
+void AssignmentNode::dump(int indent) const {
+    printIndent(indent);
+    std::println("Assignment(");
+    this->left_expr->dump(indent + 1);
+    this->right_expr->dump(indent + 1);
     printIndent(indent);
     std::println(")");
 }
@@ -312,4 +446,4 @@ int main(int argc, char* argv[]) {
     ast->dump();
     return 0;
 }
-*/
+// */

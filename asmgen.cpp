@@ -159,7 +159,6 @@ std::shared_ptr<AsmOperandNode> IRVariableNode::emit_asm() {
     return std::make_shared<AsmPseudoNode>(this->var_name);
 }
 
-// temp stub implementations for testing irgen.cpp
 std::vector<std::unique_ptr<AsmInstructionNode>> IRCopyNode::emit_asm() {
     auto instructions = std::vector<std::unique_ptr<AsmInstructionNode>>();
     auto src = this->val_src->emit_asm();
@@ -235,10 +234,9 @@ namespace { // no-name namespace for helper function
 /// @param pseudo_reg_map The map of pseudo registers to stack offsets.
 /// @param stack_offset The current stack offset.
 /// @return A shared pointer to the resolved stack node.
-std::shared_ptr<AsmStackNode>
-_resolvePseudoRegister(AsmPseudoNode* pseudo_src, // TODO(VachanVY): careful: raw pointer, can we
-                                                  // avoid using raw pointer?
-                       std::unordered_map<std::string, int>& pseudo_reg_map, int& stack_offset) {
+std::shared_ptr<AsmStackNode> _resolvePseudoRegister(
+    AsmPseudoNode* pseudo_src, // TODO(VachanVY): can we avoid using raw pointer?
+    std::unordered_map<std::string, int>& pseudo_reg_map, int& stack_offset) {
     // check if pseudo register already assigned in map
     bool assigned = pseudo_reg_map.contains(pseudo_src->identifier);
 
@@ -485,6 +483,9 @@ int main(int argc, char* argv[]) {
         std::println("{}, {}, {}", i++, tokenTypeToString(token_type), lexeme);
     }
     auto ast = parse(tokens);
+    ast->dump();
+    SymbolTable sym_table;
+    ast->resolveTypes(sym_table);
     ast->dump();
     auto ir_ast = ast->emit_ir();
     ir_ast->dump_ir();

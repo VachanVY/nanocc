@@ -44,7 +44,7 @@ class AsmProgramNode : public AsmASTNode {
                                 int& nxt_offset);
     void fixUpInstructions(const int& stack_size);
 
-    void emit_asm(std::ostream& os);
+    void generateAsm(std::ostream& os);
 };
 
 class AsmFunctionNode : public AsmASTNode {
@@ -63,7 +63,7 @@ class AsmFunctionNode : public AsmASTNode {
                                 int& nxt_offset);
     void fixUpInstructions(const int& stack_size);
 
-    void emit_asm(std::ostream& os);
+    void generateAsm(std::ostream& os);
 };
 
 // Instruction Nodes -- base
@@ -73,11 +73,11 @@ class AsmInstructionNode : public AsmASTNode {
         return dynamic_cast<const AsmInstructionNode*>(node) != nullptr;
     }
     virtual void resolvePseudoRegisters(std::unordered_map<std::string, int>& pseudo_reg_map,
-                                        int& nxt_offset){}; // default no-op
-    virtual void fixUpInstructions(
-        std::vector<std::unique_ptr<AsmInstructionNode>>& instructions){}; // default no-op
+                                        int& nxt_offset) {}; // default no-op
+    virtual void fixUpInstructions(std::vector<std::unique_ptr<AsmInstructionNode>>& instructions) {
+    }; // default no-op
 
-    virtual void emit_asm(std::ostream& os) = 0;
+    virtual void generateAsm(std::ostream& os) = 0;
 };
 
 class AsmMovNode : public AsmInstructionNode {
@@ -97,7 +97,7 @@ class AsmMovNode : public AsmInstructionNode {
                                 int& nxt_offset) override;
     void fixUpInstructions(std::vector<std::unique_ptr<AsmInstructionNode>>& instructions) override;
 
-    void emit_asm(std::ostream& os) override;
+    void generateAsm(std::ostream& os) override;
 };
 
 class AsmUnaryNode : public AsmInstructionNode {
@@ -115,7 +115,7 @@ class AsmUnaryNode : public AsmInstructionNode {
 
     void resolvePseudoRegisters(std::unordered_map<std::string, int>& pseudo_reg_map,
                                 int& nxt_offset) override;
-    void emit_asm(std::ostream& os) override;
+    void generateAsm(std::ostream& os) override;
 };
 
 class AsmBinaryNode : public AsmInstructionNode {
@@ -135,7 +135,7 @@ class AsmBinaryNode : public AsmInstructionNode {
     void resolvePseudoRegisters(std::unordered_map<std::string, int>& pseudo_reg_map,
                                 int& nxt_offset) override;
     void fixUpInstructions(std::vector<std::unique_ptr<AsmInstructionNode>>& instructions) override;
-    void emit_asm(std::ostream& os) override;
+    void generateAsm(std::ostream& os) override;
 };
 
 class AsmCmpNode : public AsmInstructionNode {
@@ -155,7 +155,7 @@ class AsmCmpNode : public AsmInstructionNode {
     void resolvePseudoRegisters(std::unordered_map<std::string, int>& pseudo_reg_map,
                                 int& nxt_offset) override;
     void fixUpInstructions(std::vector<std::unique_ptr<AsmInstructionNode>>& instructions) override;
-    void emit_asm(std::ostream& os) override;
+    void generateAsm(std::ostream& os) override;
 };
 
 class AsmIdivNode : public AsmInstructionNode {
@@ -171,7 +171,7 @@ class AsmIdivNode : public AsmInstructionNode {
     void resolvePseudoRegisters(std::unordered_map<std::string, int>& pseudo_reg_map,
                                 int& nxt_offset) override;
     void fixUpInstructions(std::vector<std::unique_ptr<AsmInstructionNode>>& instructions) override;
-    void emit_asm(std::ostream& os) override;
+    void generateAsm(std::ostream& os) override;
 };
 
 class AsmCdqNode : public AsmInstructionNode {
@@ -180,8 +180,8 @@ class AsmCdqNode : public AsmInstructionNode {
         return dynamic_cast<const AsmCdqNode*>(node) != nullptr;
     }
     void resolvePseudoRegisters(std::unordered_map<std::string, int>& pseudo_reg_map,
-                                int& nxt_offset) override{}; // no-op
-    void emit_asm(std::ostream& os) override;
+                                int& nxt_offset) override {}; // no-op
+    void generateAsm(std::ostream& os) override;
 };
 
 class AsmJmpNode : public AsmInstructionNode {
@@ -194,7 +194,7 @@ class AsmJmpNode : public AsmInstructionNode {
     static bool classof(const AsmInstructionNode* node) {
         return dynamic_cast<const AsmJmpNode*>(node) != nullptr;
     }
-    void emit_asm(std::ostream& os) override;
+    void generateAsm(std::ostream& os) override;
 };
 
 class AsmJmpCCNode : public AsmInstructionNode {
@@ -209,7 +209,7 @@ class AsmJmpCCNode : public AsmInstructionNode {
     static bool classof(const AsmInstructionNode* node) {
         return dynamic_cast<const AsmJmpCCNode*>(node) != nullptr;
     }
-    void emit_asm(std::ostream& os) override;
+    void generateAsm(std::ostream& os) override;
 };
 
 class AsmSetCCNode : public AsmInstructionNode {
@@ -227,7 +227,7 @@ class AsmSetCCNode : public AsmInstructionNode {
 
     void resolvePseudoRegisters(std::unordered_map<std::string, int>& pseudo_reg_map,
                                 int& nxt_offset) override;
-    void emit_asm(std::ostream& os) override;
+    void generateAsm(std::ostream& os) override;
 };
 
 class AsmLabelNode : public AsmInstructionNode {
@@ -241,7 +241,7 @@ class AsmLabelNode : public AsmInstructionNode {
         return dynamic_cast<const AsmLabelNode*>(node) != nullptr;
     }
 
-    void emit_asm(std::ostream& os) override;
+    void generateAsm(std::ostream& os) override;
 };
 
 class AsmAllocateStackNode : public AsmInstructionNode {
@@ -255,11 +255,12 @@ class AsmAllocateStackNode : public AsmInstructionNode {
         return dynamic_cast<const AsmAllocateStackNode*>(node) != nullptr;
     }
     void resolvePseudoRegisters(std::unordered_map<std::string, int>& pseudo_reg_map,
-                                int& nxt_offset) override{}; // no-op
-    void fixUpInstructions(
-        std::vector<std::unique_ptr<AsmInstructionNode>>& instructions) override{}; // no-op
+                                int& nxt_offset) override {}; // no-op
+    void
+    fixUpInstructions(std::vector<std::unique_ptr<AsmInstructionNode>>& instructions) override {
+    }; // no-op
 
-    void emit_asm(std::ostream& os) override;
+    void generateAsm(std::ostream& os) override;
 };
 
 class AsmRetNode : public AsmInstructionNode {
@@ -268,11 +269,12 @@ class AsmRetNode : public AsmInstructionNode {
         return dynamic_cast<const AsmRetNode*>(node) != nullptr;
     }
     void resolvePseudoRegisters(std::unordered_map<std::string, int>& pseudo_reg_map,
-                                int& nxt_offset) override{}; // no-op
-    void fixUpInstructions(
-        std::vector<std::unique_ptr<AsmInstructionNode>>& instructions) override{}; // no-op
+                                int& nxt_offset) override {}; // no-op
+    void
+    fixUpInstructions(std::vector<std::unique_ptr<AsmInstructionNode>>& instructions) override {
+    }; // no-op
 
-    void emit_asm(std::ostream& os) override;
+    void generateAsm(std::ostream& os) override;
 };
 // Instruction Nodes -- end
 
@@ -282,7 +284,7 @@ class AsmOperandNode : public AsmASTNode {
     virtual ~AsmOperandNode() = default;
     static bool classof(const AsmOperandNode* node) { return node != nullptr; }
 
-    virtual void emit_asm(std::ostream& os) = 0;
+    virtual void generateAsm(std::ostream& os) = 0;
 };
 
 class AsmImmediateNode : public AsmOperandNode {
@@ -296,7 +298,7 @@ class AsmImmediateNode : public AsmOperandNode {
         return dynamic_cast<const AsmImmediateNode*>(node) != nullptr;
     }
 
-    void emit_asm(std::ostream& os) override;
+    void generateAsm(std::ostream& os) override;
 };
 
 class AsmRegisterNode : public AsmOperandNode {
@@ -310,7 +312,7 @@ class AsmRegisterNode : public AsmOperandNode {
         return dynamic_cast<const AsmRegisterNode*>(node) != nullptr;
     }
 
-    void emit_asm(std::ostream& os) override;
+    void generateAsm(std::ostream& os) override;
 };
 
 class AsmPseudoNode : public AsmOperandNode {
@@ -324,7 +326,7 @@ class AsmPseudoNode : public AsmOperandNode {
         return dynamic_cast<const AsmPseudoNode*>(node) != nullptr;
     }
 
-    void emit_asm(std::ostream& os) override {
+    void generateAsm(std::ostream& os) override {
         throw std::runtime_error("AsmPseudoNode should have been resolved before emission");
     };
 };
@@ -342,6 +344,6 @@ class AsmStackNode : public AsmOperandNode {
         return dynamic_cast<const AsmStackNode*>(node) != nullptr;
     }
 
-    void emit_asm(std::ostream& os) override;
+    void generateAsm(std::ostream& os) override;
 };
 // Operand Nodes -- end

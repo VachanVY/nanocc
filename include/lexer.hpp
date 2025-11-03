@@ -26,6 +26,8 @@
     X(AND, "&&")                                                                                   \
     X(OR, "||")                                                                                    \
                                                                                                    \
+    X(ASSIGN, "=")                                                                                 \
+                                                                                                   \
     X(EQUAL, "==")                                                                                 \
     X(NOT_EQUAL, "!=")                                                                             \
     X(LESSTHAN, "<")                                                                               \

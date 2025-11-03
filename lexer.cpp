@@ -26,6 +26,9 @@ std::pair<TokenType, std::regex> token_specs[] = {
     {TokenType::AND, std::regex("&&")},
     {TokenType::OR, std::regex("\\|\\|")},
 
+    // assignment operators // comes under binary operators but has less precedence
+    {TokenType::ASSIGN, std::regex("=")},
+
     {TokenType::EQUAL, std::regex("==")},
     {TokenType::NOT_EQUAL, std::regex("!=")},
     {TokenType::LESSTHAN, std::regex("<")},
