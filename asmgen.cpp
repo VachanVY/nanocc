@@ -234,9 +234,9 @@ namespace { // no-name namespace for helper function
 /// @param pseudo_reg_map The map of pseudo registers to stack offsets.
 /// @param stack_offset The current stack offset.
 /// @return A shared pointer to the resolved stack node.
-std::shared_ptr<AsmStackNode> _resolvePseudoRegister(
-    AsmPseudoNode* pseudo_src, // TODO(VachanVY): can we avoid using raw pointer?
-    std::unordered_map<std::string, int>& pseudo_reg_map, int& stack_offset) {
+std::shared_ptr<AsmStackNode>
+_resolvePseudoRegister(AsmPseudoNode* pseudo_src, // TODO(VachanVY): can we avoid using raw pointer?
+                       std::unordered_map<std::string, int>& pseudo_reg_map, int& stack_offset) {
     // check if pseudo register already assigned in map
     bool assigned = pseudo_reg_map.contains(pseudo_src->identifier);
 

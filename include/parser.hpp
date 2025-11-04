@@ -19,6 +19,7 @@ class BlockNode;
 class StatementNode; // derived from BlockNode
 class ReturnNode;
 class ExpressionNode;
+class IfElseNode;
 class NullNode;
 
 class DeclarationNode; // derived from BlockNode
@@ -31,6 +32,7 @@ class ConstantNode;
 class UnaryNode;
 class BinaryNode;
 class AssignmentNode;
+class ConditionalNode;
 
 class IdentifierNode; // Do we need this? Just a string would do?
 
@@ -48,7 +50,7 @@ class ProgramNode : public ASTNode {
     void parse(std::deque<Token>& tokens, size_t& pos);
     void dump(int indent = 0) const override;
     void resolveTypes(SymbolTable& sym_table);
-    std::unique_ptr<IRProgramNode> emit_ir();
+    // std::unique_ptr<IRProgramNode> emit_ir();
 };
 
 class FunctionNode : public ASTNode {
@@ -59,7 +61,7 @@ class FunctionNode : public ASTNode {
     void parse(std::deque<Token>& tokens, size_t& pos);
     void dump(int indent = 0) const override;
     void resolveTypes(SymbolTable& sym_table);
-    std::unique_ptr<IRFunctionNode> emit_ir();
+    // std::unique_ptr<IRFunctionNode> emit_ir();
 };
 
 class BlockNode : public ASTNode {
@@ -70,7 +72,7 @@ class BlockNode : public ASTNode {
     void parse(std::deque<Token>& tokens, size_t& pos);
     void dump(int indent = 0) const override;
     void resolveTypes(SymbolTable& sym_table);
-    std::vector<std::unique_ptr<IRInstructionNode>> emit_ir();
+    // std::vector<std::unique_ptr<IRInstructionNode>> emit_ir();
 };
 
 class DeclarationNode : public BlockNode {
@@ -81,19 +83,20 @@ class DeclarationNode : public BlockNode {
     void parse(std::deque<Token>& tokens, size_t& pos);
     void dump(int indent = 0) const override;
     void resolveTypes(SymbolTable& sym_table);
-    std::vector<std::unique_ptr<IRInstructionNode>> emit_ir();
+    // std::vector<std::unique_ptr<IRInstructionNode>> emit_ir();
 };
 
 class StatementNode : public BlockNode {
   public:
     std::unique_ptr<ReturnNode> return_stmt;
     std::unique_ptr<ExpressionNode> expression_stmt;
+    std::unique_ptr<IfElseNode> ifelse_stmt;
     std::unique_ptr<NullNode> null_stmt;
 
     void parse(std::deque<Token>& tokens, size_t& pos);
     void dump(int indent = 0) const override;
     void resolveTypes(SymbolTable& sym_table);
-    std::vector<std::unique_ptr<IRInstructionNode>> emit_ir();
+    // std::vector<std::unique_ptr<IRInstructionNode>> emit_ir();
 };
 
 class ReturnNode : public StatementNode {
@@ -103,7 +106,7 @@ class ReturnNode : public StatementNode {
     void parse(std::deque<Token>& tokens, size_t& pos);
     void dump(int indent = 0) const override;
     void resolveTypes(SymbolTable& sym_table);
-    std::vector<std::unique_ptr<IRInstructionNode>> emit_ir();
+    // std::vector<std::unique_ptr<IRInstructionNode>> emit_ir();
 };
 
 // for non-return statements
@@ -114,7 +117,19 @@ class ExpressionNode : public StatementNode {
     void parse(std::deque<Token>& tokens, size_t& pos);
     void dump(int indent = 0) const override;
     void resolveTypes(SymbolTable& sym_table);
-    std::vector<std::unique_ptr<IRInstructionNode>> emit_ir();
+    // std::vector<std::unique_ptr<IRInstructionNode>> emit_ir();
+};
+
+class IfElseNode : public StatementNode {
+  public:
+    std::unique_ptr<ExprNode> condition;
+    std::unique_ptr<StatementNode> if_block;
+    std::unique_ptr<StatementNode> else_block; // OPTIONAL
+
+    void parse(std::deque<Token>& tokens, size_t& pos);
+    void dump(int indent = 0) const override;
+    void resolveTypes(SymbolTable& sym_table);
+    /* std::vector<std::unique_ptr<IRInstructionNode>> emit_ir(); */
 };
 
 // for null statements (i.e., just a semicolon)
@@ -122,6 +137,7 @@ class NullNode : public ExpressionNode {
   public:
     void parse(std::deque<Token>& tokens, size_t& pos);
     void dump(int indent = 0) const override;
+    void resolveTypes(SymbolTable& sym_table){}; // no-op
     std::vector<std::unique_ptr<IRInstructionNode>> emit_ir();
 };
 
@@ -134,8 +150,8 @@ class ExprNode : public ASTNode {
     void parse(std::deque<Token>& tokens, size_t& pos, int min_precedence = 0);
     void dump(int indent = 0) const override;
     void resolveTypes(SymbolTable& sym_table);
-    virtual std::shared_ptr<IRValNode> // runtime polymorphism for ExprFactorNode
-    emit_ir(std::vector<std::unique_ptr<IRInstructionNode>>& instructions);
+    // virtual std::shared_ptr<IRValNode> // runtime polymorphism for ExprFactorNode
+    // emit_ir(std::vector<std::unique_ptr<IRInstructionNode>>& instructions);
 };
 
 class ExprFactorNode : public ExprNode {
@@ -147,11 +163,11 @@ class ExprFactorNode : public ExprNode {
 
     void parse(std::deque<Token>& tokens, size_t& pos);
     void dump(int indent = 0) const override;
+    /// @brief runtime polymorphism for BinaryNode, AssignmentNode, ConditionalNode
     virtual void resolveTypes(SymbolTable& sym_table);
     // runtime polymorphism for BinaryNode, AssignmentNode,
-    // (ConstantNode, UnaryNode, not sure about these...)
-    virtual std::shared_ptr<IRValNode>
-    emit_ir(std::vector<std::unique_ptr<IRInstructionNode>>& instructions);
+    // virtual std::shared_ptr<IRValNode>
+    // emit_ir(std::vector<std::unique_ptr<IRInstructionNode>>& instructions);
 };
 
 class ConstantNode : public ExprFactorNode {
@@ -218,6 +234,25 @@ class AssignmentNode : public ExprFactorNode {
     static bool classof(const ExprFactorNode* u) {
         return dynamic_cast<const AssignmentNode*>(u) != nullptr;
     }
+};
+
+class ConditionalNode : public ExprFactorNode {
+  public:
+    std::unique_ptr<ExprNode> condition;
+    std::unique_ptr<ExprNode> true_expr;
+    std::unique_ptr<ExprNode> false_expr;
+
+    ConditionalNode() = default;
+    ConditionalNode(std::unique_ptr<ExprNode> cond, std::unique_ptr<ExprNode> t_expr,
+                    std::unique_ptr<ExprNode> f_expr)
+        : condition(std::move(cond)), true_expr(std::move(t_expr)), false_expr(std::move(f_expr)) {}
+
+    void parse(std::deque<Token>& tokens, size_t& pos);
+    void dump(int indent = 0) const override;
+    void resolveTypes(SymbolTable& sym_table) override;
+    /* static bool classof(const ExprFactorNode* u) {
+        return dynamic_cast<const ConditionalNode*>(u) != nullptr;
+    } */
 };
 
 class IdentifierNode : public ASTNode {

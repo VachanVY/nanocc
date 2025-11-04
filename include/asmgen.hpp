@@ -73,9 +73,9 @@ class AsmInstructionNode : public AsmASTNode {
         return dynamic_cast<const AsmInstructionNode*>(node) != nullptr;
     }
     virtual void resolvePseudoRegisters(std::unordered_map<std::string, int>& pseudo_reg_map,
-                                        int& nxt_offset) {}; // default no-op
-    virtual void fixUpInstructions(std::vector<std::unique_ptr<AsmInstructionNode>>& instructions) {
-    }; // default no-op
+                                        int& nxt_offset){}; // default no-op
+    virtual void fixUpInstructions(
+        std::vector<std::unique_ptr<AsmInstructionNode>>& instructions){}; // default no-op
 
     virtual void generateAsm(std::ostream& os) = 0;
 };
@@ -180,7 +180,7 @@ class AsmCdqNode : public AsmInstructionNode {
         return dynamic_cast<const AsmCdqNode*>(node) != nullptr;
     }
     void resolvePseudoRegisters(std::unordered_map<std::string, int>& pseudo_reg_map,
-                                int& nxt_offset) override {}; // no-op
+                                int& nxt_offset) override{}; // no-op
     void generateAsm(std::ostream& os) override;
 };
 
@@ -255,10 +255,9 @@ class AsmAllocateStackNode : public AsmInstructionNode {
         return dynamic_cast<const AsmAllocateStackNode*>(node) != nullptr;
     }
     void resolvePseudoRegisters(std::unordered_map<std::string, int>& pseudo_reg_map,
-                                int& nxt_offset) override {}; // no-op
-    void
-    fixUpInstructions(std::vector<std::unique_ptr<AsmInstructionNode>>& instructions) override {
-    }; // no-op
+                                int& nxt_offset) override{}; // no-op
+    void fixUpInstructions(
+        std::vector<std::unique_ptr<AsmInstructionNode>>& instructions) override{}; // no-op
 
     void generateAsm(std::ostream& os) override;
 };
@@ -269,10 +268,9 @@ class AsmRetNode : public AsmInstructionNode {
         return dynamic_cast<const AsmRetNode*>(node) != nullptr;
     }
     void resolvePseudoRegisters(std::unordered_map<std::string, int>& pseudo_reg_map,
-                                int& nxt_offset) override {}; // no-op
-    void
-    fixUpInstructions(std::vector<std::unique_ptr<AsmInstructionNode>>& instructions) override {
-    }; // no-op
+                                int& nxt_offset) override{}; // no-op
+    void fixUpInstructions(
+        std::vector<std::unique_ptr<AsmInstructionNode>>& instructions) override{}; // no-op
 
     void generateAsm(std::ostream& os) override;
 };

@@ -23,6 +23,10 @@ void StatementNode::resolveTypes(SymbolTable& sym_table) {
         this->return_stmt->resolveTypes(sym_table);
     } else if (this->expression_stmt) {
         this->expression_stmt->resolveTypes(sym_table);
+    } else if (this->ifelse_stmt) {
+        this->ifelse_stmt->resolveTypes(sym_table);
+    } else if (this->null_stmt) {
+        this->null_stmt->resolveTypes(sym_table); // no-op
     }
 }
 
@@ -30,6 +34,15 @@ void ReturnNode::resolveTypes(SymbolTable& sym_table) { this->ret_expr->resolveT
 
 void ExpressionNode::resolveTypes(SymbolTable& sym_table) { this->expr->resolveTypes(sym_table); }
 
+void IfElseNode::resolveTypes(SymbolTable& sym_table) {
+    this->condition->resolveTypes(sym_table);
+    this->if_block->resolveTypes(sym_table);
+    if (this->else_block) {
+        this->else_block->resolveTypes(sym_table);
+    }
+}
+
+/// @brief Check for variable redeclaration; Add to symbol table after giving unique name;
 void DeclarationNode::resolveTypes(SymbolTable& sym_table) {
     if (sym_table.contains(this->var_identifier->name)) {
         throw std::runtime_error(
@@ -58,6 +71,7 @@ void ExprFactorNode::resolveTypes(SymbolTable& sym_table) {
     }
 }
 
+/// @brief Should already be added to the symbol table by `DeclarationNode`
 void VarNode::resolveTypes(SymbolTable& sym_table) {
     if (sym_table.contains(this->var_name->name)) {
         this->var_name->name = sym_table[this->var_name->name];
@@ -67,11 +81,12 @@ void VarNode::resolveTypes(SymbolTable& sym_table) {
     }
 }
 
+/// @brief left_expr of a `AssignmentNode` must be a `VarNode`
 void AssignmentNode::resolveTypes(SymbolTable& sym_table) {
     assert(this->left_expr && this->left_expr->left_exprf &&
            "Left expression or its factor is null in `AssignmentNode::resolveTypes`");
     auto left_factor = this->left_expr->left_exprf.get();
-    if (!left_factor->var_identifier) { /* !isa<VarNode>(left_factor) && */
+    if (!left_factor->var_identifier) {
         throw std::runtime_error("Type Error: Left-hand side of assignment must be a variable");
     }
 
@@ -79,11 +94,21 @@ void AssignmentNode::resolveTypes(SymbolTable& sym_table) {
     this->right_expr->resolveTypes(sym_table);
 }
 
+void ConditionalNode::resolveTypes(SymbolTable& sym_table) {
+    this->condition->resolveTypes(sym_table);
+    this->true_expr->resolveTypes(sym_table);
+    this->false_expr->resolveTypes(sym_table);
+}
+
 void BinaryNode::resolveTypes(SymbolTable& sym_table) {
     this->left_expr->resolveTypes(sym_table);
     this->right_expr->resolveTypes(sym_table);
 }
 
+/* 
+- Detect errors of type `<unary_op> <exprfactor> = <expr>`
+- eg: !a = 3 ==parsed_as=> UnaryNode('!', AssignmentNode(VarNode('a'), ConstantNode('3')));
+*/
 void UnaryNode::resolveTypes(SymbolTable& sym_table) {
     assert(this->operand && "Operand is null in `UnaryNode::resolveTypes`");
     if (isa<AssignmentNode>(this->operand.get())) {
@@ -92,7 +117,7 @@ void UnaryNode::resolveTypes(SymbolTable& sym_table) {
     this->operand->resolveTypes(sym_table);
 }
 
-/*
+// /*
 int main(int argc, char* argv[]) {
     if (argc < 2) {
         std::println(stderr,
@@ -129,4 +154,4 @@ int main(int argc, char* argv[]) {
     ast->dump();
     return 0;
 }
-*/
+// */

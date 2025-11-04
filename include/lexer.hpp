@@ -12,6 +12,10 @@
     X(INT, "int")                                                                                  \
     X(VOID, "void")                                                                                \
     X(RETURN, "return")                                                                            \
+    X(IF, "if")                                                                                    \
+    X(ELSE, "else")                                                                                \
+    X(QUESTION, "?")                                                                               \
+    X(COLON, ":")                                                                                  \
                                                                                                    \
     X(TILDE, "~")                                                                                  \
     X(DECREMENT, "--")                                                                             \

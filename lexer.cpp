@@ -11,6 +11,10 @@ std::pair<TokenType, std::regex> token_specs[] = {
     {TokenType::INT, std::regex("int\\b")},
     {TokenType::VOID, std::regex("void\\b")},
     {TokenType::RETURN, std::regex("return\\b")},
+    {TokenType::IF, std::regex("if\\b")},
+    {TokenType::ELSE, std::regex("else\\b")},
+    {TokenType::QUESTION, std::regex("\\?")},
+    {TokenType::COLON, std::regex(":")},
 
     // "unary operators"
     {TokenType::TILDE, std::regex("~")},

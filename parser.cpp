@@ -9,8 +9,8 @@
 
 namespace { // some helper vars/functions
 static const std::unordered_map<std::string, int> BINOP_PRECEDENCE = {
-    {"*", 50}, {"/", 50},  {"%", 50},  {"+", 45},  {"-", 45},  {"<", 35}, {"<=", 35},
-    {">", 35}, {">=", 35}, {"==", 30}, {"!=", 30}, {"&&", 10}, {"||", 5}, {"=", 1}};
+    {"*", 50},  {"/", 50},  {"%", 50},  {"+", 45},  {"-", 45}, {"<", 35}, {"<=", 35}, {">", 35},
+    {">=", 35}, {"==", 30}, {"!=", 30}, {"&&", 10}, {"||", 5}, {"?", 3},  {"=", 1}};
 
 inline bool isUnary(const std::string& op) {
     return op == "~" || op == "-" || op == "!";
@@ -122,6 +122,9 @@ void StatementNode::parse(std::deque<Token>& tokens, size_t& pos) {
     } else if (tokens[pos].type == TokenType::SEMICOLON) {
         this->null_stmt = std::make_unique<NullNode>();
         this->null_stmt->parse(tokens, pos);
+    } else if (tokens[pos].type == TokenType::IF) {
+        this->ifelse_stmt = std::make_unique<IfElseNode>();
+        this->ifelse_stmt->parse(tokens, pos);
     } else {
         this->expression_stmt = std::make_unique<ExpressionNode>();
         this->expression_stmt->parse(tokens, pos);
@@ -133,6 +136,8 @@ void StatementNode::dump(int indent) const {
         this->return_stmt->dump(indent);
     } else if (this->null_stmt) {
         this->null_stmt->dump(indent);
+    } else if (this->ifelse_stmt) {
+        this->ifelse_stmt->dump(indent);
     } else {
         this->expression_stmt->dump(indent);
     }
@@ -165,6 +170,35 @@ void ExpressionNode::dump(int indent) const {
     printIndent(indent);
     std::println("Expression(");
     this->expr->dump(indent + 1);
+    printIndent(indent);
+    std::println(")");
+}
+
+void IfElseNode::parse(std::deque<Token>& tokens, size_t& pos) {
+    expect(tokens, TokenType::IF, pos);
+    expect(tokens, TokenType::LPAREN, pos);
+    this->condition = std::make_unique<ExprNode>();
+    this->condition->parse(tokens, pos);
+    expect(tokens, TokenType::RPAREN, pos);
+
+    this->if_block = std::make_unique<StatementNode>();
+    this->if_block->parse(tokens, pos);
+
+    if (tokens[pos].type == TokenType::ELSE) {
+        expect(tokens, TokenType::ELSE, pos);
+        this->else_block = std::make_unique<StatementNode>();
+        this->else_block->parse(tokens, pos);
+    }
+}
+
+void IfElseNode::dump(int indent) const {
+    printIndent(indent);
+    std::println("IfElse(");
+    this->condition->dump(indent + 1);
+    this->if_block->dump(indent + 1);
+    if (this->else_block) {
+        this->else_block->dump(indent + 1);
+    }
     printIndent(indent);
     std::println(")");
 }
@@ -227,30 +261,43 @@ void ExprNode::parse(std::deque<Token>& tokens, size_t& pos, int min_precedence)
         const auto& [token_type, op] = tokens[pos];
         int op_prec = getPrecedence(op);
 
+        auto right_expr = std::make_unique<ExprNode>();
+        auto left_expr = std::make_unique<ExprNode>();
         // RIGHT ASSOCIATIVE OPERATORS
         if (token_type == TokenType::ASSIGN) {
             expect(tokens, TokenType::ASSIGN, pos); // consume '='
 
-            auto right_expr = std::make_unique<ExprNode>();
             right_expr->parse(tokens, pos, op_prec);
 
             // wrap `left_exprf` in an `ExprNode`
-            auto left_expr = std::make_unique<ExprNode>();
             left_expr->left_exprf = std::move(this->left_exprf);
 
             this->left_exprf =
                 std::make_unique<AssignmentNode>(std::move(left_expr), std::move(right_expr));
+        } else if (token_type == TokenType::QUESTION) {
+            expect(tokens, TokenType::QUESTION, pos); // consume '?'
+
+            auto middle_expr = std::make_unique<ExprNode>();
+            middle_expr->parse(tokens, pos, 0); // reset precedence for middle expr
+
+            expect(tokens, TokenType::COLON, pos); // consume ':'
+
+            right_expr->parse(tokens, pos, op_prec);
+
+            // wrap `left_exprf` in an `ExprNode`
+            left_expr->left_exprf = std::move(this->left_exprf);
+
+            this->left_exprf = std::make_unique<ConditionalNode>(
+                std::move(left_expr), std::move(middle_expr), std::move(right_expr));
         }
         // LEFT ASSOCIATIVE OPERATORS
         else {
             expect(tokens, token_type, pos); // consume operator
 
-            auto right_expr = std::make_unique<ExprNode>();
             // the + 1 makes this left associative
             right_expr->parse(tokens, pos, op_prec + 1); // |◍◍◍◍|
 
             // wrap `left_exprf` in an `ExprNode`
-            auto left_expr = std::make_unique<ExprNode>();
             left_expr->left_exprf = std::move(this->left_exprf);
 
             this->left_exprf =
@@ -274,9 +321,9 @@ void ExprFactorNode::parse(std::deque<Token>& tokens, size_t& pos) {
     } else if (isUnary(lexeme)) { // <unary> <factor>
         this->unary = std::make_unique<UnaryNode>();
         this->unary->parse(tokens, pos);
-        // should I keep the below lines in `UnaryNode::parse`?
-        this->unary->operand = std::make_unique<ExprFactorNode>();
-        this->unary->operand->parse(tokens, pos);
+        /// should I keep the below lines in `UnaryNode::parse`?
+        /* this->unary->operand = std::make_unique<ExprFactorNode>();
+        this->unary->operand->parse(tokens, pos); */
     } else if (token_type == TokenType::LPAREN) { // "(" <expr> ")"
         expect(tokens, TokenType::LPAREN, pos);
         this->expr = std::make_unique<ExprNode>();
@@ -353,6 +400,8 @@ void UnaryNode::parse(std::deque<Token>& tokens, size_t& pos) {
                         tokenTypeToString(token_type), actual, pos));
     }
     this->op_type = actual;
+    this->operand = std::make_unique<ExprFactorNode>();
+    this->operand->parse(tokens, pos);
 }
 
 void UnaryNode::dump(int indent) const {
@@ -364,13 +413,7 @@ void UnaryNode::dump(int indent) const {
 }
 
 void BinaryNode::parse(std::deque<Token>& tokens, size_t& pos) {
-    const auto& [token_type, actual] = tokens[pos++];
-    if (!isBinop(actual)) {
-        throw std::runtime_error(
-            std::format("Syntax Error: Expected binary operator but got '{}' : '{}' at pos:{}",
-                        tokenTypeToString(token_type), actual, pos));
-    }
-    this->op_type = actual;
+    throw std::runtime_error("Shouldn't reach `BinaryNode::parse`, handled in `ExprNode::parse`");
 }
 
 void BinaryNode::dump(int indent) const {
@@ -383,11 +426,8 @@ void BinaryNode::dump(int indent) const {
 }
 
 void AssignmentNode::parse(std::deque<Token>& tokens, size_t& pos) {
-    this->left_expr = std::make_unique<ExprNode>();
-    this->left_expr->parse(tokens, pos);
-    expect(tokens, TokenType::ASSIGN, pos);
-    this->right_expr = std::make_unique<ExprNode>();
-    this->right_expr->parse(tokens, pos);
+    throw std::runtime_error(
+        "Shouldn't reach `AssignmentNode::parse`, handled in `ExprNode::parse`");
 }
 
 void AssignmentNode::dump(int indent) const {
@@ -395,6 +435,21 @@ void AssignmentNode::dump(int indent) const {
     std::println("Assignment(");
     this->left_expr->dump(indent + 1);
     this->right_expr->dump(indent + 1);
+    printIndent(indent);
+    std::println(")");
+}
+
+void ConditionalNode::parse(std::deque<Token>& tokens, size_t& pos) {
+    throw std::runtime_error(
+        "Shouldn't reach here: `ConditionalNode::parse`, handled in `ExprNode::parse`");
+}
+
+void ConditionalNode::dump(int indent) const {
+    printIndent(indent);
+    std::println("Conditional(");
+    this->condition->dump(indent + 1);
+    this->true_expr->dump(indent + 1);
+    this->false_expr->dump(indent + 1);
     printIndent(indent);
     std::println(")");
 }

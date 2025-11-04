@@ -1,12 +1,10 @@
 int main(void) {
-  int b;
-  int a = 1;
-  a = a * 2;
-  b = a = a;
-  int c = 0;
-  // !a = 3; gives error
-  a+3; !a;
-  return a;
+  int b = 1;
+  int a = 0;
+  if (a)
+      return 1;
+  else
+      return 2;
 }
 
 /*

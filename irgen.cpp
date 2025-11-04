@@ -93,8 +93,7 @@ std::vector<std::unique_ptr<IRInstructionNode>> DeclarationNode::emit_ir() {
         auto dest_var = init_expr->emit_ir(ir_instructions);
         // emit copy instruction to assign the value to the variable
         auto ir_var = std::make_shared<IRVariableNode>(var_identifier->name);
-        auto ir_copy = std::make_unique<IRCopyNode>(
-            std::move(dest_var), std::move(ir_var));
+        auto ir_copy = std::make_unique<IRCopyNode>(std::move(dest_var), std::move(ir_var));
         ir_instructions.push_back(std::move(ir_copy));
     }
     // else, no initialization => no IR needed (default to 0)
@@ -154,17 +153,18 @@ ExprNode::emit_ir(std::vector<std::unique_ptr<IRInstructionNode>>& instructions)
 
 namespace { // helper functions to handle binary short-circuiting operators
 /// @brief handle non-short-circuiting binary operations
-std::shared_ptr<IRValNode> handleOtherBinOps(
-    BinaryNode* binop, // TODO(VachanVY): anyway to NOT use raw pointer here?
-    std::vector<std::unique_ptr<IRInstructionNode>>& instructions) {
+std::shared_ptr<IRValNode>
+handleOtherBinOps(BinaryNode* binop, // TODO(VachanVY): anyway to NOT use raw pointer here?
+                  std::vector<std::unique_ptr<IRInstructionNode>>& instructions) {
     auto left_val = binop->left_expr->emit_ir(instructions);
     auto right_val = binop->right_expr->emit_ir(instructions);
 
     std::string tmp = getUniqueName("tmp");
     auto val_dest = std::make_shared<IRVariableNode>(tmp);
 
-    auto ir_binary = std::make_unique<IRBinaryNode>(binop->op_type, left_val, right_val,
-    val_dest); instructions.push_back(std::move(ir_binary)); return val_dest;
+    auto ir_binary = std::make_unique<IRBinaryNode>(binop->op_type, left_val, right_val, val_dest);
+    instructions.push_back(std::move(ir_binary));
+    return val_dest;
 }
 
 auto getLabelName = [](const std::string& prefix) {
@@ -216,8 +216,8 @@ handleShortCircuitOps(BinaryNode* binop,
 } // namespace
 
 // return the destination register
-std::shared_ptr<IRValNode> ExprFactorNode::emit_ir(
-    std::vector<std::unique_ptr<IRInstructionNode>>& instructions) {
+std::shared_ptr<IRValNode>
+ExprFactorNode::emit_ir(std::vector<std::unique_ptr<IRInstructionNode>>& instructions) {
     if (auto binop = dyn_cast<BinaryNode>(this)) {
         if (binop->op_type == "&&" || binop->op_type == "||") {
             return handleShortCircuitOps(binop, instructions);
@@ -226,7 +226,8 @@ std::shared_ptr<IRValNode> ExprFactorNode::emit_ir(
         }
     } else if (auto assignop = dyn_cast<AssignmentNode>(this)) {
         // evaluate rhs expr, add it's instructions to the list, then
-        // evaluate lhs expr to get the variable to assign to result of rhs. add instructions to list on the way...
+        // evaluate lhs expr to get the variable to assign to result of rhs. add instructions to
+        // list on the way...
         auto right_val = assignop->right_expr->emit_ir(instructions); // result of the rhs expr
         auto left_val = assignop->left_expr->emit_ir(instructions);   // VarNode->emit_ir()
 
