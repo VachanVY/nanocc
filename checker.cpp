@@ -105,7 +105,7 @@ void BinaryNode::resolveTypes(SymbolTable& sym_table) {
     this->right_expr->resolveTypes(sym_table);
 }
 
-/* 
+/*
 - Detect errors of type `<unary_op> <exprfactor> = <expr>`
 - eg: !a = 3 ==parsed_as=> UnaryNode('!', AssignmentNode(VarNode('a'), ConstantNode('3')));
 */
@@ -117,7 +117,7 @@ void UnaryNode::resolveTypes(SymbolTable& sym_table) {
     this->operand->resolveTypes(sym_table);
 }
 
-// /*
+/*
 int main(int argc, char* argv[]) {
     if (argc < 2) {
         std::println(stderr,

@@ -34,6 +34,12 @@ inline std::string getUniqueName(const std::string& prefix) {
     return prefix + "." + std::to_string(counter++);
 };
 
+inline std::string getLabelName(const std::string& prefix) {
+    assert(!prefix.empty() && "Label prefix cannot be empty");
+    static size_t label_counter = 0;
+    return prefix + "." + std::to_string(label_counter++);
+};
+
 // LLVM-style...
 // TODO(VachanVY): As of now the `classof` methods use dynamic_cast internally.
 // This is a temporary solution and may be replaced with a more efficient

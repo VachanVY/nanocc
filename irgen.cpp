@@ -116,6 +116,11 @@ std::vector<std::unique_ptr<IRInstructionNode>> StatementNode::emit_ir() {
         for (auto& instr : expr_instructions) {
             ir_instructions.push_back(std::move(instr));
         }
+    } else if (ifelse_stmt) {
+        auto ifelse_instructions = ifelse_stmt->emit_ir();
+        for (auto& instr : ifelse_instructions) {
+            ir_instructions.push_back(std::move(instr));
+        }
     } else {
         if (!null_stmt) { // do nothing for null statement
             throw std::runtime_error("IR Generation Error: Malformed StatementNode");
@@ -138,6 +143,44 @@ std::vector<std::unique_ptr<IRInstructionNode>> ExpressionNode::emit_ir() {
     // this will return a new temporary variable holding the expression result
     // but we won't use it that again in the IR Generation
     auto dest_var = expr->emit_ir(ir_instructions);
+    return ir_instructions;
+}
+
+std::vector<std::unique_ptr<IRInstructionNode>> IfElseNode::emit_ir() {
+    std::vector<std::unique_ptr<IRInstructionNode>> ir_instructions;
+
+    // no else block => `end` label
+    // else block present => `else` label
+    std::string end_else_label = getLabelName(!else_block ? "end" : "else");
+
+    auto cond_var = condition->emit_ir(ir_instructions);
+    // if condition is false, jump to else / end
+    auto jumpifzero = std::make_unique<IRJumpIfZeroNode>(cond_var, end_else_label);
+    ir_instructions.push_back(std::move(jumpifzero));
+
+    // emit if block instructions
+    auto if_instr = if_block->emit_ir();
+    for (auto& instr : if_instr) {
+        ir_instructions.push_back(std::move(instr));
+    }
+
+    if (!else_block) { // if condition only; else is absent
+        // no else block; just place end label
+        auto end_label = std::make_unique<IRLabelNode>(end_else_label);
+        ir_instructions.push_back(std::move(end_label));
+    } else { // if-else condition
+        std::string end_label_str = getLabelName("end");
+        ir_instructions.push_back(std::make_unique<IRJumpNode>(end_label_str));
+
+        ir_instructions.push_back(std::make_unique<IRLabelNode>(end_else_label));
+
+        auto else_instr = else_block->emit_ir();
+        for (auto& instr : else_instr) {
+            ir_instructions.push_back(std::move(instr));
+        }
+
+        ir_instructions.push_back(std::make_unique<IRLabelNode>(end_label_str));
+    }
     return ir_instructions;
 }
 
@@ -166,12 +209,6 @@ handleOtherBinOps(BinaryNode* binop, // TODO(VachanVY): anyway to NOT use raw po
     instructions.push_back(std::move(ir_binary));
     return val_dest;
 }
-
-auto getLabelName = [](const std::string& prefix) {
-    assert(!prefix.empty() && "Label prefix cannot be empty");
-    static size_t label_counter = 0;
-    return prefix + "." + std::to_string(label_counter++);
-};
 
 std::shared_ptr<IRValNode>
 handleShortCircuitOps(BinaryNode* binop,
@@ -234,6 +271,30 @@ ExprFactorNode::emit_ir(std::vector<std::unique_ptr<IRInstructionNode>>& instruc
         auto ir_copy = std::make_unique<IRCopyNode>(right_val, left_val); // left_val <= right_val
         instructions.push_back(std::move(ir_copy));
         return left_val;
+    } else if (auto condop = dyn_cast<ConditionalNode>(this)) {
+        // result = condition ? true_expr : false_expr
+        auto result = std::make_shared<IRVariableNode>(getUniqueName("tmp"));
+
+        // eval condition
+        auto cond_val = condop->condition->emit_ir(instructions);
+        std::string else_label = getLabelName("else_branch");
+        instructions.push_back(std::make_unique<IRJumpIfZeroNode>(cond_val, else_label));
+
+        // if true
+        auto true_val = condop->true_expr->emit_ir(instructions);
+        instructions.push_back(std::make_unique<IRCopyNode>(true_val, result));
+
+        std::string end_label = getLabelName("end");
+        instructions.push_back(std::make_unique<IRJumpNode>(end_label));
+        
+        // else branch
+        instructions.push_back(std::make_unique<IRLabelNode>(else_label));
+        auto false_val = condop->false_expr->emit_ir(instructions);
+        instructions.push_back(std::make_unique<IRCopyNode>(false_val, result));
+
+        // end
+        instructions.push_back(std::make_unique<IRLabelNode>(end_label));
+        return result;
     } else if (var_identifier) {
         auto ir_var = std::make_shared<IRVariableNode>(var_identifier->var_name->name);
         return ir_var;

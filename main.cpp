@@ -72,7 +72,7 @@ int main(int argc, char* argv[]) {
     asm_file << output.str();
     asm_file.close();
 
-    std::string gcc_command = "gcc " + asm_filename + " -o " + base_filename + ".out";
+    std::string gcc_command = "gcc " + asm_filename + " -o " + base_filename;
     int result = std::system(gcc_command.c_str());
 
     if (result != 0) {

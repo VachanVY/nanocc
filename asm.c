@@ -1,12 +1,35 @@
 int main(void) {
-  int b = 1;
   int a = 0;
+  int b = a ? 1 : 0;
   if (a)
       return 1;
   else
       return 2;
 }
 
+/*
+    .globl main
+main:
+    pushq %rbp
+    movq %rsp, %rbp
+    subq $12, %rsp
+    movl $0, -4(%rbp) # a = 0
+    cmpl $0, -4(%rbp) # if (a==0)
+    je else_branch.0  # then jump to else
+    movl $1, -8(%rbp) # if (a != 0): b = 1
+    jmp end.1         # jump to end
+  else_branch.0:      
+    movl $0, -8(%rbp)
+  end.1:
+    movl -8(%rbp), %r10d
+    movl %r10d, -12(%rbp)
+    movl $0, %eax
+    movq %rbp, %rsp
+    popq %rbp
+    ret
+    .section .note.GNU-stack, "",@progbits
+
+*/
 /*
 Program(
   Function(

@@ -129,7 +129,7 @@ class IfElseNode : public StatementNode {
     void parse(std::deque<Token>& tokens, size_t& pos);
     void dump(int indent = 0) const override;
     void resolveTypes(SymbolTable& sym_table);
-    /* std::vector<std::unique_ptr<IRInstructionNode>> emit_ir(); */
+    std::vector<std::unique_ptr<IRInstructionNode>> emit_ir();
 };
 
 // for null statements (i.e., just a semicolon)
@@ -250,9 +250,9 @@ class ConditionalNode : public ExprFactorNode {
     void parse(std::deque<Token>& tokens, size_t& pos);
     void dump(int indent = 0) const override;
     void resolveTypes(SymbolTable& sym_table) override;
-    /* static bool classof(const ExprFactorNode* u) {
+    static bool classof(const ExprFactorNode* u) {
         return dynamic_cast<const ConditionalNode*>(u) != nullptr;
-    } */
+    }
 };
 
 class IdentifierNode : public ASTNode {
