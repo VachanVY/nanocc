@@ -14,19 +14,22 @@
 class ASTNode;
 class ProgramNode;
 class FunctionNode;
-class BlockNode;
 
-class StatementNode; // derived from BlockNode
+// a BlockNode will contain multiple BlockItemNodes which are either statements or declarations
+class BlockNode;
+class BlockItemNode;
+
+class StatementNode;
 class ReturnNode;
 class ExpressionNode;
 class IfElseNode;
+class CompoundNode; // Do we need this? Just holds a BlockNode... just use BlockNode directly?
 class NullNode;
 
-class DeclarationNode; // derived from BlockNode
+class DeclarationNode;
 
 class ExprNode;
-
-class ExprFactorNode; // derived from ExprNode // helper class
+class ExprFactorNode; // derived from ExprNode // helper class for ExprNode
 class VarNode;
 class ConstantNode;
 class UnaryNode;
@@ -56,7 +59,7 @@ class ProgramNode : public ASTNode {
 class FunctionNode : public ASTNode {
   public:
     std::unique_ptr<IdentifierNode> var_identifier; // function name
-    std::vector<std::unique_ptr<BlockNode>> body;   // list of statements/declarations
+    std::unique_ptr<BlockNode> body;                // list of statements/declarations
 
     void parse(std::deque<Token>& tokens, size_t& pos);
     void dump(int indent = 0) const override;
@@ -65,6 +68,16 @@ class FunctionNode : public ASTNode {
 };
 
 class BlockNode : public ASTNode {
+  public:
+    std::vector<std::unique_ptr<BlockItemNode>> block_items;
+
+    void parse(std::deque<Token>& tokens, size_t& pos);
+    void dump(int indent = 0) const override;
+    void resolveTypes(SymbolTable& sym_table);
+    std::vector<std::unique_ptr<IRInstructionNode>> emit_ir();
+};
+
+class BlockItemNode : public ASTNode {
   public:
     std::unique_ptr<StatementNode> statement;
     std::unique_ptr<DeclarationNode> declaration;
@@ -75,7 +88,7 @@ class BlockNode : public ASTNode {
     std::vector<std::unique_ptr<IRInstructionNode>> emit_ir();
 };
 
-class DeclarationNode : public BlockNode {
+class DeclarationNode : public ASTNode {
   public:
     std::unique_ptr<IdentifierNode> var_identifier;
     std::unique_ptr<ExprNode> init_expr; // OPTIONAL
@@ -86,11 +99,12 @@ class DeclarationNode : public BlockNode {
     std::vector<std::unique_ptr<IRInstructionNode>> emit_ir();
 };
 
-class StatementNode : public BlockNode {
+class StatementNode : public ASTNode {
   public:
     std::unique_ptr<ReturnNode> return_stmt;
     std::unique_ptr<ExpressionNode> expression_stmt;
     std::unique_ptr<IfElseNode> ifelse_stmt;
+    std::unique_ptr<CompoundNode> compound_stmt;
     std::unique_ptr<NullNode> null_stmt;
 
     void parse(std::deque<Token>& tokens, size_t& pos);
@@ -132,12 +146,22 @@ class IfElseNode : public StatementNode {
     std::vector<std::unique_ptr<IRInstructionNode>> emit_ir();
 };
 
+class CompoundNode : public StatementNode {
+  public:
+    std::unique_ptr<BlockNode> block;
+
+    void parse(std::deque<Token>& tokens, size_t& pos);
+    void dump(int indent = 0) const override;
+    void resolveTypes(SymbolTable& sym_table);
+    std::vector<std::unique_ptr<IRInstructionNode>> emit_ir();
+};
+
 // for null statements (i.e., just a semicolon)
-class NullNode : public ExpressionNode {
+class NullNode : public StatementNode {
   public:
     void parse(std::deque<Token>& tokens, size_t& pos);
     void dump(int indent = 0) const override;
-    void resolveTypes(SymbolTable& sym_table){}; // no-op
+    void resolveTypes(SymbolTable& sym_table);
     std::vector<std::unique_ptr<IRInstructionNode>> emit_ir();
 };
 

@@ -12,19 +12,19 @@ static const std::unordered_map<std::string, int> BINOP_PRECEDENCE = {
     {"*", 50},  {"/", 50},  {"%", 50},  {"+", 45},  {"-", 45}, {"<", 35}, {"<=", 35}, {">", 35},
     {">=", 35}, {"==", 30}, {"!=", 30}, {"&&", 10}, {"||", 5}, {"?", 3},  {"=", 1}};
 
-inline bool isUnary(const std::string& op) {
+constexpr bool isUnary(const std::string& op) {
     return op == "~" || op == "-" || op == "!";
     /* || op == "--"; */ // decrement only for lexing now
 }
 
-inline int getPrecedence(const std::string& op) {
+constexpr int getPrecedence(const std::string& op) {
     auto it = BINOP_PRECEDENCE.find(op);
     if (it == BINOP_PRECEDENCE.end())
         throw std::runtime_error("Invalid operator: " + op);
     return it->second;
 }
 
-inline bool isBinop(const std::string& op) { return BINOP_PRECEDENCE.contains(op); }
+constexpr bool isBinop(const std::string& op) { return BINOP_PRECEDENCE.contains(op); }
 } // namespace
 
 /* Dev Docs
@@ -71,13 +71,8 @@ void FunctionNode::parse(std::deque<Token>& tokens, size_t& pos) {
     expect(tokens, TokenType::LPAREN, pos);
     expect(tokens, TokenType::VOID, pos);
     expect(tokens, TokenType::RPAREN, pos);
-    expect(tokens, TokenType::LBRACE, pos);
-    while (tokens[pos].type != TokenType::RBRACE) {
-        auto block = std::make_unique<BlockNode>();
-        block->parse(tokens, pos);
-        this->body.push_back(std::move(block));
-    }
-    expect(tokens, TokenType::RBRACE, pos);
+    this->body = std::make_unique<BlockNode>();
+    this->body->parse(tokens, pos);
 }
 
 void FunctionNode::dump(int indent) const {
@@ -86,11 +81,7 @@ void FunctionNode::dump(int indent) const {
     this->var_identifier->dump(indent + 1);
     printIndent(indent + 1);
     std::println("body=(");
-    for (const auto& block : this->body) {
-        if (block) {
-            block->dump(indent + 2);
-        }
-    }
+    this->body->dump(indent + 2);
     printIndent(indent + 1);
     std::println(")"); // end of body
     printIndent(indent);
@@ -98,6 +89,26 @@ void FunctionNode::dump(int indent) const {
 }
 
 void BlockNode::parse(std::deque<Token>& tokens, size_t& pos) {
+    expect(tokens, TokenType::LBRACE, pos);
+    while (tokens[pos].type != TokenType::RBRACE) { // "}"
+        auto block_item = std::make_unique<BlockItemNode>();
+        block_item->parse(tokens, pos);
+        this->block_items.push_back(std::move(block_item));
+    }
+    expect(tokens, TokenType::RBRACE, pos);
+}
+
+void BlockNode::dump(int indent) const {
+    printIndent(indent);
+    std::println("Block(");
+    for (const auto& block_item : this->block_items) {
+        block_item->dump(indent + 1);
+    }
+    printIndent(indent);
+    std::println(")");
+}
+
+void BlockItemNode::parse(std::deque<Token>& tokens, size_t& pos) {
     if (tokens[pos].type == TokenType::INT) { // int <var_name>; | int <var_name> = <expr>;
         this->declaration = std::make_unique<DeclarationNode>();
         this->declaration->parse(tokens, pos);
@@ -107,7 +118,7 @@ void BlockNode::parse(std::deque<Token>& tokens, size_t& pos) {
     }
 }
 
-void BlockNode::dump(int indent) const {
+void BlockItemNode::dump(int indent) const {
     if (this->declaration) {
         this->declaration->dump(indent);
     } else if (this->statement) {
@@ -122,6 +133,9 @@ void StatementNode::parse(std::deque<Token>& tokens, size_t& pos) {
     } else if (tokens[pos].type == TokenType::SEMICOLON) {
         this->null_stmt = std::make_unique<NullNode>();
         this->null_stmt->parse(tokens, pos);
+    } else if (tokens[pos].type == TokenType::LBRACE) {
+        this->compound_stmt = std::make_unique<CompoundNode>();
+        this->compound_stmt->parse(tokens, pos);
     } else if (tokens[pos].type == TokenType::IF) {
         this->ifelse_stmt = std::make_unique<IfElseNode>();
         this->ifelse_stmt->parse(tokens, pos);
@@ -138,6 +152,8 @@ void StatementNode::dump(int indent) const {
         this->null_stmt->dump(indent);
     } else if (this->ifelse_stmt) {
         this->ifelse_stmt->dump(indent);
+    } else if (this->compound_stmt) {
+        this->compound_stmt->dump(indent);
     } else {
         this->expression_stmt->dump(indent);
     }
@@ -202,6 +218,13 @@ void IfElseNode::dump(int indent) const {
     printIndent(indent);
     std::println(")");
 }
+
+void CompoundNode::parse(std::deque<Token>& tokens, size_t& pos) {
+    this->block = std::make_unique<BlockNode>();
+    this->block->parse(tokens, pos);
+}
+
+void CompoundNode::dump(int indent) const { this->block->dump(indent); }
 
 void NullNode::parse(std::deque<Token>& tokens, size_t& pos) {
     expect(tokens, TokenType::SEMICOLON, pos);

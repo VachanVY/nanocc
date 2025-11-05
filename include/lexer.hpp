@@ -60,7 +60,7 @@ struct Token {
 
 extern std::pair<TokenType, std::regex> token_specs[];
 
-inline std::string_view tokenTypeToString(TokenType type) {
+constexpr std::string_view tokenTypeToString(TokenType type) {
     switch (type) {
 #define X(name, str)                                                                               \
     case TokenType::name:                                                                          \

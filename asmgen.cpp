@@ -91,7 +91,7 @@ namespace {
 static const std::unordered_map<std::string, std::string> RELATIONAL_OPS = {
     {"==", "e"}, {"!=", "ne"}, {"<", "l"}, {"<=", "le"}, {">", "g"}, {">=", "ge"}};
 
-const std::string getCondCode(const std::string& op_type) {
+constexpr std::string getCondCode(const std::string& op_type) {
     auto it = RELATIONAL_OPS.find(op_type);
     if (it == RELATIONAL_OPS.end()) {
         throw std::runtime_error("getCondCode: Unsupported relational operator " + op_type);

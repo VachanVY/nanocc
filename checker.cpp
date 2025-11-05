@@ -4,13 +4,15 @@
 
 void ProgramNode::resolveTypes(SymbolTable& sym_table) { this->func->resolveTypes(sym_table); }
 
-void FunctionNode::resolveTypes(SymbolTable& sym_table) {
-    for (const auto& block : this->body) {
-        block->resolveTypes(sym_table);
+void FunctionNode::resolveTypes(SymbolTable& sym_table) { body->resolveTypes(sym_table); }
+
+void BlockNode::resolveTypes(SymbolTable& sym_table) {
+    for (const auto& block_item : this->block_items) {
+        block_item->resolveTypes(sym_table);
     }
 }
 
-void BlockNode::resolveTypes(SymbolTable& sym_table) {
+void BlockItemNode::resolveTypes(SymbolTable& sym_table) {
     if (this->declaration) {
         this->declaration->resolveTypes(sym_table);
     } else if (this->statement) {
@@ -25,8 +27,12 @@ void StatementNode::resolveTypes(SymbolTable& sym_table) {
         this->expression_stmt->resolveTypes(sym_table);
     } else if (this->ifelse_stmt) {
         this->ifelse_stmt->resolveTypes(sym_table);
+    } else if (this->compound_stmt) {
+        this->compound_stmt->resolveTypes(sym_table);
     } else if (this->null_stmt) {
         this->null_stmt->resolveTypes(sym_table); // no-op
+    } else {
+        throw std::runtime_error("Type Error: Malformed StatementNode");
     }
 }
 
@@ -42,15 +48,28 @@ void IfElseNode::resolveTypes(SymbolTable& sym_table) {
     }
 }
 
+/// @brief Create a new scope, i.e create a copy of the current symbol table and
+/// mark all variables from the parent scope as false as they are not from current block scope
+void CompoundNode::resolveTypes(SymbolTable& old_sym_table) {
+    SymbolTable new_sym_table = old_sym_table;
+    for (const auto& [var_name, var_scope] : old_sym_table) {
+        new_sym_table[var_name].from_curr_scope = false;
+    }
+    this->block->resolveTypes(new_sym_table);
+}
+
+void NullNode::resolveTypes(SymbolTable& sym_table){}; // no-op
+
 /// @brief Check for variable redeclaration; Add to symbol table after giving unique name;
 void DeclarationNode::resolveTypes(SymbolTable& sym_table) {
-    if (sym_table.contains(this->var_identifier->name)) {
+    if (sym_table.contains(this->var_identifier->name) &&
+        sym_table[this->var_identifier->name].from_curr_scope) {
         throw std::runtime_error(
             std::format("Type Error: Redeclaration of variable '{}'", this->var_identifier->name));
     }
 
     std::string unique_name = getUniqueName(this->var_identifier->name);
-    sym_table[this->var_identifier->name] = unique_name;
+    sym_table[this->var_identifier->name] = (VariableScope){unique_name, true};
     this->var_identifier->name = unique_name; // update the declaration's name too
     if (this->init_expr) {
         this->init_expr->resolveTypes(sym_table);
@@ -74,7 +93,7 @@ void ExprFactorNode::resolveTypes(SymbolTable& sym_table) {
 /// @brief Should already be added to the symbol table by `DeclarationNode`
 void VarNode::resolveTypes(SymbolTable& sym_table) {
     if (sym_table.contains(this->var_name->name)) {
-        this->var_name->name = sym_table[this->var_name->name];
+        this->var_name->name = sym_table[this->var_name->name].unique_name;
     } else {
         throw std::runtime_error(
             std::format("Type Error: Undeclared variable '{}'", this->var_name->name));

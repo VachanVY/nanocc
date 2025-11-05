@@ -35,11 +35,9 @@ void IRProgramNode::dump_ir(int indent) const {
 std::unique_ptr<IRFunctionNode> FunctionNode::emit_ir() {
     // a function has many blocks => many instructions
     std::vector<std::unique_ptr<IRInstructionNode>> instructions;
-    for (const auto& block : body) {
-        auto block_instructions = block->emit_ir();
-        for (auto& instr : block_instructions) {
-            instructions.push_back(std::move(instr));
-        }
+    auto body_instructions = body->emit_ir();
+    for (auto& instr : body_instructions) {
+        instructions.push_back(std::move(instr));
     }
     // edge case: ensure function ends with a return; always return 0 no matter what
     // if the func already ends with a return, this is redundant but okay for now
@@ -71,6 +69,17 @@ void IRFunctionNode::dump_ir(int indent) const {
 
 std::vector<std::unique_ptr<IRInstructionNode>> BlockNode::emit_ir() {
     std::vector<std::unique_ptr<IRInstructionNode>> ir_instructions;
+    for (const auto& block_item : this->block_items) {
+        auto item_instructions = block_item->emit_ir();
+        for (auto& instr : item_instructions) {
+            ir_instructions.push_back(std::move(instr));
+        }
+    }
+    return ir_instructions;
+}
+
+std::vector<std::unique_ptr<IRInstructionNode>> BlockItemNode::emit_ir() {
+    std::vector<std::unique_ptr<IRInstructionNode>> ir_instructions;
     if (declaration) {
         auto decl_instructions = declaration->emit_ir();
         for (auto& instr : decl_instructions) {
@@ -82,7 +91,7 @@ std::vector<std::unique_ptr<IRInstructionNode>> BlockNode::emit_ir() {
             ir_instructions.push_back(std::move(instr));
         }
     } else
-        throw std::runtime_error("IR Generation Error: Empty BlockNode");
+        throw std::runtime_error("IR Generation Error: Empty BlockItemNode");
     return ir_instructions;
 }
 
@@ -119,6 +128,11 @@ std::vector<std::unique_ptr<IRInstructionNode>> StatementNode::emit_ir() {
     } else if (ifelse_stmt) {
         auto ifelse_instructions = ifelse_stmt->emit_ir();
         for (auto& instr : ifelse_instructions) {
+            ir_instructions.push_back(std::move(instr));
+        }
+    } else if (compound_stmt) {
+        auto compound_instructions = compound_stmt->emit_ir();
+        for (auto& instr : compound_instructions) {
             ir_instructions.push_back(std::move(instr));
         }
     } else {
@@ -183,6 +197,8 @@ std::vector<std::unique_ptr<IRInstructionNode>> IfElseNode::emit_ir() {
     }
     return ir_instructions;
 }
+
+std::vector<std::unique_ptr<IRInstructionNode>> CompoundNode::emit_ir() { return block->emit_ir(); }
 
 std::vector<std::unique_ptr<IRInstructionNode>> NullNode::emit_ir() {
     return {}; // no-op for null statement
@@ -286,7 +302,7 @@ ExprFactorNode::emit_ir(std::vector<std::unique_ptr<IRInstructionNode>>& instruc
 
         std::string end_label = getLabelName("end");
         instructions.push_back(std::make_unique<IRJumpNode>(end_label));
-        
+
         // else branch
         instructions.push_back(std::make_unique<IRLabelNode>(else_label));
         auto false_val = condop->false_expr->emit_ir(instructions);
