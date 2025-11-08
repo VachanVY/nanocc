@@ -4,10 +4,17 @@
 #include "codegen.hpp"
 #include "lexer.hpp"
 #include "parser.hpp"
+#include "checker.hpp"
+#include "irgen.hpp"
 #include "utils.hpp"
 
-// g++ -std=c++23 -I./include lexer.cpp parser.cpp asmgen.cpp codegen.cpp
-// main.cpp -o main.out
+void semanticAnalysis(std::unique_ptr<ProgramNode>& ast, bool debug);
+std::unique_ptr<IRProgramNode> generateIR(std::unique_ptr<ProgramNode>& ast, bool debug);
+void correctAsmInstructions(std::unique_ptr<AsmProgramNode>& asm_ast, bool debug);
+std::ostringstream generateAsm(std::unique_ptr<AsmProgramNode>& asm_ast);
+
+// g++ -std=c++23 -I./include lexer.cpp parser.cpp checker.cpp irgen.cpp 
+// asmgen.cpp codegen.cpp main.cpp -o main.out
 int main(int argc, char* argv[]) {
     if (argc < 2) {
         std::println(stderr,
@@ -17,7 +24,6 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    // Find the source file (non-flag argument)
     std::string filename;
     for (int i = 1; i < argc; i++) {
         std::string arg = argv[i];
@@ -32,37 +38,23 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    const std::string source = getFileContents(filename);
-    auto tokens = lexer(source);
-    auto ast = parse(tokens);
-    ast->dump();
-    SymbolTable sym_table;
-    ast->resolveTypes(sym_table);
-    ast->dump();
-    auto ir_ast = ast->emit_ir();
-    ir_ast->dump_ir();
-    auto asm_ast = ir_ast->emit_asm();
+    auto contents = getFileContents(filename);
+    auto tokens = lexer(contents, true);
+    auto ast = parse(tokens, true);
+    semanticAnalysis(ast, true);
+    auto ir = generateIR(ast, true);
+    auto asm_ast = ir->lowerToAsm();
+    correctAsmInstructions(asm_ast, true);
+    auto output = generateAsm(asm_ast);
 
-    // maps from `AsmPseudoNode::identifier` to assigned `AsmStackNode::offset`
-    std::unordered_map<std::string, int> pseudo_reg_map;
-    int stack_offset = 0; // offsets grow in 4-byte (int) increments // increment by 4 then use
-    asm_ast->resolvePseudoRegisters(pseudo_reg_map, stack_offset);
-    std::println("After resolving pseudo registers: {}", stack_offset);
-
-    asm_ast->fixUpInstructions(stack_offset);
-
-    // Emit assembly to string stream
-    std::ostringstream output;
-    asm_ast->generateAsm(output);
-
-    // Get the base filename without extension
+    // base filename without extension
     std::string base_filename = filename;
     size_t dot_pos = base_filename.rfind('.');
     if (dot_pos != std::string::npos) {
         base_filename = base_filename.substr(0, dot_pos);
     }
 
-    // Write assembly to .s file
+    // write asm to .s file
     std::string asm_filename = base_filename + ".s";
     std::ofstream asm_file(asm_filename);
     if (!asm_file) {
@@ -82,4 +74,64 @@ int main(int argc, char* argv[]) {
     std::println("Successfully compiled to executable with result: {}", result);
 
     return 0;
+}
+
+/// @brief Performs semantic analysis on the AST.
+/// @param ast The AST to analyze.
+/// @param debug Whether to print debug information during analysis.
+void semanticAnalysis(std::unique_ptr<ProgramNode>& ast, bool debug) {
+    SymbolTable global_sym_table;
+    ast->resolveTypes(global_sym_table);
+    if (debug) {
+        std::println("----- Identifier Resolution -----");
+        ast->dump();
+        std::println("---------------------------------");
+    }
+
+    std::string loop_label = "";
+    ast->loopLabelling(loop_label);
+    if (debug) {
+        std::println("----- Loop Labelling -----");
+        ast->dump();
+        std::println("--------------------------");
+    }
+}
+
+
+/// @brief Generates the intermediate representation (IR) from the given AST
+/// @param ast The AST to convert
+/// @param debug Whether to print debug information during conversion
+/// @return The generated IR
+std::unique_ptr<IRProgramNode> generateIR(std::unique_ptr<ProgramNode>& ast, bool debug) {
+    auto ir_program = ast->generateIR();
+    if (debug) {
+        std::println("----------- IR Generation -----------");
+        ir_program->dump();
+        std::println("-------------------------------------");
+    }
+    return ir_program;
+}
+
+/// @brief Corrects the assembly instructions in the given ASM AST
+/// @param asm_ast The ASM AST to correct
+/// @param debug Whether to print debug information during correction
+void correctAsmInstructions(std::unique_ptr<AsmProgramNode>& asm_ast, bool debug) {
+    // maps from `AsmPseudoNode::identifier` to assigned `AsmStackNode::offset`
+    std::unordered_map<std::string, int> pseudo_reg_map;
+    int stack_offset = 0; // offsets grow in 4-byte (int) increments // increment by 4 then use
+    asm_ast->resolvePseudoRegisters(pseudo_reg_map, stack_offset);
+    if (debug) {
+        std::println("After resolving pseudo registers: {}", stack_offset);
+    }
+
+    asm_ast->fixUpInstructions(stack_offset);
+}
+
+/// @brief Generates the assembly code from the given ASM AST
+/// @param asm_ast The ASM AST to generate code from
+/// @return The generated assembly code as a string stream
+std::ostringstream generateAsm(std::unique_ptr<AsmProgramNode>& asm_ast) {
+    std::ostringstream os;
+    asm_ast->generateAsm(os);
+    return os;
 }

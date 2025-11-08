@@ -38,8 +38,8 @@ class IRProgramNode : public IRNode {
     IRProgramNode() = default;
     explicit IRProgramNode(std::unique_ptr<IRFunctionNode> func_ptr) : func(std::move(func_ptr)) {}
 
-    void dump_ir(int indent = 0) const;
-    std::unique_ptr<AsmProgramNode> emit_asm();
+    void dump(int indent = 0) const;
+    std::unique_ptr<AsmProgramNode> lowerToAsm();
 };
 
 class IRFunctionNode : public IRNode {
@@ -52,15 +52,15 @@ class IRFunctionNode : public IRNode {
                    std::vector<std::unique_ptr<IRInstructionNode>> instruction_list)
         : var_name(std::move(name)), instructions(std::move(instruction_list)) {}
 
-    void dump_ir(int indent) const;
-    std::unique_ptr<AsmFunctionNode> emit_asm();
+    void dump(int indent) const;
+    std::unique_ptr<AsmFunctionNode> lowerToAsm();
 };
 
 class IRInstructionNode : public IRNode {
   public:
     virtual ~IRInstructionNode() = default;
-    virtual void dump_ir(int indent) const = 0;
-    virtual std::vector<std::unique_ptr<AsmInstructionNode>> emit_asm() = 0;
+    virtual void dump(int indent) const = 0;
+    virtual std::vector<std::unique_ptr<AsmInstructionNode>> lowerToAsm() = 0;
 };
 
 class IRRetNode : public IRInstructionNode {
@@ -70,8 +70,8 @@ class IRRetNode : public IRInstructionNode {
     IRRetNode() = default;
     explicit IRRetNode(std::shared_ptr<IRValNode> val_ptr) : val(std::move(val_ptr)) {}
 
-    void dump_ir(int indent) const override;
-    std::vector<std::unique_ptr<AsmInstructionNode>> emit_asm() override;
+    void dump(int indent) const override;
+    std::vector<std::unique_ptr<AsmInstructionNode>> lowerToAsm() override;
 };
 
 class IRUnaryNode : public IRInstructionNode {
@@ -84,8 +84,8 @@ class IRUnaryNode : public IRInstructionNode {
     IRUnaryNode(std::string op, std::shared_ptr<IRValNode> src, std::shared_ptr<IRValNode> dest)
         : op_type(std::move(op)), val_src(std::move(src)), val_dest(std::move(dest)) {}
 
-    void dump_ir(int indent) const override;
-    std::vector<std::unique_ptr<AsmInstructionNode>> emit_asm() override;
+    void dump(int indent) const override;
+    std::vector<std::unique_ptr<AsmInstructionNode>> lowerToAsm() override;
 };
 
 class IRBinaryNode : public IRInstructionNode {
@@ -101,8 +101,8 @@ class IRBinaryNode : public IRInstructionNode {
         : op_type(std::move(op)), val_src1(std::move(src1)), val_src2(std::move(src2)),
           val_dest(std::move(dest)) {}
 
-    void dump_ir(int indent) const override;
-    std::vector<std::unique_ptr<AsmInstructionNode>> emit_asm() override;
+    void dump(int indent) const override;
+    std::vector<std::unique_ptr<AsmInstructionNode>> lowerToAsm() override;
 };
 
 /// @brief val_src => val_dest
@@ -115,8 +115,8 @@ class IRCopyNode : public IRInstructionNode {
     IRCopyNode(std::shared_ptr<IRValNode> src, std::shared_ptr<IRValNode> dest)
         : val_src(std::move(src)), val_dest(std::move(dest)) {}
 
-    void dump_ir(int indent) const override;
-    std::vector<std::unique_ptr<AsmInstructionNode>> emit_asm() override;
+    void dump(int indent) const override;
+    std::vector<std::unique_ptr<AsmInstructionNode>> lowerToAsm() override;
 };
 
 class IRJumpNode : public IRInstructionNode {
@@ -126,8 +126,8 @@ class IRJumpNode : public IRInstructionNode {
     IRJumpNode() = default;
     explicit IRJumpNode(std::string label) : target_label(std::move(label)) {}
 
-    void dump_ir(int indent) const override;
-    std::vector<std::unique_ptr<AsmInstructionNode>> emit_asm() override;
+    void dump(int indent) const override;
+    std::vector<std::unique_ptr<AsmInstructionNode>> lowerToAsm() override;
 };
 
 class IRJumpIfZeroNode : public IRInstructionNode {
@@ -139,8 +139,8 @@ class IRJumpIfZeroNode : public IRInstructionNode {
     IRJumpIfZeroNode(std::shared_ptr<IRValNode> cond, std::string label)
         : condition(std::move(cond)), target_label(std::move(label)) {}
 
-    void dump_ir(int indent) const override;
-    std::vector<std::unique_ptr<AsmInstructionNode>> emit_asm() override;
+    void dump(int indent) const override;
+    std::vector<std::unique_ptr<AsmInstructionNode>> lowerToAsm() override;
 };
 
 class IRJumpIfNotZeroNode : public IRInstructionNode {
@@ -152,8 +152,8 @@ class IRJumpIfNotZeroNode : public IRInstructionNode {
     IRJumpIfNotZeroNode(std::shared_ptr<IRValNode> cond, std::string label)
         : condition(std::move(cond)), target_label(std::move(label)) {}
 
-    void dump_ir(int indent) const override;
-    std::vector<std::unique_ptr<AsmInstructionNode>> emit_asm() override;
+    void dump(int indent) const override;
+    std::vector<std::unique_ptr<AsmInstructionNode>> lowerToAsm() override;
 };
 
 class IRLabelNode : public IRInstructionNode {
@@ -163,15 +163,15 @@ class IRLabelNode : public IRInstructionNode {
     IRLabelNode() = default;
     explicit IRLabelNode(std::string name) : label_name(std::move(name)) {}
 
-    void dump_ir(int indent) const override;
-    std::vector<std::unique_ptr<AsmInstructionNode>> emit_asm() override;
+    void dump(int indent) const override;
+    std::vector<std::unique_ptr<AsmInstructionNode>> lowerToAsm() override;
 };
 
 class IRValNode : public IRNode {
   public:
     virtual ~IRValNode() = default;
-    virtual std::string dump_ir() const = 0;
-    virtual std::shared_ptr<AsmOperandNode> emit_asm() = 0;
+    virtual std::string dump() const = 0;
+    virtual std::shared_ptr<AsmOperandNode> lowerToAsm() = 0;
 };
 
 class IRConstNode : public IRValNode {
@@ -181,8 +181,8 @@ class IRConstNode : public IRValNode {
     IRConstNode() = default;
     explicit IRConstNode(std::string value) : val(std::move(value)) {}
 
-    std::string dump_ir() const override;
-    std::shared_ptr<AsmOperandNode> emit_asm() override; // return AsmImmediateNode
+    std::string dump() const override;
+    std::shared_ptr<AsmOperandNode> lowerToAsm() override; // return AsmImmediateNode
 };
 
 class IRVariableNode : public IRValNode {
@@ -192,6 +192,6 @@ class IRVariableNode : public IRValNode {
     IRVariableNode() = default;
     explicit IRVariableNode(std::string name) : var_name(std::move(name)) {}
 
-    std::string dump_ir() const override;
-    std::shared_ptr<AsmOperandNode> emit_asm() override; // return AsmPseudoNode
+    std::string dump() const override;
+    std::shared_ptr<AsmOperandNode> lowerToAsm() override; // return AsmPseudoNode
 };

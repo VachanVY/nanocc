@@ -6,18 +6,32 @@
 #include <string>
 #include <print>
 
+/// @brief Reads the contents of a file into a string after preprocessing it with GCC.
+/// @param filename The name of the file to read.
+/// @return The preprocessed contents of the file as a string.
 inline std::string getFileContents(const std::string& filename) {
-    std::ifstream file(filename);
+    // generate unique temp file name
+    auto hash = std::hash<std::string>{}(filename);
+    std::string preprocessed_file = "/tmp/preprocessed_" + std::to_string(hash) + ".i";
 
+    // gcc preprocessor
+    std::string preprocess_cmd = "gcc -E -P " + filename + " -o " + preprocessed_file;
+    if (std::system(preprocess_cmd.c_str()) != 0) {
+        throw std::runtime_error("Error: GCC preprocessor failed for file '" + filename + "'");
+    }
+
+    std::ifstream file(preprocessed_file);
     if (!file.is_open()) {
-        throw std::runtime_error("Error: Could not open file '" + filename + "'");
+        throw std::runtime_error("Error: Could not open preprocessed file '" + preprocessed_file +
+                                 "'");
     }
 
     std::stringstream buffer;
     buffer << file.rdbuf();
-    std::string content = buffer.str();
     file.close();
-    return content;
+    std::remove(preprocessed_file.c_str());
+    
+    return buffer.str();
 }
 
 constexpr auto TAB4 = "    ";

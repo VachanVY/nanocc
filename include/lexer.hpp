@@ -76,4 +76,8 @@ constexpr std::string_view tokenTypeToString(TokenType type) {
     throw std::runtime_error("Unknown TokenType");
 }
 
-std::deque<Token> lexer(const std::string& s);
+/// @brief Lexical analyzer that converts source code string into tokens.
+/// @param s The source code string to analyze.
+/// @param debug Whether to print debug information during lexing.
+/// @return A deque of tokens generated from the source code.
+std::deque<Token> lexer(const std::string& s, bool debug = false);

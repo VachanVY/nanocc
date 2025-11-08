@@ -239,21 +239,20 @@ void StatementNode::loopLabelling(std::string& loop_label) {
     }
 }
 
-void ReturnNode::loopLabelling(std::string& loop_label){}; // no-op
+void ReturnNode::loopLabelling(std::string& loop_label){};     // no-op
 void ExpressionNode::loopLabelling(std::string& loop_label){}; // no-op
-void IfElseNode::loopLabelling(std::string& loop_label){
+
+void IfElseNode::loopLabelling(std::string& loop_label) {
     this->if_block->loopLabelling(loop_label);
     if (this->else_block) {
         this->else_block->loopLabelling(loop_label);
     }
 };
 
-void CompoundNode::loopLabelling(std::string& loop_label){
-    block->loopLabelling(loop_label);
-};
+void CompoundNode::loopLabelling(std::string& loop_label) { block->loopLabelling(loop_label); };
 
 void BreakNode::loopLabelling(std::string& loop_label) {
-    if(loop_label.empty()) {
+    if (loop_label.empty()) {
         throw std::runtime_error("Label Error: 'break' used outside of a loop");
     }
     this->label = std::make_unique<IdentifierNode>();
@@ -261,7 +260,7 @@ void BreakNode::loopLabelling(std::string& loop_label) {
 }
 
 void ContinueNode::loopLabelling(std::string& loop_label) {
-    if(loop_label.empty()) {
+    if (loop_label.empty()) {
         throw std::runtime_error("Label Error: 'continue' used outside of a loop");
     }
     this->label = std::make_unique<IdentifierNode>();
@@ -269,21 +268,21 @@ void ContinueNode::loopLabelling(std::string& loop_label) {
 }
 
 void WhileNode::loopLabelling(std::string& loop_label) {
-    std::string new_label = getLabelName("WHILE");
+    std::string new_label = getLabelName("while");
     this->label = std::make_unique<IdentifierNode>();
     this->label->name = new_label;
     this->body->loopLabelling(new_label);
 }
 
 void DoWhileNode::loopLabelling(std::string& loop_label) {
-    std::string new_label = getLabelName("DO_WHILE");
+    std::string new_label = getLabelName("do_while");
     this->label = std::make_unique<IdentifierNode>();
     this->label->name = new_label;
     this->body->loopLabelling(new_label);
 }
 
 void ForNode::loopLabelling(std::string& loop_label) {
-    std::string new_label = getLabelName("FOR");
+    std::string new_label = getLabelName("for");
     this->label = std::make_unique<IdentifierNode>();
     this->label->name = new_label;
     this->body->loopLabelling(new_label);
@@ -295,7 +294,7 @@ void DeclarationNode::loopLabelling(std::string& loop_label){}; // no-op
 
 // loop labelling -- end
 
-// /*
+/*
 int main(int argc, char* argv[]) {
     if (argc < 2) {
         std::println(stderr,
@@ -320,20 +319,24 @@ int main(int argc, char* argv[]) {
         return 1;
     }
     auto contents = getFileContents(filename);
-    auto tokens = lexer(contents);
-    size_t i = 0;
-    for (const auto& [token_type, lexeme] : tokens) {
-        std::println("{}, {}, {}", i++, tokenTypeToString(token_type), lexeme);
+    auto tokens = lexer(contents, true);
+    auto ast = parse(tokens, true);
+
+    SymbolTable global_sym_table;
+    ast->resolveTypes(global_sym_table);
+    if (true) {
+        std::println("----- Identifier Resolution -----");
+        ast->dump();
+        std::println("---------------------------------");
     }
-    auto ast = parse(tokens);
-    ast->dump();
-    SymbolTable sym_table;
-    ast->resolveTypes(sym_table);
-    ast->dump();
 
     std::string loop_label = "";
     ast->loopLabelling(loop_label);
-    ast->dump();
+    if (true) {
+        std::println("----- Loop Labelling -----");
+        ast->dump();
+        std::println("--------------------------");
+    }
     return 0;
 }
 // */

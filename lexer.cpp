@@ -54,7 +54,7 @@ std::pair<TokenType, std::regex> token_specs[] = {
     {TokenType::SEMICOLON, std::regex(";")},
 };
 
-std::deque<Token> lexer(const std::string& s) {
+std::deque<Token> lexer(const std::string& s, bool debug) {
     std::deque<Token> tokens;
     size_t pos = 0;
     while (pos < s.length()) {
@@ -63,7 +63,7 @@ std::deque<Token> lexer(const std::string& s) {
             continue;
         }
 
-        // handle comments //
+        // handle comments of type "//"
         if (pos < s.length() - 1 && s[pos] == '/' && s[pos + 1] == '/') {
             // Skip until end of line
             while (pos < s.length() && s[pos] != '\n') {
@@ -72,7 +72,7 @@ std::deque<Token> lexer(const std::string& s) {
             continue;
         }
 
-        // handle comments /* */
+        // handle comments of type "/**/"
         if (pos < s.length() - 1 && s[pos] == '/' && s[pos + 1] == '*') {
             pos += 2; // skip /*
             while (pos < s.length() - 1) {
@@ -115,6 +115,15 @@ std::deque<Token> lexer(const std::string& s) {
         // add to `tokens`
         tokens.emplace_back(class_type, match);
     }
+
+    if (debug) {
+        std::println("----- Lexical Analysis -----");
+        size_t i = 0;
+        for (const auto& [token_type, lexeme] : tokens) {
+            std::println("| {} | {} | {} |", i++, tokenTypeToString(token_type), lexeme);
+        }
+        std::println("----------------------------");
+    }
     return tokens;
 }
 
@@ -144,11 +153,7 @@ int main(int argc, char *argv[]) {
         return 1;
     }
     auto contents = getFileContents(filename);
-    auto tokens = lexer(contents);
-
-    for(auto& [token_type, lexeme]: tokens){
-        std::println("{}, {}", tokenTypeToString(token_type), lexeme);
-    }
+    auto tokens = lexer(contents, true);
 
     return 0;
 }

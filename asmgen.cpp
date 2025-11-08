@@ -8,31 +8,35 @@
 
 #include "asmgen.hpp"
 #include "irgen.hpp"
+#include "parser.hpp"
 #include "utils.hpp"
 
 /*
 Contains Implementations of:
-* emit_asm methods for IR nodes to generate corresponding ASM nodes
+* lowerToAsm methods for IR nodes to generate corresponding ASM nodes
 * resolvePseudoRegisters methods for ASM nodes to resolve pseudo registers
 * fixUpInstructions methods for ASM nodes to fix instructions needing multiple steps
 */
 
 // Emit Assembly Functions -- Start
-std::unique_ptr<AsmProgramNode> IRProgramNode::emit_asm() {
+
+/// @brief Lowers the given IR program to an ASM program.
+/// @return The lowered ASM program.
+std::unique_ptr<AsmProgramNode> IRProgramNode::lowerToAsm() {
     auto asm_program = std::make_unique<AsmProgramNode>();
     if (this->func) {
-        asm_program->func = std::move(this->func->emit_asm());
+        asm_program->func = std::move(this->func->lowerToAsm());
     }
     return asm_program;
 }
 
-std::unique_ptr<AsmFunctionNode> IRFunctionNode::emit_asm() {
+std::unique_ptr<AsmFunctionNode> IRFunctionNode::lowerToAsm() {
     auto asm_func = std::make_unique<AsmFunctionNode>(this->var_name);
 
     if (!this->instructions.empty()) {
         for (const auto& instr : this->instructions) {
             // every IR instruction can emit multiple ASM instructions
-            auto asm_instrs = instr->emit_asm();
+            auto asm_instrs = instr->lowerToAsm();
             for (auto& asm_instr : asm_instrs) {
                 asm_func->instructions.push_back(std::move(asm_instr));
             }
@@ -41,12 +45,12 @@ std::unique_ptr<AsmFunctionNode> IRFunctionNode::emit_asm() {
     return asm_func;
 }
 
-std::vector<std::unique_ptr<AsmInstructionNode>> IRRetNode::emit_asm() {
+std::vector<std::unique_ptr<AsmInstructionNode>> IRRetNode::lowerToAsm() {
     auto instructions = std::vector<std::unique_ptr<AsmInstructionNode>>();
 
     // IR Ret = Asm Mov + Ret instructions
     if (val) {
-        auto src = this->val->emit_asm();
+        auto src = this->val->lowerToAsm();
         auto dest = std::make_shared<AsmRegisterNode>("%eax");
         auto mov_instr = std::make_unique<AsmMovNode>(src, dest);
         instructions.push_back(std::move(mov_instr));
@@ -56,11 +60,11 @@ std::vector<std::unique_ptr<AsmInstructionNode>> IRRetNode::emit_asm() {
     return instructions;
 }
 
-std::vector<std::unique_ptr<AsmInstructionNode>> IRUnaryNode::emit_asm() {
+std::vector<std::unique_ptr<AsmInstructionNode>> IRUnaryNode::lowerToAsm() {
     auto instructions = std::vector<std::unique_ptr<AsmInstructionNode>>();
     if (this->op_type == "!") { // relational op
-        auto src = this->val_src->emit_asm();
-        auto dest = this->val_dest->emit_asm();
+        auto src = this->val_src->lowerToAsm();
+        auto dest = this->val_dest->lowerToAsm();
 
         auto cmp_instr = std::make_unique<AsmCmpNode>(std::make_shared<AsmImmediateNode>("0"), src);
         instructions.push_back(std::move(cmp_instr));
@@ -73,8 +77,8 @@ std::vector<std::unique_ptr<AsmInstructionNode>> IRUnaryNode::emit_asm() {
         instructions.push_back(std::move(setcc_instr));
         return instructions;
     } else if (this->op_type == "~" || this->op_type == "-") {
-        auto dest = this->val_dest->emit_asm();
-        auto src = this->val_src->emit_asm();
+        auto dest = this->val_dest->lowerToAsm();
+        auto src = this->val_src->lowerToAsm();
 
         auto mov_instr = std::make_unique<AsmMovNode>(src, dest);
         instructions.push_back(std::move(mov_instr));
@@ -83,7 +87,7 @@ std::vector<std::unique_ptr<AsmInstructionNode>> IRUnaryNode::emit_asm() {
         instructions.push_back(std::move(unary_instr));
         return instructions;
     } else {
-        throw std::runtime_error("IRUnaryNode::emit_asm: Unsupported op_type " + this->op_type);
+        throw std::runtime_error("IRUnaryNode::lowerToAsm: Unsupported op_type " + this->op_type);
     }
 }
 
@@ -100,22 +104,22 @@ constexpr std::string getCondCode(const std::string& op_type) {
 }
 } // namespace
 
-std::vector<std::unique_ptr<AsmInstructionNode>> IRBinaryNode::emit_asm() {
+std::vector<std::unique_ptr<AsmInstructionNode>> IRBinaryNode::lowerToAsm() {
     auto instructions = std::vector<std::unique_ptr<AsmInstructionNode>>();
-    // AsmOperandNode::emit_asm returns imm/pseudo if const/variable
-    auto dest = this->val_dest->emit_asm();
+    // AsmOperandNode::lowerToAsm returns imm/pseudo if const/variable
+    auto dest = this->val_dest->lowerToAsm();
 
     // separate handling for (+, -, *), (/, %) and (==, !=, <, >, <=, >= {relational ops})
     if (this->op_type == "/" || this->op_type == "%") {
         auto eax_reg = std::make_shared<AsmRegisterNode>("%eax");
-        auto src1 = this->val_src1->emit_asm();
+        auto src1 = this->val_src1->lowerToAsm();
         auto mov_instr = std::make_unique<AsmMovNode>(src1, eax_reg);
         instructions.push_back(std::move(mov_instr));
 
         auto cdq_instr = std::make_unique<AsmCdqNode>();
         instructions.push_back(std::move(cdq_instr));
 
-        auto divisor = this->val_src2->emit_asm();
+        auto divisor = this->val_src2->lowerToAsm();
         auto idiv_instr = std::make_unique<AsmIdivNode>(divisor);
         instructions.push_back(std::move(idiv_instr));
 
@@ -124,17 +128,17 @@ std::vector<std::unique_ptr<AsmInstructionNode>> IRBinaryNode::emit_asm() {
         auto mov_res_instr = std::make_unique<AsmMovNode>(result_reg, dest);
         instructions.push_back(std::move(mov_res_instr));
     } else if (this->op_type == "+" || this->op_type == "-" || this->op_type == "*") {
-        auto src1 = this->val_src1->emit_asm();
+        auto src1 = this->val_src1->lowerToAsm();
         auto mov_instr = std::make_unique<AsmMovNode>(src1, dest);
         instructions.push_back(std::move(mov_instr));
 
-        auto src2 = this->val_src2->emit_asm();
+        auto src2 = this->val_src2->lowerToAsm();
         auto binary_instr = std::make_unique<AsmBinaryNode>(this->op_type, src2, dest);
         instructions.push_back(std::move(binary_instr));
     } else if (RELATIONAL_OPS.contains(this->op_type)) {
-        auto src1 = this->val_src1->emit_asm();
-        auto src2 = this->val_src2->emit_asm();
-        auto dest = this->val_dest->emit_asm();
+        auto src1 = this->val_src1->lowerToAsm();
+        auto src2 = this->val_src2->lowerToAsm();
+        auto dest = this->val_dest->lowerToAsm();
 
         auto cmp_instr = std::make_unique<AsmCmpNode>(src2, src1);
         instructions.push_back(std::move(cmp_instr));
@@ -146,30 +150,30 @@ std::vector<std::unique_ptr<AsmInstructionNode>> IRBinaryNode::emit_asm() {
         auto setcc_instr = std::make_unique<AsmSetCCNode>(getCondCode(this->op_type), dest);
         instructions.push_back(std::move(setcc_instr));
     } else {
-        throw std::runtime_error("IRBinaryNode::emit_asm: Unsupported op_type " + this->op_type);
+        throw std::runtime_error("IRBinaryNode::lowerToAsm: Unsupported op_type " + this->op_type);
     }
     return instructions;
 }
 
-std::shared_ptr<AsmOperandNode> IRConstNode::emit_asm() {
+std::shared_ptr<AsmOperandNode> IRConstNode::lowerToAsm() {
     return std::make_shared<AsmImmediateNode>(this->val);
 }
 
-std::shared_ptr<AsmOperandNode> IRVariableNode::emit_asm() {
+std::shared_ptr<AsmOperandNode> IRVariableNode::lowerToAsm() {
     return std::make_shared<AsmPseudoNode>(this->var_name);
 }
 
-std::vector<std::unique_ptr<AsmInstructionNode>> IRCopyNode::emit_asm() {
+std::vector<std::unique_ptr<AsmInstructionNode>> IRCopyNode::lowerToAsm() {
     auto instructions = std::vector<std::unique_ptr<AsmInstructionNode>>();
-    auto src = this->val_src->emit_asm();
-    auto dest = this->val_dest->emit_asm();
+    auto src = this->val_src->lowerToAsm();
+    auto dest = this->val_dest->lowerToAsm();
 
     auto mov_instr = std::make_unique<AsmMovNode>(src, dest);
     instructions.push_back(std::move(mov_instr));
     return instructions;
 }
 
-std::vector<std::unique_ptr<AsmInstructionNode>> IRJumpNode::emit_asm() {
+std::vector<std::unique_ptr<AsmInstructionNode>> IRJumpNode::lowerToAsm() {
     auto instructions = std::vector<std::unique_ptr<AsmInstructionNode>>();
     auto jmp_instr = std::make_unique<AsmJmpNode>(this->target_label);
     instructions.push_back(std::move(jmp_instr));
@@ -181,7 +185,7 @@ std::vector<std::unique_ptr<AsmInstructionNode>>
 emit_jump_if(const std::string& cc, // condition code
              const std::shared_ptr<IRValNode>& condition, const std::string& target_label) {
     std::vector<std::unique_ptr<AsmInstructionNode>> instructions;
-    auto cond_asm = condition->emit_asm();
+    auto cond_asm = condition->lowerToAsm();
 
     // compare condition with 0
     instructions.push_back(
@@ -194,17 +198,17 @@ emit_jump_if(const std::string& cc, // condition code
 }
 } // namespace
 
-std::vector<std::unique_ptr<AsmInstructionNode>> IRJumpIfZeroNode::emit_asm() {
+std::vector<std::unique_ptr<AsmInstructionNode>> IRJumpIfZeroNode::lowerToAsm() {
     auto instructions = emit_jump_if("e", this->condition, this->target_label);
     return instructions;
 }
 
-std::vector<std::unique_ptr<AsmInstructionNode>> IRJumpIfNotZeroNode::emit_asm() {
+std::vector<std::unique_ptr<AsmInstructionNode>> IRJumpIfNotZeroNode::lowerToAsm() {
     auto instructions = emit_jump_if("ne", this->condition, this->target_label);
     return instructions;
 }
 
-std::vector<std::unique_ptr<AsmInstructionNode>> IRLabelNode::emit_asm() {
+std::vector<std::unique_ptr<AsmInstructionNode>> IRLabelNode::lowerToAsm() {
     auto instructions = std::vector<std::unique_ptr<AsmInstructionNode>>();
     auto label_instr = std::make_unique<AsmLabelNode>(this->label_name);
     instructions.push_back(std::move(label_instr));
@@ -452,6 +456,7 @@ void AsmCmpNode::fixUpInstructions(std::vector<std::unique_ptr<AsmInstructionNod
 
 /*
 #include "lexer.hpp"
+#include "checker.hpp"
 #include "parser.hpp"
 int main(int argc, char* argv[]) {
     if (argc < 2) {
@@ -477,27 +482,44 @@ int main(int argc, char* argv[]) {
         return 1;
     }
     auto contents = getFileContents(filename);
-    auto tokens = lexer(contents);
-    size_t i = 0;
-    for (const auto& [token_type, lexeme] : tokens) {
-        std::println("{}, {}, {}", i++, tokenTypeToString(token_type), lexeme);
+    auto tokens = lexer(contents, true);
+    auto ast = parse(tokens, true);
+
+    SymbolTable global_sym_table;
+    ast->resolveTypes(global_sym_table);
+    if (true) {
+        std::println("----- Identifier Resolution -----");
+        ast->dump();
+        std::println("---------------------------------");
     }
-    auto ast = parse(tokens);
-    ast->dump();
-    SymbolTable sym_table;
-    ast->resolveTypes(sym_table);
-    ast->dump();
-    auto ir_ast = ast->emit_ir();
-    ir_ast->dump_ir();
-    auto asm_ast = ir_ast->emit_asm();
+
+    std::string loop_label = "";
+    ast->loopLabelling(loop_label);
+    if (true) {
+        std::println("----- Loop Labelling -----");
+        ast->dump();
+        std::println("--------------------------");
+    }
+
+    auto ir_program = ast->generateIR();
+    if (true) {
+        std::println("----------- IR Generation -----------");
+        ir_program->dump();
+        std::println("-------------------------------------");
+    }
+
+    auto asm_ast = ir_program->lowerToAsm();
 
     // maps from `AsmPseudoNode::identifier` to assigned `AsmStackNode::offset`
     std::unordered_map<std::string, int> pseudo_reg_map;
     int stack_offset = 0; // offsets grow in 4-byte (int) increments // increment by 4 then use
     asm_ast->resolvePseudoRegisters(pseudo_reg_map, stack_offset);
-    std::println("After resolving pseudo registers: {}", stack_offset);
+    if (true) {
+        std::println("After resolving pseudo registers: {}", stack_offset);
+    }
 
     asm_ast->fixUpInstructions(stack_offset);
+
     return 0;
 }
 // */

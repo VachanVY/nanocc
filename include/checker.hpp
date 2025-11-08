@@ -3,6 +3,11 @@
 #include <unordered_map>
 #include <string>
 
+// #include <memory>
+
+// // Forward declaration to avoid circular dependencies
+// class ProgramNode;
+
 struct VariableScope {
     std::string unique_name;
     bool from_curr_scope; /* only used by DeclarationNode to prevent redeclaration */

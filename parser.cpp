@@ -2,6 +2,7 @@
 #include <memory>
 #include <print>
 #include <vector>
+#include <unordered_map>
 
 #include "lexer.hpp"
 #include "parser.hpp"
@@ -296,7 +297,8 @@ void WhileNode::dump(int indent) const {
     std::print("While(");
     if (this->label) {
         this->label->dump(0, false);
-    } std::println();
+    }
+    std::println();
     this->condition->dump(indent + 1);
     this->body->dump(indent + 1);
     printIndent(indent);
@@ -322,7 +324,8 @@ void DoWhileNode::dump(int indent) const {
     std::print("DoWhile(");
     if (this->label) {
         this->label->dump(0, false);
-    } std::println();
+    }
+    std::println();
     this->body->dump(indent + 1);
     this->condition->dump(indent + 1);
     printIndent(indent);
@@ -361,7 +364,8 @@ void ForNode::dump(int indent) const {
     std::print("For(");
     if (this->label) {
         this->label->dump(0, false);
-    } std::println();
+    }
+    std::println();
 
     printIndent(indent + 1);
     std::println("Init:");
@@ -656,7 +660,7 @@ void ConditionalNode::dump(int indent) const {
     std::println(")");
 }
 
-std::unique_ptr<ProgramNode> parse(std::deque<Token>& tokens) {
+std::unique_ptr<ProgramNode> parse(std::deque<Token>& tokens, bool debug) {
     size_t pos = 0;
     auto ast = std::make_unique<ProgramNode>();
     ast->parse(tokens, pos);
@@ -665,6 +669,12 @@ std::unique_ptr<ProgramNode> parse(std::deque<Token>& tokens) {
         throw std::runtime_error(
             std::format("Syntax Error: Unexpected token '{}' of class '{}' at top level", actual,
                         tokenTypeToString(token_type)));
+    }
+
+    if (debug) {
+        std::println("-------- Parse Tree --------");
+        ast->dump();
+        std::println("----------------------------");
     }
     return ast;
 }
@@ -694,13 +704,8 @@ int main(int argc, char* argv[]) {
         return 1;
     }
     auto contents = getFileContents(filename);
-    auto tokens = lexer(contents);
-    size_t i = 0;
-    for (const auto& [token_type, lexeme] : tokens) {
-        std::println("{}, {}, {}", i++, tokenTypeToString(token_type), lexeme);
-    }
-    auto ast = parse(tokens);
-    ast->dump();
+    auto tokens = lexer(contents, true);
+    auto ast = parse(tokens, true);
     return 0;
 }
 // */
