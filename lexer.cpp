@@ -15,6 +15,11 @@ std::pair<TokenType, std::regex> token_specs[] = {
     {TokenType::ELSE, std::regex("else\\b")},
     {TokenType::QUESTION, std::regex("\\?")},
     {TokenType::COLON, std::regex(":")},
+    {TokenType::DO, std::regex("do\\b")},
+    {TokenType::WHILE, std::regex("while\\b")},
+    {TokenType::FOR, std::regex("for\\b")},
+    {TokenType::BREAK, std::regex("break\\b")},
+    {TokenType::CONTINUE, std::regex("continue\\b")},
 
     // "unary operators"
     {TokenType::TILDE, std::regex("~")},

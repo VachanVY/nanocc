@@ -60,7 +60,8 @@ void CompoundNode::resolveTypes(SymbolTable& old_sym_table) {
 
 void NullNode::resolveTypes(SymbolTable& sym_table){}; // no-op
 
-/// @brief Check for variable redeclaration; Add to symbol table after giving unique name;
+/// @brief Check for variable redeclaration in the same scope;
+/// Add to symbol table after giving unique name;
 void DeclarationNode::resolveTypes(SymbolTable& sym_table) {
     if (sym_table.contains(this->var_identifier->name) &&
         sym_table[this->var_identifier->name].from_curr_scope) {

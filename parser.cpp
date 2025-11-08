@@ -139,6 +139,21 @@ void StatementNode::parse(std::deque<Token>& tokens, size_t& pos) {
     } else if (tokens[pos].type == TokenType::IF) {
         this->ifelse_stmt = std::make_unique<IfElseNode>();
         this->ifelse_stmt->parse(tokens, pos);
+    } else if (tokens[pos].type == TokenType::BREAK) {
+        this->break_stmt = std::make_unique<BreakNode>();
+        this->break_stmt->parse(tokens, pos);
+    } else if (tokens[pos].type == TokenType::CONTINUE) {
+        this->continue_stmt = std::make_unique<ContinueNode>();
+        this->continue_stmt->parse(tokens, pos);
+    } else if (tokens[pos].type == TokenType::WHILE) {
+        this->while_stmt = std::make_unique<WhileNode>();
+        this->while_stmt->parse(tokens, pos);
+    } else if (tokens[pos].type == TokenType::DO) {
+        this->dowhile_stmt = std::make_unique<DoWhileNode>();
+        this->dowhile_stmt->parse(tokens, pos);
+    } else if (tokens[pos].type == TokenType::FOR) {
+        this->for_stmt =  std::make_unique<ForNode>();
+        this->for_stmt->parse(tokens, pos);
     } else {
         this->expression_stmt = std::make_unique<ExpressionNode>();
         this->expression_stmt->parse(tokens, pos);
@@ -154,6 +169,16 @@ void StatementNode::dump(int indent) const {
         this->ifelse_stmt->dump(indent);
     } else if (this->compound_stmt) {
         this->compound_stmt->dump(indent);
+    } else if (this->break_stmt) {
+        this->break_stmt->dump(indent);
+    } else if (this->continue_stmt) {
+        this->continue_stmt->dump(indent);
+    } else if (this->while_stmt) {
+        this->while_stmt->dump(indent);
+    } else if (this->dowhile_stmt) {
+        this->dowhile_stmt->dump(indent);
+    } else if (this->for_stmt) {
+        this->for_stmt->dump(indent);
     } else {
         this->expression_stmt->dump(indent);
     }
@@ -225,6 +250,167 @@ void CompoundNode::parse(std::deque<Token>& tokens, size_t& pos) {
 }
 
 void CompoundNode::dump(int indent) const { this->block->dump(indent); }
+
+void BreakNode::parse(std::deque<Token>& tokens, size_t& pos) {
+    expect(tokens, TokenType::BREAK, pos);
+    expect(tokens, TokenType::SEMICOLON, pos);
+
+    // dummy label
+    this->label = std::make_unique<IdentifierNode>();
+    this->label->name = "break";
+}
+
+void BreakNode::dump(int indent) const {
+    printIndent(indent);
+    std::print("Break(");
+    if (this->label) {
+        this->label->dump(0, false);
+    }
+    std::println(")");
+}
+
+void ContinueNode::parse(std::deque<Token>& tokens, size_t& pos) {
+    expect(tokens, TokenType::CONTINUE, pos);
+    expect(tokens, TokenType::SEMICOLON, pos);
+
+    // dummy label
+    this->label = std::make_unique<IdentifierNode>();
+    this->label->name = "continue";
+}
+
+void ContinueNode::dump(int indent) const {
+    printIndent(indent);
+    std::print("Continue(");
+    if (this->label) {
+        this->label->dump(0, false);
+    }
+    std::println(")");
+}
+
+void WhileNode::parse(std::deque<Token>& tokens, size_t& pos) {
+    expect(tokens, TokenType::WHILE, pos);
+
+    expect(tokens, TokenType::LPAREN, pos);
+    this->condition = std::make_unique<ExprNode>();
+    this->condition->parse(tokens, pos);
+    expect(tokens, TokenType::RPAREN, pos);
+
+    this->body = std::make_unique<StatementNode>();
+    this->body->parse(tokens, pos);
+
+    // dummy label
+    this->label = std::make_unique<IdentifierNode>();
+    this->label->name = "while";
+}
+
+void WhileNode::dump(int indent) const {
+    printIndent(indent);
+    std::println("While(");
+    this->condition->dump(indent + 1);
+    this->body->dump(indent + 1);
+    printIndent(indent);
+    std::println(")");
+}
+
+void DoWhileNode::parse(std::deque<Token>& tokens, size_t& pos) {
+    expect(tokens, TokenType::DO, pos);
+
+    this->body = std::make_unique<StatementNode>();
+    this->body->parse(tokens, pos);
+
+    expect(tokens, TokenType::WHILE, pos);
+    expect(tokens, TokenType::LPAREN, pos);
+    this->condition = std::make_unique<ExprNode>();
+    this->condition->parse(tokens, pos);
+    expect(tokens, TokenType::RPAREN, pos);
+    expect(tokens, TokenType::SEMICOLON, pos);
+
+    // dummy label
+    this->label = std::make_unique<IdentifierNode>();
+    this->label->name = "do_while";
+}
+
+void DoWhileNode::dump(int indent) const {
+    printIndent(indent);
+    std::println("DoWhile(");
+    this->body->dump(indent + 1);
+    this->condition->dump(indent + 1);
+    printIndent(indent);
+    std::println(")");
+}
+
+void ForNode::parse(std::deque<Token>& tokens, size_t& pos) {
+    expect(tokens, TokenType::FOR, pos);
+    expect(tokens, TokenType::LPAREN, pos);
+
+    // init statement
+    this->init = std::make_unique<ForInitNode>();
+    this->init->parse(tokens, pos); // handles the case of no init too
+
+    // condition
+    if (tokens[pos].type != TokenType::SEMICOLON) {
+        this->condition = std::make_unique<ExprNode>();
+        this->condition->parse(tokens, pos);
+    }
+    expect(tokens, TokenType::SEMICOLON, pos);
+
+    // post expression
+    if (tokens[pos].type != TokenType::RPAREN) {
+        this->post = std::make_unique<ExprNode>();
+        this->post->parse(tokens, pos);
+    }
+    expect(tokens, TokenType::RPAREN, pos);
+
+    // loop body
+    this->body = std::make_unique<StatementNode>();
+    this->body->parse(tokens, pos);
+}
+
+void ForNode::dump(int indent) const {
+    printIndent(indent);
+    std::println("For(");
+
+    printIndent(indent + 1);
+    std::println("Init:");
+    this->init->dump(indent + 2);
+
+    if (this->condition) {
+        printIndent(indent + 1);
+        std::println("Condition:");
+        this->condition->dump(indent + 2);
+    }
+    if (this->post) {
+        printIndent(indent + 1);
+        std::println("Post:");
+        this->post->dump(indent + 2);
+    }
+
+    printIndent(indent + 1);
+    std::println("Body:");
+    this->body->dump(indent + 2);
+    printIndent(indent);
+    std::println(")");
+}
+
+void ForInitNode::parse(std::deque<Token>& tokens, size_t& pos) {
+    if (tokens[pos].type == TokenType::INT) {
+        this->declaration = std::make_unique<DeclarationNode>();
+        this->declaration->parse(tokens, pos);
+        return;
+    } else if (tokens[pos].type != TokenType::SEMICOLON) {
+        this->init_expr = std::make_unique<ExprNode>();
+        this->init_expr->parse(tokens, pos);
+    }
+    expect(tokens, TokenType::SEMICOLON, pos);
+}
+
+void ForInitNode::dump(int indent) const {
+    if (this->declaration) {
+        this->declaration->dump(indent);
+    } else if (this->init_expr) {
+        this->init_expr->dump(indent);
+    }
+}
 
 void NullNode::parse(std::deque<Token>& tokens, size_t& pos) {
     expect(tokens, TokenType::SEMICOLON, pos);

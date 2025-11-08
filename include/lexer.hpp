@@ -16,6 +16,11 @@
     X(ELSE, "else")                                                                                \
     X(QUESTION, "?")                                                                               \
     X(COLON, ":")                                                                                  \
+    X(DO, "do")                                                                                    \
+    X(WHILE, "while")                                                                              \
+    X(FOR, "for")                                                                                  \
+    X(BREAK, "break")                                                                              \
+    X(CONTINUE, "continue")                                                                        \
                                                                                                    \
     X(TILDE, "~")                                                                                  \
     X(DECREMENT, "--")                                                                             \
