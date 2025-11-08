@@ -1,15 +1,20 @@
 int main(void) {
-  int a = 1;
-
+  int a = 0;
   while (a < 10) {
+    for (int i = 0; i < 10; i = i + 1) {
+      if (i % 2 == 0) {
+        continue;
+      }
+      else if (a > i) {
+        break;
+      }
+    }
     a = a + 1;
+    continue;
   }
-  
-  
-  for (int i = 0; i < 10; i = i + 1) {
-    a = a + i;
-  }
+  // break;
 }
+
 
 /*
 Program(
@@ -19,7 +24,7 @@ Program(
       Block(
         Declaration(
           name='a'
-          Constant(1)
+          Constant(0)
         )
         While(
           Binary(<,
@@ -27,6 +32,50 @@ Program(
             Constant(10)
           )
           Block(
+            For(
+              Init:
+                Declaration(
+                  name='i'
+                  Constant(0)
+                )
+              Condition:
+                Binary(<,
+                  Var(name='i')
+                  Constant(10)
+                )
+              Post:
+                Assignment(
+                  Var(name='i')
+                  Binary(+,
+                    Var(name='i')
+                    Constant(1)
+                  )
+                )
+              ForLoopBody:
+                Block(
+                  IfElse(
+                    Binary(==,
+                      Binary(%,
+                        Var(name='i')
+                        Constant(2)
+                      )
+                      Constant(0)
+                    )
+                    Block(
+                      Continue()
+                    )
+                    IfElse(
+                      Binary(>,
+                        Var(name='a')
+                        Var(name='i')
+                      )
+                      Block(
+                        Break()
+                      )
+                    )
+                  )
+                )
+            )
             Expression(
               Assignment(
                 Var(name='a')
@@ -36,6 +85,157 @@ Program(
                 )
               )
             )
+            Continue()
+          )
+        )
+      )
+    )
+  )
+)
+Program(
+  Function(
+    name='main'
+    body=(
+      Block(
+        Declaration(
+          name='a.0'
+          Constant(0)
+        )
+        While(
+          Binary(<,
+            Var(name='a.0')
+            Constant(10)
+          )
+          Block(
+            For(
+              Init:
+                Declaration(
+                  name='i.1'
+                  Constant(0)
+                )
+              Condition:
+                Binary(<,
+                  Var(name='i.1')
+                  Constant(10)
+                )
+              Post:
+                Assignment(
+                  Var(name='i.1')
+                  Binary(+,
+                    Var(name='i.1')
+                    Constant(1)
+                  )
+                )
+              ForLoopBody:
+                Block(
+                  IfElse(
+                    Binary(==,
+                      Binary(%,
+                        Var(name='i.1')
+                        Constant(2)
+                      )
+                      Constant(0)
+                    )
+                    Block(
+                      Continue()
+                    )
+                    IfElse(
+                      Binary(>,
+                        Var(name='a.0')
+                        Var(name='i.1')
+                      )
+                      Block(
+                        Break()
+                      )
+                    )
+                  )
+                )
+            )
+            Expression(
+              Assignment(
+                Var(name='a.0')
+                Binary(+,
+                  Var(name='a.0')
+                  Constant(1)
+                )
+              )
+            )
+            Continue()
+          )
+        )
+      )
+    )
+  )
+)
+Program(
+  Function(
+    name='main'
+    body=(
+      Block(
+        Declaration(
+          name='a.0'
+          Constant(0)
+        )
+        While(name='WHILE.0'
+          Binary(<,
+            Var(name='a.0')
+            Constant(10)
+          )
+          Block(
+            For(name='FOR.1'
+              Init:
+                Declaration(
+                  name='i.1'
+                  Constant(0)
+                )
+              Condition:
+                Binary(<,
+                  Var(name='i.1')
+                  Constant(10)
+                )
+              Post:
+                Assignment(
+                  Var(name='i.1')
+                  Binary(+,
+                    Var(name='i.1')
+                    Constant(1)
+                  )
+                )
+              ForLoopBody:
+                Block(
+                  IfElse(
+                    Binary(==,
+                      Binary(%,
+                        Var(name='i.1')
+                        Constant(2)
+                      )
+                      Constant(0)
+                    )
+                    Block(
+                      Continue(name='FOR.1')
+                    )
+                    IfElse(
+                      Binary(>,
+                        Var(name='a.0')
+                        Var(name='i.1')
+                      )
+                      Block(
+                        Break(name='FOR.1')
+                      )
+                    )
+                  )
+                )
+            )
+            Expression(
+              Assignment(
+                Var(name='a.0')
+                Binary(+,
+                  Var(name='a.0')
+                  Constant(1)
+                )
+              )
+            )
+            Continue(name='WHILE.0')
           )
         )
       )

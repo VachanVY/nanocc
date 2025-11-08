@@ -152,7 +152,7 @@ void StatementNode::parse(std::deque<Token>& tokens, size_t& pos) {
         this->dowhile_stmt = std::make_unique<DoWhileNode>();
         this->dowhile_stmt->parse(tokens, pos);
     } else if (tokens[pos].type == TokenType::FOR) {
-        this->for_stmt =  std::make_unique<ForNode>();
+        this->for_stmt = std::make_unique<ForNode>();
         this->for_stmt->parse(tokens, pos);
     } else {
         this->expression_stmt = std::make_unique<ExpressionNode>();
@@ -254,10 +254,6 @@ void CompoundNode::dump(int indent) const { this->block->dump(indent); }
 void BreakNode::parse(std::deque<Token>& tokens, size_t& pos) {
     expect(tokens, TokenType::BREAK, pos);
     expect(tokens, TokenType::SEMICOLON, pos);
-
-    // dummy label
-    this->label = std::make_unique<IdentifierNode>();
-    this->label->name = "break";
 }
 
 void BreakNode::dump(int indent) const {
@@ -272,10 +268,6 @@ void BreakNode::dump(int indent) const {
 void ContinueNode::parse(std::deque<Token>& tokens, size_t& pos) {
     expect(tokens, TokenType::CONTINUE, pos);
     expect(tokens, TokenType::SEMICOLON, pos);
-
-    // dummy label
-    this->label = std::make_unique<IdentifierNode>();
-    this->label->name = "continue";
 }
 
 void ContinueNode::dump(int indent) const {
@@ -297,15 +289,14 @@ void WhileNode::parse(std::deque<Token>& tokens, size_t& pos) {
 
     this->body = std::make_unique<StatementNode>();
     this->body->parse(tokens, pos);
-
-    // dummy label
-    this->label = std::make_unique<IdentifierNode>();
-    this->label->name = "while";
 }
 
 void WhileNode::dump(int indent) const {
     printIndent(indent);
-    std::println("While(");
+    std::print("While(");
+    if (this->label) {
+        this->label->dump(0, false);
+    } std::println();
     this->condition->dump(indent + 1);
     this->body->dump(indent + 1);
     printIndent(indent);
@@ -324,15 +315,14 @@ void DoWhileNode::parse(std::deque<Token>& tokens, size_t& pos) {
     this->condition->parse(tokens, pos);
     expect(tokens, TokenType::RPAREN, pos);
     expect(tokens, TokenType::SEMICOLON, pos);
-
-    // dummy label
-    this->label = std::make_unique<IdentifierNode>();
-    this->label->name = "do_while";
 }
 
 void DoWhileNode::dump(int indent) const {
     printIndent(indent);
-    std::println("DoWhile(");
+    std::print("DoWhile(");
+    if (this->label) {
+        this->label->dump(0, false);
+    } std::println();
     this->body->dump(indent + 1);
     this->condition->dump(indent + 1);
     printIndent(indent);
@@ -368,7 +358,10 @@ void ForNode::parse(std::deque<Token>& tokens, size_t& pos) {
 
 void ForNode::dump(int indent) const {
     printIndent(indent);
-    std::println("For(");
+    std::print("For(");
+    if (this->label) {
+        this->label->dump(0, false);
+    } std::println();
 
     printIndent(indent + 1);
     std::println("Init:");
@@ -386,7 +379,7 @@ void ForNode::dump(int indent) const {
     }
 
     printIndent(indent + 1);
-    std::println("Body:");
+    std::println("ForLoopBody:");
     this->body->dump(indent + 2);
     printIndent(indent);
     std::println(")");

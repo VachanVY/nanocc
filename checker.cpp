@@ -2,6 +2,17 @@
 #include "parser.hpp"
 #include "checker.hpp"
 
+namespace {
+SymbolTable copySymbolTableForNewScope(const SymbolTable& old_sym_table, bool curr_scope = false) {
+    SymbolTable new_sym_table = old_sym_table;
+    for (const auto& [var_name, var_scope] : old_sym_table) {
+        new_sym_table[var_name].from_curr_scope = curr_scope;
+    }
+    return new_sym_table;
+}
+} // namespace
+
+// identifier resolution -- start
 void ProgramNode::resolveTypes(SymbolTable& sym_table) { this->func->resolveTypes(sym_table); }
 
 void FunctionNode::resolveTypes(SymbolTable& sym_table) { body->resolveTypes(sym_table); }
@@ -29,6 +40,16 @@ void StatementNode::resolveTypes(SymbolTable& sym_table) {
         this->ifelse_stmt->resolveTypes(sym_table);
     } else if (this->compound_stmt) {
         this->compound_stmt->resolveTypes(sym_table);
+    } else if (this->break_stmt) {
+        this->break_stmt->resolveTypes(sym_table); // no-op
+    } else if (this->continue_stmt) {
+        this->continue_stmt->resolveTypes(sym_table); // no-op
+    } else if (this->while_stmt) {
+        this->while_stmt->resolveTypes(sym_table);
+    } else if (this->dowhile_stmt) {
+        this->dowhile_stmt->resolveTypes(sym_table);
+    } else if (this->for_stmt) {
+        this->for_stmt->resolveTypes(sym_table);
     } else if (this->null_stmt) {
         this->null_stmt->resolveTypes(sym_table); // no-op
     } else {
@@ -51,11 +72,46 @@ void IfElseNode::resolveTypes(SymbolTable& sym_table) {
 /// @brief Create a new scope, i.e create a copy of the current symbol table and
 /// mark all variables from the parent scope as false as they are not from current block scope
 void CompoundNode::resolveTypes(SymbolTable& old_sym_table) {
-    SymbolTable new_sym_table = old_sym_table;
-    for (const auto& [var_name, var_scope] : old_sym_table) {
-        new_sym_table[var_name].from_curr_scope = false;
-    }
+    SymbolTable new_sym_table = copySymbolTableForNewScope(old_sym_table, /*curr_scope=*/false);
     this->block->resolveTypes(new_sym_table);
+}
+
+void BreakNode::resolveTypes(SymbolTable& sym_table){}; // no-op
+
+void ContinueNode::resolveTypes(SymbolTable& sym_table){}; // no-op
+
+void WhileNode::resolveTypes(SymbolTable& sym_table) {
+    this->condition->resolveTypes(sym_table);
+    this->body->resolveTypes(sym_table);
+}
+
+void DoWhileNode::resolveTypes(SymbolTable& sym_table) {
+    this->body->resolveTypes(sym_table);
+    this->condition->resolveTypes(sym_table);
+}
+
+void ForNode::resolveTypes(SymbolTable& sym_table) {
+    // create a new scope for the for-loop
+    SymbolTable new_sym_table = copySymbolTableForNewScope(sym_table, /*curr_scope=*/false);
+    this->init->resolveTypes(new_sym_table);
+    if (this->condition) {
+        this->condition->resolveTypes(new_sym_table);
+    }
+    if (this->post) {
+        this->post->resolveTypes(new_sym_table);
+    }
+    // `StatementNode::resolveTypes` =calls=> `CompoundNode::resolveTypes`
+    // => creates another new scope for the body
+    // no need to do anything here for that
+    this->body->resolveTypes(new_sym_table);
+}
+
+void ForInitNode::resolveTypes(SymbolTable& sym_table) {
+    if (this->declaration) {
+        this->declaration->resolveTypes(sym_table);
+    } else if (this->init_expr) {
+        this->init_expr->resolveTypes(sym_table);
+    }
 }
 
 void NullNode::resolveTypes(SymbolTable& sym_table){}; // no-op
@@ -101,7 +157,7 @@ void VarNode::resolveTypes(SymbolTable& sym_table) {
     }
 }
 
-/// @brief left_expr of a `AssignmentNode` must be a `VarNode`
+/// @brief `AssignmentNode::left_expr` must be a `VarNode` else throw type error
 void AssignmentNode::resolveTypes(SymbolTable& sym_table) {
     assert(this->left_expr && this->left_expr->left_exprf &&
            "Left expression or its factor is null in `AssignmentNode::resolveTypes`");
@@ -136,8 +192,110 @@ void UnaryNode::resolveTypes(SymbolTable& sym_table) {
     }
     this->operand->resolveTypes(sym_table);
 }
+// identifier resolution -- end
 
-/*
+// loop labelling -- start
+void ProgramNode::loopLabelling(std::string& loop_label) { this->func->loopLabelling(loop_label); }
+
+void FunctionNode::loopLabelling(std::string& loop_label) { body->loopLabelling(loop_label); }
+
+void BlockNode::loopLabelling(std::string& loop_label) {
+    for (const auto& block_item : this->block_items) {
+        block_item->loopLabelling(loop_label);
+    }
+}
+
+void BlockItemNode::loopLabelling(std::string& loop_label) {
+    if (this->declaration) {
+        this->declaration->loopLabelling(loop_label); // no-op
+    } else if (this->statement) {
+        this->statement->loopLabelling(loop_label);
+    }
+}
+
+void StatementNode::loopLabelling(std::string& loop_label) {
+    if (this->return_stmt) {
+        this->return_stmt->loopLabelling(loop_label); // no-op
+    } else if (this->expression_stmt) {
+        this->expression_stmt->loopLabelling(loop_label); // no-op
+    } else if (this->ifelse_stmt) {
+        this->ifelse_stmt->loopLabelling(loop_label); // no-op
+    } else if (this->compound_stmt) {
+        this->compound_stmt->loopLabelling(loop_label);
+    } else if (this->break_stmt) {
+        this->break_stmt->loopLabelling(loop_label);
+    } else if (this->continue_stmt) {
+        this->continue_stmt->loopLabelling(loop_label);
+    } else if (this->while_stmt) {
+        this->while_stmt->loopLabelling(loop_label);
+    } else if (this->dowhile_stmt) {
+        this->dowhile_stmt->loopLabelling(loop_label);
+    } else if (this->for_stmt) {
+        this->for_stmt->loopLabelling(loop_label);
+    } else if (this->null_stmt) {
+        this->null_stmt->loopLabelling(loop_label); // no-op
+    } else {
+        throw std::runtime_error("Type Error: Malformed StatementNode");
+    }
+}
+
+void ReturnNode::loopLabelling(std::string& loop_label){}; // no-op
+void ExpressionNode::loopLabelling(std::string& loop_label){}; // no-op
+void IfElseNode::loopLabelling(std::string& loop_label){
+    this->if_block->loopLabelling(loop_label);
+    if (this->else_block) {
+        this->else_block->loopLabelling(loop_label);
+    }
+};
+
+void CompoundNode::loopLabelling(std::string& loop_label){
+    block->loopLabelling(loop_label);
+};
+
+void BreakNode::loopLabelling(std::string& loop_label) {
+    if(loop_label.empty()) {
+        throw std::runtime_error("Label Error: 'break' used outside of a loop");
+    }
+    this->label = std::make_unique<IdentifierNode>();
+    this->label->name = loop_label;
+}
+
+void ContinueNode::loopLabelling(std::string& loop_label) {
+    if(loop_label.empty()) {
+        throw std::runtime_error("Label Error: 'continue' used outside of a loop");
+    }
+    this->label = std::make_unique<IdentifierNode>();
+    this->label->name = loop_label;
+}
+
+void WhileNode::loopLabelling(std::string& loop_label) {
+    std::string new_label = getLabelName("WHILE");
+    this->label = std::make_unique<IdentifierNode>();
+    this->label->name = new_label;
+    this->body->loopLabelling(new_label);
+}
+
+void DoWhileNode::loopLabelling(std::string& loop_label) {
+    std::string new_label = getLabelName("DO_WHILE");
+    this->label = std::make_unique<IdentifierNode>();
+    this->label->name = new_label;
+    this->body->loopLabelling(new_label);
+}
+
+void ForNode::loopLabelling(std::string& loop_label) {
+    std::string new_label = getLabelName("FOR");
+    this->label = std::make_unique<IdentifierNode>();
+    this->label->name = new_label;
+    this->body->loopLabelling(new_label);
+}
+
+void NullNode::loopLabelling(std::string& loop_label){}; // no-op
+
+void DeclarationNode::loopLabelling(std::string& loop_label){}; // no-op
+
+// loop labelling -- end
+
+// /*
 int main(int argc, char* argv[]) {
     if (argc < 2) {
         std::println(stderr,
@@ -171,6 +329,10 @@ int main(int argc, char* argv[]) {
     ast->dump();
     SymbolTable sym_table;
     ast->resolveTypes(sym_table);
+    ast->dump();
+
+    std::string loop_label = "";
+    ast->loopLabelling(loop_label);
     ast->dump();
     return 0;
 }
