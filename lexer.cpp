@@ -63,28 +63,6 @@ std::deque<Token> lexer(const std::string& s, bool debug) {
             continue;
         }
 
-        // handle comments of type "//"
-        if (pos < s.length() - 1 && s[pos] == '/' && s[pos + 1] == '/') {
-            // Skip until end of line
-            while (pos < s.length() && s[pos] != '\n') {
-                pos++;
-            }
-            continue;
-        }
-
-        // handle comments of type "/**/"
-        if (pos < s.length() - 1 && s[pos] == '/' && s[pos + 1] == '*') {
-            pos += 2; // skip /*
-            while (pos < s.length() - 1) {
-                if (s[pos] == '*' && s[pos + 1] == '/') {
-                    pos += 2; // skip */
-                    break;
-                }
-                pos++;
-            }
-            continue;
-        }
-
         size_t match_length = 0;
         std::string match;
         TokenType class_type;
