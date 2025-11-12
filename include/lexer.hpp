@@ -50,7 +50,9 @@
     X(RPAREN, ")")                                                                                 \
     X(LBRACE, "{")                                                                                 \
     X(RBRACE, "}")                                                                                 \
-    X(SEMICOLON, ";")
+    X(SEMICOLON, ";")                                                                              \
+                                                                                                   \
+    X(COMMA, ",")
 
 enum class TokenType {
 #define X(name, str) name,

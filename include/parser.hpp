@@ -12,7 +12,10 @@
 
 class ASTNode;
 class ProgramNode;
-class FunctionNode;
+
+class DeclNode; // change name to DeclarationNode afterwards
+class VariableDeclNode;
+class FunctionDeclNode;
 
 // a BlockNode will contain multiple BlockItemNodes which are either statements or declarations
 class BlockNode;
@@ -33,8 +36,6 @@ class NullNode;
 // Derived from ASTNode
 class ForInitNode; // Helper for init in ForNode | Can be declaration, expression or nothing
 
-class DeclarationNode;
-
 class ExprNode;
 class ExprFactorNode; // derived from ExprNode // helper class for ExprNode
 class VarNode;
@@ -43,6 +44,7 @@ class UnaryNode;
 class BinaryNode;
 class AssignmentNode;
 class ConditionalNode;
+class FunctionCallNode;
 
 class IdentifierNode; // Do we need this? Just a string would do?
 
@@ -55,25 +57,51 @@ class ASTNode {
 
 class ProgramNode : public ASTNode {
   public:
-    std::unique_ptr<FunctionNode> func;
+    std::vector<std::unique_ptr<FunctionDeclNode>> functions;
 
     void parse(std::deque<Token>& tokens, size_t& pos);
     void dump(int indent = 0) const override;
-    void resolveTypes(SymbolTable& sym_table);
-    void loopLabelling(std::string& loop_label);
-    std::unique_ptr<IRProgramNode> generateIR();
+    // void resolveTypes(SymbolTable& sym_table);
+    // void loopLabelling(std::string& loop_label);
+    // std::unique_ptr<IRProgramNode> generateIR();
 };
 
-class FunctionNode : public ASTNode {
+class DeclNode : public ASTNode {
   public:
-    std::unique_ptr<IdentifierNode> var_identifier; // function name
-    std::unique_ptr<BlockNode> body;                // list of statements/declarations
+    std::unique_ptr<FunctionDeclNode> func;
+    std::unique_ptr<VariableDeclNode> var;
 
     void parse(std::deque<Token>& tokens, size_t& pos);
     void dump(int indent = 0) const override;
-    void resolveTypes(SymbolTable& sym_table);
-    void loopLabelling(std::string& loop_label);
-    std::unique_ptr<IRFunctionNode> generateIR();
+    /* void resolveTypes(SymbolTable& sym_table);
+    void loopLabelling(std::string& loop_label); */
+};
+
+// int "name"; | int "name" = <expr>;
+class VariableDeclNode : public ASTNode {
+  public:
+    std::unique_ptr<IdentifierNode> name;
+    std::unique_ptr<ExprNode> init_expr; // OPTIONAL
+
+    void parse(std::deque<Token>& tokens, size_t& pos);
+    void dump(int indent = 0) const override;
+    // void resolveTypes(SymbolTable& sym_table);
+    // void loopLabelling(std::string& loop_label); // no-op
+    // std::vector<std::unique_ptr<IRInstructionNode>> generateIR();
+};
+
+class FunctionDeclNode : public ASTNode {
+  public:
+    std::unique_ptr<IdentifierNode> name; // function name
+    std::vector<std::unique_ptr<IdentifierNode>> parameters;
+    // OPTIONAL(body): present for function definitions; absent for function declarations;
+    std::unique_ptr<BlockNode> body;
+
+    void parse(std::deque<Token>& tokens, size_t& pos);
+    void dump(int indent = 0) const override;
+    // void resolveTypes(SymbolTable& sym_table);
+    // void loopLabelling(std::string& loop_label);
+    // std::unique_ptr<IRFunctionNode> generateIR();
 };
 
 class BlockNode : public ASTNode {
@@ -82,33 +110,21 @@ class BlockNode : public ASTNode {
 
     void parse(std::deque<Token>& tokens, size_t& pos);
     void dump(int indent = 0) const override;
-    void resolveTypes(SymbolTable& sym_table);
-    void loopLabelling(std::string& loop_label);
-    std::vector<std::unique_ptr<IRInstructionNode>> generateIR();
+    // void resolveTypes(SymbolTable& sym_table);
+    // void loopLabelling(std::string& loop_label);
+    // std::vector<std::unique_ptr<IRInstructionNode>> generateIR();
 };
 
 class BlockItemNode : public ASTNode {
   public:
     std::unique_ptr<StatementNode> statement;
-    std::unique_ptr<DeclarationNode> declaration;
+    std::unique_ptr<DeclNode> declaration;
 
     void parse(std::deque<Token>& tokens, size_t& pos);
     void dump(int indent = 0) const override;
-    void resolveTypes(SymbolTable& sym_table);
-    void loopLabelling(std::string& loop_label);
-    std::vector<std::unique_ptr<IRInstructionNode>> generateIR();
-};
-
-class DeclarationNode : public ASTNode {
-  public:
-    std::unique_ptr<IdentifierNode> var_identifier;
-    std::unique_ptr<ExprNode> init_expr; // OPTIONAL
-
-    void parse(std::deque<Token>& tokens, size_t& pos);
-    void dump(int indent = 0) const override;
-    void resolveTypes(SymbolTable& sym_table);
-    void loopLabelling(std::string& loop_label); // no-op
-    std::vector<std::unique_ptr<IRInstructionNode>> generateIR();
+    // void resolveTypes(SymbolTable& sym_table);
+    // void loopLabelling(std::string& loop_label);
+    // std::vector<std::unique_ptr<IRInstructionNode>> generateIR();
 };
 
 class StatementNode : public ASTNode {
@@ -126,9 +142,9 @@ class StatementNode : public ASTNode {
 
     void parse(std::deque<Token>& tokens, size_t& pos);
     void dump(int indent = 0) const override;
-    void resolveTypes(SymbolTable& sym_table);
-    void loopLabelling(std::string& loop_label);
-    std::vector<std::unique_ptr<IRInstructionNode>> generateIR();
+    // void resolveTypes(SymbolTable& sym_table);
+    // void loopLabelling(std::string& loop_label);
+    // std::vector<std::unique_ptr<IRInstructionNode>> generateIR();
 };
 
 class ReturnNode : public StatementNode {
@@ -137,9 +153,9 @@ class ReturnNode : public StatementNode {
 
     void parse(std::deque<Token>& tokens, size_t& pos);
     void dump(int indent = 0) const override;
-    void resolveTypes(SymbolTable& sym_table);
-    void loopLabelling(std::string& loop_label); // no-op
-    std::vector<std::unique_ptr<IRInstructionNode>> generateIR();
+    // void resolveTypes(SymbolTable& sym_table);
+    // void loopLabelling(std::string& loop_label); // no-op
+    // std::vector<std::unique_ptr<IRInstructionNode>> generateIR();
 };
 
 // for non-return statements
@@ -149,9 +165,9 @@ class ExpressionNode : public StatementNode {
 
     void parse(std::deque<Token>& tokens, size_t& pos);
     void dump(int indent = 0) const override;
-    void resolveTypes(SymbolTable& sym_table);
-    void loopLabelling(std::string& loop_label); // no-op
-    std::vector<std::unique_ptr<IRInstructionNode>> generateIR();
+    // void resolveTypes(SymbolTable& sym_table);
+    // void loopLabelling(std::string& loop_label); // no-op
+    // std::vector<std::unique_ptr<IRInstructionNode>> generateIR();
 };
 
 class IfElseNode : public StatementNode {
@@ -162,9 +178,9 @@ class IfElseNode : public StatementNode {
 
     void parse(std::deque<Token>& tokens, size_t& pos);
     void dump(int indent = 0) const override;
-    void resolveTypes(SymbolTable& sym_table);
-    void loopLabelling(std::string& loop_label);
-    std::vector<std::unique_ptr<IRInstructionNode>> generateIR();
+    // void resolveTypes(SymbolTable& sym_table);
+    // void loopLabelling(std::string& loop_label);
+    // std::vector<std::unique_ptr<IRInstructionNode>> generateIR();
 };
 
 class CompoundNode : public StatementNode {
@@ -173,9 +189,9 @@ class CompoundNode : public StatementNode {
 
     void parse(std::deque<Token>& tokens, size_t& pos);
     void dump(int indent = 0) const override;
-    void resolveTypes(SymbolTable& sym_table);
-    void loopLabelling(std::string& loop_label);
-    std::vector<std::unique_ptr<IRInstructionNode>> generateIR();
+    // void resolveTypes(SymbolTable& sym_table);
+    // void loopLabelling(std::string& loop_label);
+    // std::vector<std::unique_ptr<IRInstructionNode>> generateIR();
 };
 
 // ✶✶✶ for Loop Related Nodes
@@ -188,9 +204,9 @@ class BreakNode : public StatementNode {
 
     void parse(std::deque<Token>& tokens, size_t& pos);
     void dump(int indent = 0) const override;
-    void resolveTypes(SymbolTable& sym_table);
-    void loopLabelling(std::string& loop_label);
-    std::vector<std::unique_ptr<IRInstructionNode>> generateIR();
+    // void resolveTypes(SymbolTable& sym_table);
+    // void loopLabelling(std::string& loop_label);
+    // std::vector<std::unique_ptr<IRInstructionNode>> generateIR();
 };
 
 class ContinueNode : public StatementNode {
@@ -199,9 +215,9 @@ class ContinueNode : public StatementNode {
 
     void parse(std::deque<Token>& tokens, size_t& pos);
     void dump(int indent = 0) const override;
-    void resolveTypes(SymbolTable& sym_table);
-    void loopLabelling(std::string& loop_label);
-    std::vector<std::unique_ptr<IRInstructionNode>> generateIR();
+    // void resolveTypes(SymbolTable& sym_table);
+    // void loopLabelling(std::string& loop_label);
+    // std::vector<std::unique_ptr<IRInstructionNode>> generateIR();
 };
 
 class WhileNode : public StatementNode {
@@ -213,9 +229,9 @@ class WhileNode : public StatementNode {
 
     void parse(std::deque<Token>& tokens, size_t& pos);
     void dump(int indent = 0) const override;
-    void resolveTypes(SymbolTable& sym_table);
-    void loopLabelling(std::string& loop_label);
-    std::vector<std::unique_ptr<IRInstructionNode>> generateIR();
+    // void resolveTypes(SymbolTable& sym_table);
+    // void loopLabelling(std::string& loop_label);
+    // std::vector<std::unique_ptr<IRInstructionNode>> generateIR();
 };
 
 class DoWhileNode : public StatementNode {
@@ -227,9 +243,9 @@ class DoWhileNode : public StatementNode {
 
     void parse(std::deque<Token>& tokens, size_t& pos);
     void dump(int indent = 0) const override;
-    void resolveTypes(SymbolTable& sym_table);
-    void loopLabelling(std::string& loop_label);
-    std::vector<std::unique_ptr<IRInstructionNode>> generateIR();
+    // void resolveTypes(SymbolTable& sym_table);
+    // void loopLabelling(std::string& loop_label);
+    // std::vector<std::unique_ptr<IRInstructionNode>> generateIR();
 };
 
 class ForNode : public StatementNode {
@@ -243,20 +259,20 @@ class ForNode : public StatementNode {
 
     void parse(std::deque<Token>& tokens, size_t& pos);
     void dump(int indent = 0) const override;
-    void resolveTypes(SymbolTable& sym_table);
-    void loopLabelling(std::string& loop_label);
-    std::vector<std::unique_ptr<IRInstructionNode>> generateIR();
+    // void resolveTypes(SymbolTable& sym_table);
+    // void loopLabelling(std::string& loop_label);
+    // std::vector<std::unique_ptr<IRInstructionNode>> generateIR();
 };
 
 class ForInitNode : public ASTNode {
   public:
-    std::unique_ptr<DeclarationNode> declaration; // OPTIONAL
-    std::unique_ptr<ExprNode> init_expr;          // OPTIONAL
+    std::unique_ptr<VariableDeclNode> declaration; // OPTIONAL
+    std::unique_ptr<ExprNode> init_expr;           // OPTIONAL
 
     void parse(std::deque<Token>& tokens, size_t& pos);
     void dump(int indent = 0) const override;
-    void resolveTypes(SymbolTable& sym_table);
-    std::vector<std::unique_ptr<IRInstructionNode>> generateIR();
+    // void resolveTypes(SymbolTable& sym_table);
+    // std::vector<std::unique_ptr<IRInstructionNode>> generateIR();
 };
 
 // for null statements (i.e., just a semicolon)
@@ -264,9 +280,9 @@ class NullNode : public StatementNode {
   public:
     void parse(std::deque<Token>& tokens, size_t& pos);
     void dump(int indent = 0) const override;
-    void resolveTypes(SymbolTable& sym_table);
-    void loopLabelling(std::string& loop_label); // no-op
-    std::vector<std::unique_ptr<IRInstructionNode>> generateIR();
+    // void resolveTypes(SymbolTable& sym_table);
+    // void loopLabelling(std::string& loop_label); // no-op
+    // std::vector<std::unique_ptr<IRInstructionNode>> generateIR();
 };
 
 class ExprNode : public ASTNode {
@@ -277,25 +293,31 @@ class ExprNode : public ASTNode {
 
     void parse(std::deque<Token>& tokens, size_t& pos, int min_precedence = 0);
     void dump(int indent = 0) const override;
-    void resolveTypes(SymbolTable& sym_table);
-    virtual std::shared_ptr<IRValNode> // runtime polymorphism for ExprFactorNode
-    generateIR(std::vector<std::unique_ptr<IRInstructionNode>>& instructions);
+    // void resolveTypes(SymbolTable& sym_table);
+    // virtual std::shared_ptr<IRValNode> // runtime polymorphism for ExprFactorNode
+    // generateIR(std::vector<std::unique_ptr<IRInstructionNode>>& instructions);
 };
 
 class ExprFactorNode : public ExprNode {
+    /*everything which <factor> can parse has higher precedence than what <expr> can parse;
+      eg. !a + b is parsed as [!a] + b not ![a + b]
+      we keep function calls here so that the below doesn't happen:
+      eg. b(x) + c is parsed as [[b(x)] + c] not [b][(x) + c]
+    */
   public:
-    std::unique_ptr<ConstantNode> constant;  // <int>: a constant integer
-    std::unique_ptr<VarNode> var_identifier; // <identifier>
-    std::unique_ptr<UnaryNode> unary;        // <unary> <factor>
-    std::unique_ptr<ExprNode> expr;          // "(" <expr> ")"
+    std::unique_ptr<ConstantNode> constant;      // <int>: a constant integer
+    std::unique_ptr<VarNode> var_identifier;     // <identifier>
+    std::unique_ptr<UnaryNode> unary;            // <unary> <factor>
+    std::unique_ptr<ExprNode> expr;              // "(" <expr> ")"
+    std::unique_ptr<FunctionCallNode> func_call; // <identifier> "(" [ <arg_list> ] ")"
 
     void parse(std::deque<Token>& tokens, size_t& pos);
     void dump(int indent = 0) const override;
     /// @brief runtime polymorphism for BinaryNode, AssignmentNode, ConditionalNode
-    virtual void resolveTypes(SymbolTable& sym_table);
+    // virtual void resolveTypes(SymbolTable& sym_table);
     // runtime polymorphism for BinaryNode, AssignmentNode,
-    virtual std::shared_ptr<IRValNode>
-    generateIR(std::vector<std::unique_ptr<IRInstructionNode>>& instructions);
+    // virtual std::shared_ptr<IRValNode>
+    // generateIR(std::vector<std::unique_ptr<IRInstructionNode>>& instructions);
 };
 
 class ConstantNode : public ExprFactorNode {
@@ -304,7 +326,7 @@ class ConstantNode : public ExprFactorNode {
 
     void parse(std::deque<Token>& tokens, size_t& pos);
     void dump(int indent = 0) const override;
-    void resolveTypes(SymbolTable& sym_table) override{};
+    // void resolveTypes(SymbolTable& sym_table) override{};
 };
 
 class VarNode : public ExprFactorNode {
@@ -313,10 +335,10 @@ class VarNode : public ExprFactorNode {
 
     void parse(std::deque<Token>& tokens, size_t& pos);
     void dump(int indent = 0) const override;
-    void resolveTypes(SymbolTable& sym_table) override;
-    static bool classof(const ExprFactorNode* u) {
-        return dynamic_cast<const VarNode*>(u) != nullptr;
-    }
+    // void resolveTypes(SymbolTable& sym_table) override;
+    // static bool classof(const ExprFactorNode* u) {
+    //     return dynamic_cast<const VarNode*>(u) != nullptr;
+    // }
 };
 
 class UnaryNode : public ExprFactorNode {
@@ -326,7 +348,7 @@ class UnaryNode : public ExprFactorNode {
 
     void parse(std::deque<Token>& tokens, size_t& pos);
     void dump(int indent = 0) const override;
-    void resolveTypes(SymbolTable& sym_table) override;
+    // void resolveTypes(SymbolTable& sym_table) override;
 };
 
 class BinaryNode : public ExprFactorNode {
@@ -341,10 +363,10 @@ class BinaryNode : public ExprFactorNode {
 
     void parse(std::deque<Token>& tokens, size_t& pos);
     void dump(int indent = 0) const override;
-    void resolveTypes(SymbolTable& sym_table) override;
-    static bool classof(const ExprFactorNode* u) {
-        return dynamic_cast<const BinaryNode*>(u) != nullptr;
-    }
+    // void resolveTypes(SymbolTable& sym_table) override;
+    // static bool classof(const ExprFactorNode* u) {
+    //     return dynamic_cast<const BinaryNode*>(u) != nullptr;
+    // }
 };
 
 class AssignmentNode : public ExprFactorNode {
@@ -358,10 +380,10 @@ class AssignmentNode : public ExprFactorNode {
 
     void parse(std::deque<Token>& tokens, size_t& pos);
     void dump(int indent = 0) const override;
-    void resolveTypes(SymbolTable& sym_table) override;
-    static bool classof(const ExprFactorNode* u) {
-        return dynamic_cast<const AssignmentNode*>(u) != nullptr;
-    }
+    // void resolveTypes(SymbolTable& sym_table) override;
+    // static bool classof(const ExprFactorNode* u) {
+    //     return dynamic_cast<const AssignmentNode*>(u) != nullptr;
+    // }
 };
 
 class ConditionalNode : public ExprFactorNode {
@@ -377,10 +399,23 @@ class ConditionalNode : public ExprFactorNode {
 
     void parse(std::deque<Token>& tokens, size_t& pos);
     void dump(int indent = 0) const override;
-    void resolveTypes(SymbolTable& sym_table) override;
+    // void resolveTypes(SymbolTable& sym_table) override;
+    // static bool classof(const ExprFactorNode* u) {
+    //     return dynamic_cast<const ConditionalNode*>(u) != nullptr;
+    // }
+};
+
+class FunctionCallNode : public ExprFactorNode {
+  public:
+    std::unique_ptr<IdentifierNode> name;
+    std::vector<std::unique_ptr<ExprNode>> arguments;
+
+    void parse(std::deque<Token>& tokens, size_t& pos);
+    void dump(int indent = 0) const override;
+    /* void resolveTypes(SymbolTable& sym_table) override;
     static bool classof(const ExprFactorNode* u) {
-        return dynamic_cast<const ConditionalNode*>(u) != nullptr;
-    }
+        return dynamic_cast<const FunctionCallNode*>(u) != nullptr;
+    } */
 };
 
 class IdentifierNode : public ASTNode {
@@ -397,5 +432,3 @@ class IdentifierNode : public ASTNode {
 /// @param debug Whether to print debug information during parsing.
 /// @return The root of the generated AST.
 std::unique_ptr<ProgramNode> parse(std::deque<Token>& tokens, bool debug = false);
-
-

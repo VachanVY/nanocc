@@ -52,6 +52,9 @@ std::pair<TokenType, std::regex> token_specs[] = {
     {TokenType::LBRACE, std::regex("\\{")},
     {TokenType::RBRACE, std::regex("\\}")},
     {TokenType::SEMICOLON, std::regex(";")},
+
+    // function args separator
+    {TokenType::COMMA, std::regex(",")},
 };
 
 std::deque<Token> lexer(const std::string& s, bool debug) {
