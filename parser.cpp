@@ -70,13 +70,15 @@ void ProgramNode::dump(int indent) const {
     std::println(")");
 }
 
-void DeclNode::parse(std::deque<Token>& tokens, size_t& pos) {
+void DeclarationNode::parse(std::deque<Token>& tokens, size_t& pos) {
     // can be a function declaration or variable declaration
     // <func_decl> := "int" <identifier> "(" <param_list> ")" (<block> | ";")
     // <var_decl> := "int" <identifier> OPTIONAL( "=" <expr>) ";"
     // if token after identifier is '(', then function decl else variable decl
-    assert(tokens[pos].type == TokenType::INT && "Expected 'int' token at the start of declaration");
-    assert(tokens[pos + 1].type == TokenType::IDENTIFIER && "Expected identifier token after 'int' in declaration");
+    assert(tokens[pos].type == TokenType::INT &&
+           "Expected 'int' token at the start of declaration");
+    assert(tokens[pos + 1].type == TokenType::IDENTIFIER &&
+           "Expected identifier token after 'int' in declaration");
     if (tokens[pos + 2].type == TokenType::LPAREN) {
         this->func = std::make_unique<FunctionDeclNode>();
         this->func->parse(tokens, pos);
@@ -86,7 +88,7 @@ void DeclNode::parse(std::deque<Token>& tokens, size_t& pos) {
     }
 }
 
-void DeclNode::dump(int indent) const {
+void DeclarationNode::dump(int indent) const {
     if (this->func) {
         this->func->dump(indent);
     } else if (this->var) {
@@ -96,8 +98,8 @@ void DeclNode::dump(int indent) const {
 
 void VariableDeclNode::parse(std::deque<Token>& tokens, size_t& pos) {
     expect(tokens, TokenType::INT, pos);
-    this->name = std::make_unique<IdentifierNode>();
-    this->name->parse(tokens, pos);
+    this->var_identifier = std::make_unique<IdentifierNode>();
+    this->var_identifier->parse(tokens, pos);
     if (tokens[pos].type == TokenType::ASSIGN) {
         expect(tokens, TokenType::ASSIGN, pos);
         this->init_expr = std::make_unique<ExprNode>();
@@ -109,7 +111,7 @@ void VariableDeclNode::parse(std::deque<Token>& tokens, size_t& pos) {
 void VariableDeclNode::dump(int indent) const {
     printIndent(indent);
     std::println("Declaration(");
-    this->name->dump(indent + 1, this->init_expr != nullptr);
+    this->var_identifier->dump(indent + 1, this->init_expr != nullptr);
     if (this->init_expr) { // OPTIONAL
         this->init_expr->dump(indent + 1);
         printIndent(indent);
@@ -119,11 +121,11 @@ void VariableDeclNode::dump(int indent) const {
 
 void FunctionDeclNode::parse(std::deque<Token>& tokens, size_t& pos) {
     expect(tokens, TokenType::INT, pos);
-    this->name = std::make_unique<IdentifierNode>();
-    this->name->parse(tokens, pos); // parse function name
+    this->func_name = std::make_unique<IdentifierNode>();
+    this->func_name->parse(tokens, pos); // parse function name
     expect(tokens, TokenType::LPAREN, pos);
     // --parse parameters-- // can be void or multiple parameters separated by ","
-    if (tokens[pos].type == TokenType::VOID){
+    if (tokens[pos].type == TokenType::VOID) {
         expect(tokens, TokenType::VOID, pos);
     } else {
         expect(tokens, TokenType::INT, pos);
@@ -142,7 +144,7 @@ void FunctionDeclNode::parse(std::deque<Token>& tokens, size_t& pos) {
     expect(tokens, TokenType::RPAREN, pos);
 
     // if function DECLARATION then just a ";"
-    // else if function DEFINATION then <block> will be present 
+    // else if function DEFINATION then <block> will be present
     if (tokens[pos].type == TokenType::SEMICOLON) {
         expect(tokens, TokenType::SEMICOLON, pos);
         return;
@@ -154,7 +156,7 @@ void FunctionDeclNode::parse(std::deque<Token>& tokens, size_t& pos) {
 void FunctionDeclNode::dump(int indent) const {
     printIndent(indent);
     std::println("Function(");
-    this->name->dump(indent + 1);
+    this->func_name->dump(indent + 1);
 
     printIndent(indent + 1);
     // println needs constant strings, so use printf
@@ -165,7 +167,7 @@ void FunctionDeclNode::dump(int indent) const {
         printIndent(indent + 1);
         std::println(")");
     }
-    
+
     if (this->body) {
         printIndent(indent + 1);
         std::println("body=(");
@@ -199,7 +201,7 @@ void BlockNode::dump(int indent) const {
 
 void BlockItemNode::parse(std::deque<Token>& tokens, size_t& pos) {
     if (tokens[pos].type == TokenType::INT) { // int <var_name>; | int <var_name> = <expr>;
-        this->declaration = std::make_unique<DeclNode>();
+        this->declaration = std::make_unique<DeclarationNode>();
         this->declaration->parse(tokens, pos);
     } else {
         this->statement = std::make_unique<StatementNode>();
@@ -535,7 +537,7 @@ void ExprNode::parse(std::deque<Token>& tokens, size_t& pos, int min_precedence)
         auto right_expr = std::make_unique<ExprNode>();
         auto left_expr = std::make_unique<ExprNode>();
         // RIGHT ASSOCIATIVE OPERATORS
-        if (token_type == TokenType::ASSIGN) {
+        if (token_type == TokenType::ASSIGN) {      /// <factor> = <expr>
             expect(tokens, TokenType::ASSIGN, pos); // consume '='
 
             right_expr->parse(tokens, pos, op_prec);
@@ -545,8 +547,8 @@ void ExprNode::parse(std::deque<Token>& tokens, size_t& pos, int min_precedence)
 
             this->left_exprf =
                 std::make_unique<AssignmentNode>(std::move(left_expr), std::move(right_expr));
-        } else if (token_type == TokenType::QUESTION) {
-            expect(tokens, TokenType::QUESTION, pos); // consume '?'
+        } else if (token_type == TokenType::QUESTION) { /// <factor> ? <expr> : <expr>
+            expect(tokens, TokenType::QUESTION, pos);   // consume '?'
 
             auto middle_expr = std::make_unique<ExprNode>();
             middle_expr->parse(tokens, pos, 0); // reset precedence for middle expr
@@ -562,7 +564,7 @@ void ExprNode::parse(std::deque<Token>& tokens, size_t& pos, int min_precedence)
                 std::move(left_expr), std::move(middle_expr), std::move(right_expr));
         }
         // LEFT ASSOCIATIVE OPERATORS
-        else {
+        else {                               /// <factor> <binary> <expr>
             expect(tokens, token_type, pos); // consume operator
 
             // the + 1 makes this left associative
@@ -587,9 +589,9 @@ void ExprFactorNode::parse(std::deque<Token>& tokens, size_t& pos) {
         this->constant = std::make_unique<ConstantNode>();
         this->constant->parse(tokens, pos);
     }
-    // <identifier> | <identifier> "(" [ <arg_list> ] ")" 
+    // <identifier> | <identifier> "(" [ <arg_list> ] ")"
     else if (token_type == TokenType::IDENTIFIER) {
-        if (tokens[pos + 1].type != TokenType::LPAREN){
+        if (tokens[pos + 1].type != TokenType::LPAREN) {
             this->var_identifier = std::make_unique<VarNode>();
             this->var_identifier->parse(tokens, pos);
         } else {
@@ -606,9 +608,9 @@ void ExprFactorNode::parse(std::deque<Token>& tokens, size_t& pos) {
         this->expr->parse(tokens, pos, 0);
         expect(tokens, TokenType::RPAREN, pos);
     } else {
-        throw std::runtime_error(std::format(
-            "Syntax Error: Malformed Expression Factor at pos:{} got '{}':'{}'",
-            pos, tokenTypeToString(token_type), lexeme));
+        throw std::runtime_error(
+            std::format("Syntax Error: Malformed Expression Factor at pos:{} got '{}':'{}'", pos,
+                        tokenTypeToString(token_type), lexeme));
     }
 }
 
@@ -734,8 +736,8 @@ void ConditionalNode::dump(int indent) const {
 }
 
 namespace { // helper function
-/// <exp> zeroOrMore( "," <exp> )
-std::vector<std::unique_ptr<ExprNode>> parseArgs(std::deque<Token>& tokens, size_t& pos){
+/// `<exp> zeroOrMore( "," <exp> )`
+std::vector<std::unique_ptr<ExprNode>> parseArgs(std::deque<Token>& tokens, size_t& pos) {
     std::vector<std::unique_ptr<ExprNode>> args;
     auto arg = std::make_unique<ExprNode>();
     arg->parse(tokens, pos);
@@ -750,9 +752,14 @@ std::vector<std::unique_ptr<ExprNode>> parseArgs(std::deque<Token>& tokens, size
 }
 } // namespace
 
+/*```
+int y = 69;
+y(5, 10); // even though y is not a function, it's parsed as a function call
+// this will be caught in semantic analysis phase
+```*/
 void FunctionCallNode::parse(std::deque<Token>& tokens, size_t& pos) {
-    this->name = std::make_unique<IdentifierNode>();
-    this->name->parse(tokens, pos);
+    this->func_identifier = std::make_unique<IdentifierNode>();
+    this->func_identifier->parse(tokens, pos);
     expect(tokens, TokenType::LPAREN, pos);
     // -- parse <arg_list> -- // OPTIONAL(<exp> zeroOrMore( "," <exp> )) //
     if (tokens[pos].type != TokenType::RPAREN) {
@@ -765,9 +772,9 @@ void FunctionCallNode::parse(std::deque<Token>& tokens, size_t& pos) {
 void FunctionCallNode::dump(int indent) const {
     printIndent(indent);
     std::println("FunctionCall(");
-    this->name->dump(indent + 1);
+    this->func_identifier->dump(indent + 1);
     printIndent(indent + 1);
-    // println needs constant strings, so using printf
+    // println needs const strings at compile time, so using printf
     std::printf("%s\n", this->arguments.empty() ? "args(void)" : "args(");
     if (!this->arguments.empty()) {
         for (const auto& arg : this->arguments)
@@ -798,7 +805,7 @@ std::unique_ptr<ProgramNode> parse(std::deque<Token>& tokens, bool debug) {
     return ast;
 }
 
-// /*
+/*
 int main(int argc, char* argv[]) {
     if (argc < 2) {
         std::println(stderr,

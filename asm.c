@@ -1,4 +1,11 @@
 // 0, 1, 1, 2, 3, 5, 8, ...
+int fib(int a);
+
+int main(void) {
+  int n = 6;
+  return fib(n);
+}
+
 int fib(int n) {
   if (n == 0 || n == 1) {
     return n;
@@ -7,14 +14,36 @@ int fib(int n) {
   }
 }
 
-int main(void) {
-  int n = 6;
-  return fib(n);
-}
-
 /*
+----------------------------
 -------- Parse Tree --------
 Program(
+  Function(
+    name='fib'
+    Parameters(
+      name='a'
+    )
+  )
+  Function(
+    name='main'
+    Parameters()
+    body=(
+      Block(
+        Declaration(
+          name='n'
+          Constant(6)
+        )
+        Return(
+          FunctionCall(
+            name='fib'
+            args(
+              Var(name='n')
+            )
+          )
+        )
+      )
+    )
+  )
   Function(
     name='fib'
     Parameters(
@@ -66,20 +95,81 @@ Program(
       )
     )
   )
+)
+----------------------------
+----- Identifier Resolution -----
+Program(
+  Function(
+    name='fib'
+    Parameters(
+      name='a.0'
+    )
+  )
   Function(
     name='main'
     Parameters()
     body=(
       Block(
         Declaration(
-          name='n'
+          name='n.1'
           Constant(6)
         )
         Return(
           FunctionCall(
             name='fib'
             args(
-              Var(name='n')
+              Var(name='n.1')
+            )
+          )
+        )
+      )
+    )
+  )
+  Function(
+    name='fib'
+    Parameters(
+      name='n.2'
+    )
+    body=(
+      Block(
+        IfElse(
+          Binary(||,
+            Binary(==,
+              Var(name='n.2')
+              Constant(0)
+            )
+            Binary(==,
+              Var(name='n.2')
+              Constant(1)
+            )
+          )
+          Block(
+            Return(
+              Var(name='n.2')
+            )
+          )
+          Block(
+            Return(
+              Binary(+,
+                FunctionCall(
+                  name='fib'
+                  args(
+                    Binary(-,
+                      Var(name='n.2')
+                      Constant(1)
+                    )
+                  )
+                )
+                FunctionCall(
+                  name='fib'
+                  args(
+                    Binary(-,
+                      Var(name='n.2')
+                      Constant(2)
+                    )
+                  )
+                )
+              )
             )
           )
         )
@@ -87,5 +177,167 @@ Program(
     )
   )
 )
-----------------------------
+---------------------------------
+----- Type Checking -----
+Program(
+  Function(
+    name='fib'
+    Parameters(
+      name='a.0'
+    )
+  )
+  Function(
+    name='main'
+    Parameters()
+    body=(
+      Block(
+        Declaration(
+          name='n.1'
+          Constant(6)
+        )
+        Return(
+          FunctionCall(
+            name='fib'
+            args(
+              Var(name='n.1')
+            )
+          )
+        )
+      )
+    )
+  )
+  Function(
+    name='fib'
+    Parameters(
+      name='n.2'
+    )
+    body=(
+      Block(
+        IfElse(
+          Binary(||,
+            Binary(==,
+              Var(name='n.2')
+              Constant(0)
+            )
+            Binary(==,
+              Var(name='n.2')
+              Constant(1)
+            )
+          )
+          Block(
+            Return(
+              Var(name='n.2')
+            )
+          )
+          Block(
+            Return(
+              Binary(+,
+                FunctionCall(
+                  name='fib'
+                  args(
+                    Binary(-,
+                      Var(name='n.2')
+                      Constant(1)
+                    )
+                  )
+                )
+                FunctionCall(
+                  name='fib'
+                  args(
+                    Binary(-,
+                      Var(name='n.2')
+                      Constant(2)
+                    )
+                  )
+                )
+              )
+            )
+          )
+        )
+      )
+    )
+  )
+)
+-------------------------
+----- Loop Labelling -----
+Program(
+  Function(
+    name='fib'
+    Parameters(
+      name='a.0'
+    )
+  )
+  Function(
+    name='main'
+    Parameters()
+    body=(
+      Block(
+        Declaration(
+          name='n.1'
+          Constant(6)
+        )
+        Return(
+          FunctionCall(
+            name='fib'
+            args(
+              Var(name='n.1')
+            )
+          )
+        )
+      )
+    )
+  )
+  Function(
+    name='fib'
+    Parameters(
+      name='n.2'
+    )
+    body=(
+      Block(
+        IfElse(
+          Binary(||,
+            Binary(==,
+              Var(name='n.2')
+              Constant(0)
+            )
+            Binary(==,
+              Var(name='n.2')
+              Constant(1)
+            )
+          )
+          Block(
+            Return(
+              Var(name='n.2')
+            )
+          )
+          Block(
+            Return(
+              Binary(+,
+                FunctionCall(
+                  name='fib'
+                  args(
+                    Binary(-,
+                      Var(name='n.2')
+                      Constant(1)
+                    )
+                  )
+                )
+                FunctionCall(
+                  name='fib'
+                  args(
+                    Binary(-,
+                      Var(name='n.2')
+                      Constant(2)
+                    )
+                  )
+                )
+              )
+            )
+          )
+        )
+      )
+    )
+  )
+)
+--------------------------
 */
