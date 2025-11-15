@@ -341,9 +341,9 @@ void FunctionDeclNode::checkTypes(TypeCheckerSymbolTable& type_checker_map) {
                                                      this->func_name->name));
             }
             if (func_type->param_types.size() != this->parameters.size()) {
-                throw std::runtime_error(std::format(
-                    "Type Error: Conflicting number of parameters in declarations for function '{}'",
-                    this->func_name->name));
+                throw std::runtime_error(std::format("Type Error: Conflicting number of parameters "
+                                                     "in declarations for function '{}'",
+                                                     this->func_name->name));
             }
         } else { // existing_type is not FuncType
             throw std::runtime_error(std::format("Type Error: Conflicting types for function '{}'",
@@ -486,8 +486,8 @@ void ExprFactorNode::checkTypes(TypeCheckerSymbolTable& type_checker_map) {
 
 void VarNode::checkTypes(TypeCheckerSymbolTable& type_checker_map) {
     if (!std::holds_alternative<IntType>(type_checker_map[this->var_name->name])) {
-        throw std::runtime_error(std::format("Type Error: Variable '{}' is not of type 'int'",
-                                             this->var_name->name));
+        throw std::runtime_error(
+            std::format("Type Error: Variable '{}' is not of type 'int'", this->var_name->name));
     }
 }
 
@@ -654,7 +654,7 @@ void ForNode::loopLabelling(std::string& loop_label) {
 void NullNode::loopLabelling(std::string& loop_label){}; // no-op
                                                          // loop labelling -- end
 
-// /*
+/*
 int main(int argc, char* argv[]) {
     if (argc < 2) {
         std::println(stderr,

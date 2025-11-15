@@ -64,7 +64,7 @@ class ProgramNode : public ASTNode {
     void resolveTypes(IdentifierMap& sym_table);
     void checkTypes(TypeCheckerSymbolTable& type_checker_map);
     void loopLabelling(std::string& loop_label);
-    // std::unique_ptr<IRProgramNode> generateIR();
+    std::unique_ptr<IRProgramNode> generateIR();
 };
 
 class DeclarationNode : public ASTNode {
@@ -77,6 +77,7 @@ class DeclarationNode : public ASTNode {
     void resolveTypes(IdentifierMap& sym_table);
     void checkTypes(TypeCheckerSymbolTable& type_checker_map);
     void loopLabelling(std::string& loop_label);
+    std::vector<std::unique_ptr<IRInstructionNode>> generateIR();
 };
 
 // int "name"; | int "name" = <expr>;
@@ -90,7 +91,7 @@ class VariableDeclNode : public ASTNode {
     void resolveTypes(IdentifierMap& sym_table);
     void checkTypes(TypeCheckerSymbolTable& type_checker_map);
     void loopLabelling(std::string& loop_label); // no-op
-    // std::vector<std::unique_ptr<IRInstructionNode>> generateIR();
+    std::vector<std::unique_ptr<IRInstructionNode>> generateIR();
 };
 
 class FunctionDeclNode : public ASTNode {
@@ -105,7 +106,7 @@ class FunctionDeclNode : public ASTNode {
     void resolveTypes(IdentifierMap& sym_table);
     void checkTypes(TypeCheckerSymbolTable& type_checker_map);
     void loopLabelling(std::string& loop_label);
-    // std::unique_ptr<IRFunctionNode> generateIR();
+    std::unique_ptr<IRFunctionNode> generateIR();
 };
 
 class BlockNode : public ASTNode {
@@ -117,7 +118,7 @@ class BlockNode : public ASTNode {
     void resolveTypes(IdentifierMap& sym_table);
     void checkTypes(TypeCheckerSymbolTable& type_checker_map);
     void loopLabelling(std::string& loop_label);
-    // std::vector<std::unique_ptr<IRInstructionNode>> generateIR();
+    std::vector<std::unique_ptr<IRInstructionNode>> generateIR();
 };
 
 class BlockItemNode : public ASTNode {
@@ -130,7 +131,7 @@ class BlockItemNode : public ASTNode {
     void resolveTypes(IdentifierMap& sym_table);
     void checkTypes(TypeCheckerSymbolTable& type_checker_map);
     void loopLabelling(std::string& loop_label);
-    // std::vector<std::unique_ptr<IRInstructionNode>> generateIR();
+    std::vector<std::unique_ptr<IRInstructionNode>> generateIR();
 };
 
 class StatementNode : public ASTNode {
@@ -151,7 +152,7 @@ class StatementNode : public ASTNode {
     void resolveTypes(IdentifierMap& sym_table);
     void checkTypes(TypeCheckerSymbolTable& type_checker_map);
     void loopLabelling(std::string& loop_label);
-    // std::vector<std::unique_ptr<IRInstructionNode>> generateIR();
+    std::vector<std::unique_ptr<IRInstructionNode>> generateIR();
 };
 
 class ReturnNode : public StatementNode {
@@ -163,7 +164,7 @@ class ReturnNode : public StatementNode {
     void resolveTypes(IdentifierMap& sym_table);
     void checkTypes(TypeCheckerSymbolTable& type_checker_map);
     void loopLabelling(std::string& loop_label); // no-op
-    // std::vector<std::unique_ptr<IRInstructionNode>> generateIR();
+    std::vector<std::unique_ptr<IRInstructionNode>> generateIR();
 };
 
 // for non-return statements
@@ -176,7 +177,7 @@ class ExpressionNode : public StatementNode {
     void resolveTypes(IdentifierMap& sym_table);
     void checkTypes(TypeCheckerSymbolTable& type_checker_map);
     void loopLabelling(std::string& loop_label); // no-op
-    // std::vector<std::unique_ptr<IRInstructionNode>> generateIR();
+    std::vector<std::unique_ptr<IRInstructionNode>> generateIR();
 };
 
 class IfElseNode : public StatementNode {
@@ -190,7 +191,7 @@ class IfElseNode : public StatementNode {
     void resolveTypes(IdentifierMap& sym_table);
     void checkTypes(TypeCheckerSymbolTable& type_checker_map);
     void loopLabelling(std::string& loop_label);
-    // std::vector<std::unique_ptr<IRInstructionNode>> generateIR();
+    std::vector<std::unique_ptr<IRInstructionNode>> generateIR();
 };
 
 class CompoundNode : public StatementNode {
@@ -202,7 +203,7 @@ class CompoundNode : public StatementNode {
     void resolveTypes(IdentifierMap& sym_table);
     void checkTypes(TypeCheckerSymbolTable& type_checker_map);
     void loopLabelling(std::string& loop_label);
-    // std::vector<std::unique_ptr<IRInstructionNode>> generateIR();
+    std::vector<std::unique_ptr<IRInstructionNode>> generateIR();
 };
 
 // ✶✶✶ for Loop Related Nodes
@@ -218,7 +219,7 @@ class BreakNode : public StatementNode {
     void resolveTypes(IdentifierMap& sym_table);
     void checkTypes(TypeCheckerSymbolTable& type_checker_map);
     void loopLabelling(std::string& loop_label);
-    // std::vector<std::unique_ptr<IRInstructionNode>> generateIR();
+    std::vector<std::unique_ptr<IRInstructionNode>> generateIR();
 };
 
 class ContinueNode : public StatementNode {
@@ -230,7 +231,7 @@ class ContinueNode : public StatementNode {
     void resolveTypes(IdentifierMap& sym_table);
     void checkTypes(TypeCheckerSymbolTable& type_checker_map);
     void loopLabelling(std::string& loop_label);
-    // std::vector<std::unique_ptr<IRInstructionNode>> generateIR();
+    std::vector<std::unique_ptr<IRInstructionNode>> generateIR();
 };
 
 class WhileNode : public StatementNode {
@@ -245,7 +246,7 @@ class WhileNode : public StatementNode {
     void resolveTypes(IdentifierMap& sym_table);
     void checkTypes(TypeCheckerSymbolTable& type_checker_map);
     void loopLabelling(std::string& loop_label);
-    // std::vector<std::unique_ptr<IRInstructionNode>> generateIR();
+    std::vector<std::unique_ptr<IRInstructionNode>> generateIR();
 };
 
 class DoWhileNode : public StatementNode {
@@ -260,7 +261,7 @@ class DoWhileNode : public StatementNode {
     void resolveTypes(IdentifierMap& sym_table);
     void checkTypes(TypeCheckerSymbolTable& type_checker_map);
     void loopLabelling(std::string& loop_label);
-    // std::vector<std::unique_ptr<IRInstructionNode>> generateIR();
+    std::vector<std::unique_ptr<IRInstructionNode>> generateIR();
 };
 
 class ForNode : public StatementNode {
@@ -277,7 +278,7 @@ class ForNode : public StatementNode {
     void resolveTypes(IdentifierMap& sym_table);
     void checkTypes(TypeCheckerSymbolTable& type_checker_map);
     void loopLabelling(std::string& loop_label);
-    // std::vector<std::unique_ptr<IRInstructionNode>> generateIR();
+    std::vector<std::unique_ptr<IRInstructionNode>> generateIR();
 };
 
 class ForInitNode : public ASTNode {
@@ -290,7 +291,7 @@ class ForInitNode : public ASTNode {
     void resolveTypes(IdentifierMap& sym_table);
     void checkTypes(TypeCheckerSymbolTable& type_checker_map);
     // void loopLabelling(std::string& loop_label); // no-op ig?
-    // std::vector<std::unique_ptr<IRInstructionNode>> generateIR();
+    std::vector<std::unique_ptr<IRInstructionNode>> generateIR();
 };
 
 // for null statements (i.e., just a semicolon)
@@ -301,7 +302,7 @@ class NullNode : public StatementNode {
     void resolveTypes(IdentifierMap& sym_table);
     void checkTypes(TypeCheckerSymbolTable& type_checker_map);
     void loopLabelling(std::string& loop_label); // no-op
-    // std::vector<std::unique_ptr<IRInstructionNode>> generateIR();
+    std::vector<std::unique_ptr<IRInstructionNode>> generateIR();
 };
 
 class ExprNode : public ASTNode {
@@ -314,8 +315,8 @@ class ExprNode : public ASTNode {
     void dump(int indent = 0) const override;
     void resolveTypes(IdentifierMap& sym_table);
     void checkTypes(TypeCheckerSymbolTable& type_checker_map);
-    // virtual std::shared_ptr<IRValNode> // runtime polymorphism for ExprFactorNode
-    // generateIR(std::vector<std::unique_ptr<IRInstructionNode>>& instructions);
+    virtual std::shared_ptr<IRValNode> // runtime polymorphism for ExprFactorNode
+    generateIR(std::vector<std::unique_ptr<IRInstructionNode>>& instructions);
 };
 
 class ExprFactorNode : public ExprNode {
@@ -337,8 +338,8 @@ class ExprFactorNode : public ExprNode {
     virtual void resolveTypes(IdentifierMap& sym_table);
     virtual void checkTypes(TypeCheckerSymbolTable& type_checker_map);
     // runtime polymorphism for BinaryNode, AssignmentNode,
-    // virtual std::shared_ptr<IRValNode>
-    // generateIR(std::vector<std::unique_ptr<IRInstructionNode>>& instructions);
+    virtual std::shared_ptr<IRValNode>
+    generateIR(std::vector<std::unique_ptr<IRInstructionNode>>& instructions);
 };
 
 class ConstantNode : public ExprFactorNode {

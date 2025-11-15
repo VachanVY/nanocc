@@ -340,4 +340,41 @@ Program(
   )
 )
 --------------------------
+----- IR Generation -----
+Function[
+  name='main'
+  instructions=[
+    n.1 = 6
+    tmp.3 = fib(n.1)
+    return tmp.3
+    return 0
+  ]
+]
+Function[
+  name='fib'
+  instructions=[
+    tmp.5 = n.2 == 0
+    jump_if_not_zero tmp.5, short.1
+    tmp.6 = n.2 == 1
+    jump_if_not_zero tmp.6, short.1
+    tmp.4 = 0
+    jump end.2
+  short.1:
+    tmp.4 = 1
+  end.2:
+    jump_if_zero tmp.4, else.0
+    return n.2
+    jump end.3
+  else.0:
+    tmp.7 = n.2 - 1
+    tmp.8 = fib(tmp.7)
+    tmp.9 = n.2 - 2
+    tmp.10 = fib(tmp.9)
+    tmp.11 = tmp.8 + tmp.10
+    return tmp.11
+  end.3:
+    return 0
+  ]
+]
+-------------------------
 */

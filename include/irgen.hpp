@@ -25,6 +25,7 @@ class IRJumpNode;
 class IRJumpIfZeroNode;
 class IRJumpIfNotZeroNode;
 class IRLabelNode;
+class IRFunctionCallNode;
 
 class IRValNode; // base class || use `shared_ptr` for this and its derived classes
 class IRConstNode;
@@ -33,10 +34,11 @@ class IRVariableNode;
 // skeleton of the defined class above
 class IRProgramNode : public IRNode {
   public:
-    std::unique_ptr<IRFunctionNode> func;
+    std::vector<std::unique_ptr<IRFunctionNode>> functions;
 
     IRProgramNode() = default;
-    explicit IRProgramNode(std::unique_ptr<IRFunctionNode> func_ptr) : func(std::move(func_ptr)) {}
+    explicit IRProgramNode(std::vector<std::unique_ptr<IRFunctionNode>> func_list)
+        : functions(std::move(func_list)) {}
 
     void dump(int indent = 0) const;
     std::unique_ptr<AsmProgramNode> lowerToAsm();
@@ -44,13 +46,14 @@ class IRProgramNode : public IRNode {
 
 class IRFunctionNode : public IRNode {
   public:
-    std::string var_name;
+    std::string func_name;
+    std::vector<std::string> parameters;
     std::vector<std::unique_ptr<IRInstructionNode>> instructions;
 
     IRFunctionNode() = default;
     IRFunctionNode(std::string name,
                    std::vector<std::unique_ptr<IRInstructionNode>> instruction_list)
-        : var_name(std::move(name)), instructions(std::move(instruction_list)) {}
+        : func_name(std::move(name)), instructions(std::move(instruction_list)) {}
 
     void dump(int indent) const;
     std::unique_ptr<AsmFunctionNode> lowerToAsm();
@@ -65,10 +68,10 @@ class IRInstructionNode : public IRNode {
 
 class IRRetNode : public IRInstructionNode {
   public:
-    std::shared_ptr<IRValNode> val;
+    std::shared_ptr<IRValNode> ret_val;
 
     IRRetNode() = default;
-    explicit IRRetNode(std::shared_ptr<IRValNode> val_ptr) : val(std::move(val_ptr)) {}
+    explicit IRRetNode(std::shared_ptr<IRValNode> val_ptr) : ret_val(std::move(val_ptr)) {}
 
     void dump(int indent) const override;
     std::vector<std::unique_ptr<AsmInstructionNode>> lowerToAsm() override;
@@ -162,6 +165,22 @@ class IRLabelNode : public IRInstructionNode {
 
     IRLabelNode() = default;
     explicit IRLabelNode(std::string name) : label_name(std::move(name)) {}
+
+    void dump(int indent) const override;
+    std::vector<std::unique_ptr<AsmInstructionNode>> lowerToAsm() override;
+};
+
+class IRFunctionCallNode : public IRInstructionNode {
+  public:
+    std::string func_name;
+    std::vector<std::shared_ptr<IRValNode>> arguments;
+    std::shared_ptr<IRValNode> return_dest;
+
+    IRFunctionCallNode() = default;
+    explicit IRFunctionCallNode(std::string name, std::vector<std::shared_ptr<IRValNode>> args,
+                                std::shared_ptr<IRValNode> ret_dest)
+        : func_name(std::move(name)), arguments(std::move(args)), return_dest(std::move(ret_dest)) {
+    }
 
     void dump(int indent) const override;
     std::vector<std::unique_ptr<AsmInstructionNode>> lowerToAsm() override;
