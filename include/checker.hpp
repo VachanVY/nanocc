@@ -29,6 +29,10 @@ struct FuncType {
 /// @brief type checker symbol table
 using TypeCheckerSymbolTable = std::unordered_map<std::string, Type>;
 
+/// @brief global type checker symbol table, helpful in codegen phase
+// add suffix @PLT for non defined function
+extern TypeCheckerSymbolTable global_type_checker_map;
+
 // UnaryNode
 // AssignmentNode
 // VarNode

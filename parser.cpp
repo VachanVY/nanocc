@@ -1,3 +1,12 @@
+/* Dev Docs
+=> what's the `parse` method for "X" doing?
+    * checks for syntax correctness and creates node for each non-terminal
+variable in "X"
+
+=> when ever we find a new a non-terminal variable in "X" create a node pointer
+for it and parse
+*/
+
 #include <deque>
 #include <memory>
 #include <print>
@@ -27,15 +36,6 @@ constexpr int getPrecedence(const std::string& op) {
 
 constexpr bool isBinop(const std::string& op) { return BINOP_PRECEDENCE.contains(op); }
 } // namespace
-
-/* Dev Docs
-=> what's the `parse` method for "X" doing?
-    * checks for syntax correctness and creates node for each non-terminal
-variable in "X"
-
-=> when ever we find a new a non-terminal variable in "X" create a node pointer
-for it and parse
-*/
 
 void expect(const std::deque<Token>& tokens, TokenType expected, size_t& pos) {
     if (pos >= tokens.size()) {

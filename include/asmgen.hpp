@@ -26,6 +26,9 @@ class AsmJmpCCNode;
 class AsmSetCCNode;
 class AsmLabelNode;
 class AsmAllocateStackNode;
+class AsmDeallocateStackNode;
+class AsmPushNode;
+class AsmCallNode; // `call func` // doesn't have parameters vector inside it.
 class AsmRetNode;
 
 class AsmOperandNode; // base class // always use via `shared_ptr`
@@ -36,13 +39,13 @@ class AsmStackNode;
 
 class AsmProgramNode : public AsmASTNode {
   public:
-    std::unique_ptr<AsmFunctionNode> func;
+    std::vector<std::unique_ptr<AsmFunctionNode>> functions;
     static bool classof(const AsmASTNode* node) {
         return dynamic_cast<const AsmProgramNode*>(node) != nullptr;
     }
     void resolvePseudoRegisters(std::unordered_map<std::string, int>& pseudo_reg_map,
-                                int& nxt_offset);
-    void fixUpInstructions(const int& stack_size);
+                                std::vector<int>& stack_offsets);
+    void fixUpInstructions(const std::vector<int>& stack_sizes);
 
     void generateAsm(std::ostream& os);
 };
@@ -257,8 +260,39 @@ class AsmAllocateStackNode : public AsmInstructionNode {
     void resolvePseudoRegisters(std::unordered_map<std::string, int>& pseudo_reg_map,
                                 int& nxt_offset) override{}; // no-op
     void fixUpInstructions(
-        std::vector<std::unique_ptr<AsmInstructionNode>>& instructions) override{}; // no-op
+        std::vector<std::unique_ptr<AsmInstructionNode>>& instructions) override; //{}; // no-op
 
+    void generateAsm(std::ostream& os) override;
+};
+
+class AsmDeallocateStackNode : public AsmInstructionNode {
+  public:
+    int stack_size = 0;
+
+    AsmDeallocateStackNode() = default;
+    explicit AsmDeallocateStackNode(int stack_size) : stack_size(stack_size) {}
+
+    void generateAsm(std::ostream& os) override;
+};
+
+class AsmPushNode : public AsmInstructionNode {
+  public:
+    std::shared_ptr<AsmOperandNode> operand;
+
+    AsmPushNode() = default;
+    explicit AsmPushNode(std::shared_ptr<AsmOperandNode> operand) : operand(std::move(operand)) {}
+
+    void resolvePseudoRegisters(std::unordered_map<std::string, int>& pseudo_reg_map,
+                                int& nxt_offset) override;
+    void generateAsm(std::ostream& os) override;
+};
+
+class AsmCallNode : public AsmInstructionNode {
+  public:
+    std::string func_name;
+
+    AsmCallNode() = default;
+    explicit AsmCallNode(std::string func_name) : func_name(std::move(func_name)) {}
     void generateAsm(std::ostream& os) override;
 };
 

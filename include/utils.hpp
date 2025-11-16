@@ -50,7 +50,7 @@ inline std::string getUniqueName(const std::string& prefix) {
 
 inline std::string getLabelName(const std::string& prefix) {
     assert(!prefix.empty() && "Label prefix cannot be empty");
-    static size_t label_counter = 0;
+    static std::size_t label_counter = 0;
     return prefix + "." + std::to_string(label_counter++);
 };
 

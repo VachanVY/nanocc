@@ -2,6 +2,8 @@
 #include "parser.hpp"
 #include "checker.hpp"
 
+TypeCheckerSymbolTable global_type_checker_map;
+
 namespace { // helper functions
 IdentifierMap copyIdentifierMapForNewScope(const IdentifierMap& old_sym_table,
                                            bool curr_scope = false) {
@@ -689,8 +691,7 @@ int main(int argc, char* argv[]) {
         ast->dump();
         std::println("---------------------------------");
     }
-    TypeCheckerSymbolTable type_checker_map;
-    ast->checkTypes(type_checker_map);
+    ast->checkTypes(global_type_checker_map);
     if (true) {
         std::println("----- Type Checking -----");
         ast->dump();

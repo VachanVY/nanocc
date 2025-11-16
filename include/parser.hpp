@@ -350,6 +350,8 @@ class ConstantNode : public ExprFactorNode {
     void dump(int indent = 0) const override;
     void resolveTypes(IdentifierMap& sym_table) override{};
     void checkTypes(TypeCheckerSymbolTable& type_checker_map) override;
+    std::shared_ptr<IRValNode>
+    generateIR(std::vector<std::unique_ptr<IRInstructionNode>>& instructions) override;
 };
 
 class VarNode : public ExprFactorNode {
@@ -363,6 +365,8 @@ class VarNode : public ExprFactorNode {
     static bool classof(const ExprFactorNode* u) {
         return dynamic_cast<const VarNode*>(u) != nullptr;
     }
+    std::shared_ptr<IRValNode>
+    generateIR(std::vector<std::unique_ptr<IRInstructionNode>>& instructions) override;
 };
 
 class UnaryNode : public ExprFactorNode {
@@ -374,6 +378,8 @@ class UnaryNode : public ExprFactorNode {
     void dump(int indent = 0) const override;
     void resolveTypes(IdentifierMap& sym_table) override;
     void checkTypes(TypeCheckerSymbolTable& type_checker_map) override;
+    std::shared_ptr<IRValNode>
+    generateIR(std::vector<std::unique_ptr<IRInstructionNode>>& instructions) override;
 };
 
 class BinaryNode : public ExprFactorNode {
@@ -393,6 +399,8 @@ class BinaryNode : public ExprFactorNode {
     static bool classof(const ExprFactorNode* u) {
         return dynamic_cast<const BinaryNode*>(u) != nullptr;
     }
+    std::shared_ptr<IRValNode>
+    generateIR(std::vector<std::unique_ptr<IRInstructionNode>>& instructions) override;
 };
 
 class AssignmentNode : public ExprFactorNode {
@@ -411,6 +419,8 @@ class AssignmentNode : public ExprFactorNode {
     static bool classof(const ExprFactorNode* u) {
         return dynamic_cast<const AssignmentNode*>(u) != nullptr;
     }
+    std::shared_ptr<IRValNode>
+    generateIR(std::vector<std::unique_ptr<IRInstructionNode>>& instructions) override;
 };
 
 class ConditionalNode : public ExprFactorNode {
@@ -431,6 +441,8 @@ class ConditionalNode : public ExprFactorNode {
     static bool classof(const ExprFactorNode* u) {
         return dynamic_cast<const ConditionalNode*>(u) != nullptr;
     }
+    std::shared_ptr<IRValNode>
+    generateIR(std::vector<std::unique_ptr<IRInstructionNode>>& instructions) override;
 };
 
 class FunctionCallNode : public ExprFactorNode {
@@ -445,6 +457,8 @@ class FunctionCallNode : public ExprFactorNode {
     static bool classof(const ExprFactorNode* u) {
         return dynamic_cast<const FunctionCallNode*>(u) != nullptr;
     }
+    std::shared_ptr<IRValNode>
+    generateIR(std::vector<std::unique_ptr<IRInstructionNode>>& instructions) override;
 };
 
 class IdentifierNode : public ASTNode {

@@ -48,12 +48,12 @@ class IRFunctionNode : public IRNode {
   public:
     std::string func_name;
     std::vector<std::string> parameters;
-    std::vector<std::unique_ptr<IRInstructionNode>> instructions;
+    std::vector<std::unique_ptr<IRInstructionNode>> ir_instructions;
 
     IRFunctionNode() = default;
     IRFunctionNode(std::string name,
                    std::vector<std::unique_ptr<IRInstructionNode>> instruction_list)
-        : func_name(std::move(name)), instructions(std::move(instruction_list)) {}
+        : func_name(std::move(name)), ir_instructions(std::move(instruction_list)) {}
 
     void dump(int indent) const;
     std::unique_ptr<AsmFunctionNode> lowerToAsm();

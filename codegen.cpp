@@ -3,12 +3,12 @@
 #include "codegen.hpp"
 #include "asmgen.hpp"
 #include "utils.hpp"
+#include "checker.hpp" // access global_type_checker_map
 
 void AsmProgramNode::generateAsm(std::ostream& os) {
-    if (!func) {
-        throw std::runtime_error("Program contains no functions to emit");
+    for (const auto& function : this->functions) {
+        function->generateAsm(os);
     }
-    func->generateAsm(os);
     os << TAB4 << ".section .note.GNU-stack, \"\",@progbits\n";
 }
 
@@ -40,16 +40,19 @@ void AsmUnaryNode::generateAsm(std::ostream& os) {
     }
     std::string mnemonic;
     char ch = op_type.empty() ? '\0' : op_type[0];
-    switch (ch) {
-    case '-':
+    switch (op_type[0]) {
+    case '-': {
         mnemonic = "negl";
         break;
-    case '~':
+    }
+    case '~': {
         mnemonic = "notl";
         break;
+    }
     default:
         throw std::runtime_error("Unsupported unary op during emission: " + op_type);
     }
+
     os << TAB4 << mnemonic << " ";
     operand->generateAsm(os);
     os << '\n';
@@ -110,10 +113,34 @@ void AsmAllocateStackNode::generateAsm(std::ostream& os) {
     os << TAB4 << "subq $" << stack_size << ", %rsp\n";
 }
 
+void AsmDeallocateStackNode::generateAsm(std::ostream& os) {
+    os << TAB4 << "addq $" << stack_size << ", %rsp\n";
+}
+
+void AsmPushNode::generateAsm(std::ostream& os) {
+    assert(operand && "AsmPushNode missing operand during emission");
+    os << TAB4 << "pushl ";
+    operand->generateAsm(os);
+    os << '\n';
+}
+
+void AsmCallNode::generateAsm(std::ostream& os) {
+    os << TAB4 << "call " << func_name;
+    // add @PLT suffix for functions without definations
+    const Type& func_info = global_type_checker_map[func_name];
+    assert(std::holds_alternative<FuncType>(func_info) &&
+           "AsmCallNode::generateAsm: func_name not found in global_type_checker_map");
+    const FuncType& func_type = std::get<FuncType>(func_info);
+    if (!func_type.defined) {
+        os << "@PLT";
+    }
+    os << '\n';
+}
+
 void AsmRetNode::generateAsm(std::ostream& os) {
     os << TAB4 << "movq %rbp, %rsp\n";
     os << TAB4 << "popq %rbp\n";
-    os << TAB4 << "ret\n";
+    os << TAB4 << "ret\n\n";
 }
 // Instruction Nodes -- end
 

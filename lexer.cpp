@@ -59,14 +59,14 @@ std::pair<TokenType, std::regex> token_specs[] = {
 
 std::deque<Token> lexer(const std::string& s, bool debug) {
     std::deque<Token> tokens;
-    size_t pos = 0;
+    std::size_t pos = 0;
     while (pos < s.length()) {
         if (std::isspace(s[pos])) {
             pos++;
             continue;
         }
 
-        size_t match_length = 0;
+        std::size_t match_length = 0;
         std::string match;
         TokenType class_type;
         bool matched = false;
@@ -99,7 +99,7 @@ std::deque<Token> lexer(const std::string& s, bool debug) {
 
     if (debug) {
         std::println("----- Lexical Analysis -----");
-        size_t i = 0;
+        std::size_t i = 0;
         for (const auto& [token_type, lexeme] : tokens) {
             std::println("| {} | {} | {} |", i++, tokenTypeToString(token_type), lexeme);
         }
@@ -133,7 +133,7 @@ int main(int argc, char *argv[]) {
         std::println(stderr, "Error: No source file specified");
         return 1;
     }
-    auto contents = getFileContents(filename);
+    auto contents = getFileContents(filename, true);
     auto tokens = lexer(contents, true);
 
     return 0;
