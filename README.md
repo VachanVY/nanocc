@@ -4,6 +4,7 @@
 
 <!-- <img width="1101" height="288" alt="image" src="https://github.com/user-attachments/assets/40781b3b-ce70-44c4-9f00-296b379433de" /> -->
 
+## nanocc progress
 ```c
 int putchar(int c);
 
