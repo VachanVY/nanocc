@@ -30,7 +30,7 @@ inline std::string getFileContents(const std::string& filename) {
     buffer << file.rdbuf();
     file.close();
     std::remove(preprocessed_file.c_str());
-    
+
     return buffer.str();
 }
 

@@ -1,3 +1,8 @@
+/*
+AI GENERATED CODE - I was too lazy to see how the 
+test framework (writing-a-c-compiler-tests) worked...
+*/
+
 #include <print>
 
 #include "asmgen.hpp"
@@ -14,16 +19,20 @@
 int main(int argc, char* argv[]) {
     if (argc < 2) {
         std::println(stderr,
-                     "Usage: {} [--lex|--parse|--validate|--tacky|--codegen]"
+                     "Usage: {} [--lex|--parse|--validate|--tacky|--codegen|-c]"
                      "<source_file>",
                      argv[0]);
         return 1;
     }
 
+    bool compile_only = false; // -c flag: compile to object file only
     std::string filename;
+
     for (int i = 1; i < argc; i++) {
         std::string arg = argv[i];
-        if (!arg.starts_with("--")) {
+        if (arg == "-c") {
+            compile_only = true;
+        } else if (!arg.starts_with("-")) {
             filename = arg;
             break;
         }
@@ -36,7 +45,7 @@ int main(int argc, char* argv[]) {
 
     // Keep original filename for output
     std::string original_filename = filename;
-    
+
     auto contents = getFileContents(filename);
     auto tokens = lexer(contents, true);
     auto ast = parse(tokens, true);
@@ -63,14 +72,27 @@ int main(int argc, char* argv[]) {
     asm_file << output.str();
     asm_file.close();
 
-    std::string gcc_command = "gcc " + asm_filename + " -o " + base_filename;
-    int result = std::system(gcc_command.c_str());
+    if (compile_only) {
+        // Compile to object file only (for -c flag)
+        std::string obj_filename = base_filename + ".o";
+        std::string gcc_command = "gcc -c " + asm_filename + " -o " + obj_filename;
+        int result = std::system(gcc_command.c_str());
 
-    if (result != 0) {
-        std::println(stderr, "Error: gcc failed with exit code {}", result);
-        return 1;
+        if (result != 0) {
+            std::println(stderr, "Error: gcc failed with exit code {}", result);
+            return 1;
+        }
+        return 0;
+    } else {
+        // Link to create executable
+        std::string gcc_command = "gcc " + asm_filename + " -o " + base_filename;
+        int result = std::system(gcc_command.c_str());
+
+        if (result != 0) {
+            std::println(stderr, "Error: gcc failed with exit code {}", result);
+            return 1;
+        }
+        std::println("Successfully compiled to executable with result: {}", result);
+        return 0;
     }
-    std::println("Successfully compiled to executable with result: {}", result);
-
-    return 0;
 }

@@ -20,7 +20,7 @@ inline void semanticAnalysis(std::unique_ptr<ProgramNode>& ast,
     }
 
     ast->checkTypes(global_type_checker_map);
-    if (true) {
+    if (debug) {
         std::println("----- Type Checking -----");
         ast->dump();
         std::println("-------------------------");

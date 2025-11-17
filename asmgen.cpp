@@ -29,6 +29,26 @@ so to not lose their values, we push them onto the stack
 WE WILL OPTIMIZE THIS LATER in REGISTER ALLOCATION PHASE
 */
 
+/*
+first 6 args are in registers:
+1st: %edi
+2nd: %esi
+3rd: %edx
+4th: %ecx
+5th: %r8d
+6th: %r9d
+*/
+
+/*
+`0(%rbp)`: rbp
+`8(%rbp)`: return address of next instruction after `call func`
+pos `offset`: `16(%rbp)`, `24(%rbp)`, ... (stack args beyond 6th)
+neg `offset`: `-4(%rbp)`, `-8(%rbp)`, ... (local vars)
+*/
+
+/*TODO: add a print pseudo assembly i.e before the
+fixups, will be easy to understand/debug asm code*/
+
 #include <memory>
 #include <print>
 #include <sstream>
@@ -41,6 +61,7 @@ WE WILL OPTIMIZE THIS LATER in REGISTER ALLOCATION PHASE
 #include "irgen.hpp"
 #include "parser.hpp"
 #include "utils.hpp"
+#include "codegen.hpp"
 
 // Emit Assembly Functions -- Start
 
@@ -62,23 +83,26 @@ std::unique_ptr<AsmFunctionNode> IRFunctionNode::lowerToAsm() {
     // place all parameters currently in the registers on to the stack,
     // the registers might get used by any function call
     // so to not lose their values, we push them onto the stack
-    // WE WILL OPTIMIZE THIS LATER in REGISTER ALLOCATION PHASE
+    // we will OPTIMIZE this later in REGISTER ALLOCATION phase
+    /// MOVING PARAMS FROM REGISTERS TO PSEUDO REGISTERS, USE 32 BIT REGISTERS
     int num_args = this->parameters.size();
-    std::string arg_resisters[6] = {"%edi", "%esi", "%edx", "%ecx", "%r8d", "%r9d"};
+    Reg arg_resisters[6] = {Reg::edi, Reg::esi, Reg::edx, Reg::ecx, Reg::r8d, Reg::r9d};
     for (int i = 0; i < std::min(num_args, 6); i++) { // `0` to `5` `if num_args >=6`
         auto psedo_reg = std::make_shared<AsmPseudoNode>(this->parameters[i]);
         asm_func->instructions.push_back(std::make_unique<AsmMovNode>(
-            std::make_shared<AsmRegisterNode>(arg_resisters[i]), psedo_reg));
+            std::make_shared<AsmRegisterNode>(getRegString(arg_resisters[i])), psedo_reg));
     }
 
     // how do we know the stack locations for the next arguments beyond 6 are placed in Stack(16),
     // Stack(24) and so on? => when this function was called (`call func`), the address of the next
     // instruction is pushed to the stack, then the control is transferred to the function.
-    // So Stack(8) has the return address, Stack(16) 1st arg beyond 6, Stack(24) 2nd arg beyond 6
-    // and so on. The first 6 args are in registers as per the calling convention.
+    // Then in the function prologue, we push %rbp.
+    // So 0(%rbp) = saved rbp, 8(%rbp) = return address,
+    // 16(%rbp) = 7th arg, 24(%rbp) = 8th arg, and so on.
+    // The first 6 args are in registers as per the calling convention.
     for (int i = 6; i < num_args; i++) { // `6` to `num_args-1`
         auto psedo_reg = std::make_shared<AsmPseudoNode>(this->parameters[i]);
-        auto stack_loc = std::make_shared<AsmStackNode>(8 * (i - 5)); // 8, 16, 24, ...
+        auto stack_loc = std::make_shared<AsmStackNode>(8 * (i - 4)); // +16, +24, +32, ...
         asm_func->instructions.push_back(std::make_unique<AsmMovNode>(stack_loc, psedo_reg));
     }
 
@@ -98,7 +122,7 @@ std::vector<std::unique_ptr<AsmInstructionNode>> IRRetNode::lowerToAsm() {
     // IR Ret = Asm Mov + Ret instructions
     if (ret_val) {
         auto src = this->ret_val->lowerToAsm();
-        auto dest = std::make_shared<AsmRegisterNode>("%eax");
+        auto dest = std::make_shared<AsmRegisterNode>(getRegString(Reg::eax));
         auto mov_instr = std::make_unique<AsmMovNode>(src, dest);
         instructions.push_back(std::move(mov_instr));
     }
@@ -158,7 +182,7 @@ std::vector<std::unique_ptr<AsmInstructionNode>> IRBinaryNode::lowerToAsm() {
 
     // separate handling for (+, -, *), (/, %) and (==, !=, <, >, <=, >= {relational ops})
     if (this->op_type == "/" || this->op_type == "%") {
-        auto eax_reg = std::make_shared<AsmRegisterNode>("%eax");
+        auto eax_reg = std::make_shared<AsmRegisterNode>(getRegString(Reg::eax));
         auto src1 = this->val_src1->lowerToAsm();
         auto mov_instr = std::make_unique<AsmMovNode>(src1, eax_reg);
         instructions.push_back(std::move(mov_instr));
@@ -170,8 +194,9 @@ std::vector<std::unique_ptr<AsmInstructionNode>> IRBinaryNode::lowerToAsm() {
         auto idiv_instr = std::make_unique<AsmIdivNode>(divisor);
         instructions.push_back(std::move(idiv_instr));
 
-        auto result_reg =
-            (this->op_type == "/") ? eax_reg : std::make_shared<AsmRegisterNode>("%edx");
+        auto result_reg = (this->op_type == "/")
+                              ? eax_reg
+                              : std::make_shared<AsmRegisterNode>(getRegString(Reg::edx));
         auto mov_res_instr = std::make_unique<AsmMovNode>(result_reg, dest);
         instructions.push_back(std::move(mov_res_instr));
     } else if (this->op_type == "+" || this->op_type == "-" || this->op_type == "*") {
@@ -270,12 +295,17 @@ std::vector<std::unique_ptr<AsmInstructionNode>> IRLabelNode::lowerToAsm() {
 /// @return instructions
 std::vector<std::unique_ptr<AsmInstructionNode>> IRFunctionCallNode::lowerToAsm() {
     auto instructions = std::vector<std::unique_ptr<AsmInstructionNode>>();
-    std::string arg_resisters[6] = {"%edi", "%esi", "%edx", "%ecx", "%r8d", "%r9d"};
+    Reg arg_resisters[6] = {Reg::edi, Reg::esi, Reg::edx, Reg::ecx, Reg::r8d, Reg::r9d};
     int num_args = this->arguments.size();
 
-    // adjust stack alignment before calling function
+    // num of stack args
+    int num_stack_args = (num_args > 6) ? (num_args - 6) : 0;
+
+    // stack must be 16-byte aligned before call
+    // each stack arg takes 8 bytes, so if odd number of stack args, add 8 bytes padding
+    // even number of stack args means stack is already 16-byte aligned
     int stack_padding = 0;
-    if (num_args % 2 == 1) { // if odd number of arguments, then add padding
+    if (num_stack_args % 2 == 1) {
         stack_padding = 8;
         instructions.push_back(std::make_unique<AsmAllocateStackNode>(stack_padding));
     }
@@ -283,37 +313,40 @@ std::vector<std::unique_ptr<AsmInstructionNode>> IRFunctionCallNode::lowerToAsm(
     // pass first 6 arguments in registers
     for (int i = 0; i < std::min(num_args, 6); i++) {
         auto arg_asm = this->arguments[i]->lowerToAsm();
-        auto reg_node = std::make_shared<AsmRegisterNode>(arg_resisters[i]);
+        auto reg_node = std::make_shared<AsmRegisterNode>(getRegString(arg_resisters[i]));
         instructions.push_back(std::make_unique<AsmMovNode>(arg_asm, reg_node));
     }
 
-    // pass remaining arguments on stack in reverse order
-    int num_stack_args = 0;
+    // pass remaining args on stack in reverse order
     for (int i = num_args - 1; i >= 6; i--) {
-        num_stack_args++;
         auto arg_asm = this->arguments[i]->lowerToAsm();
         // push (to stack) can only take immediate values or registers
+        // pushing a Register pushes the entire 8 bytes (64 bits)
         if (isa<AsmImmediateNode>(arg_asm.get()) || isa<AsmRegisterNode>(arg_asm.get())) {
             instructions.push_back(std::make_unique<AsmPushNode>(arg_asm));
         } else { // move to temp register first then push to stack
-            auto temp_reg = std::make_shared<AsmRegisterNode>("%rax");
-            instructions.push_back(std::make_unique<AsmMovNode>(arg_asm, temp_reg));
-            instructions.push_back(std::make_unique<AsmPushNode>(temp_reg));
+            // use 32-bit register for movl, then push the 64-bit register
+            auto temp_reg_32 = std::make_shared<AsmRegisterNode>(getRegString(Reg::eax));
+            auto temp_reg_64 = std::make_shared<AsmRegisterNode>(getRegString(Reg::rax));
+            instructions.push_back(std::make_unique<AsmMovNode>(arg_asm, temp_reg_32));
+            instructions.push_back(std::make_unique<AsmPushNode>(temp_reg_64));
         }
     }
 
     // call function
     instructions.push_back(std::make_unique<AsmCallNode>(this->func_name));
 
-    // adjust stack back, since call is over, remove stack args and padding
-    int total_stack_adjust = (num_stack_args * 8) + stack_padding;
+    // adjust stack: remove stack-passed arguments + padding.
+    // NOTE: any arguments passed on the stack use 8-byte slots per the System V ABI,
+    // even if the argument type is only 4 bytes.
+    int total_stack_adjust = (num_stack_args * 8 /*bytes*/) + stack_padding;
     if (total_stack_adjust > 0) {
         instructions.push_back(std::make_unique<AsmDeallocateStackNode>(total_stack_adjust));
     }
 
     // return value
     auto ret_dest = this->return_dest->lowerToAsm();
-    auto eax_reg = std::make_shared<AsmRegisterNode>("%eax");
+    auto eax_reg = std::make_shared<AsmRegisterNode>(getRegString(Reg::eax));
     instructions.push_back(std::make_unique<AsmMovNode>(eax_reg, ret_dest));
 
     return instructions;
@@ -349,13 +382,15 @@ resolvePseudoRegister(AsmPseudoNode* pseudo_src, // TODO(VachanVY): can we avoid
 
     if (assigned) {
         // if already assigned, replace it with AsmStackNode
-        return std::make_shared<AsmStackNode>(pseudo_reg_map[pseudo_src->identifier]);
+        // local variables (negative offsets from %rbp)
+        return std::make_shared<AsmStackNode>(-pseudo_reg_map[pseudo_src->identifier]);
     } else {
         // else if not assigned, bump the stack pointer first,
         // then assign that to new location
         stack_offset += 4;
         pseudo_reg_map[pseudo_src->identifier] = stack_offset;
-        return std::make_shared<AsmStackNode>(stack_offset);
+        // local variables (negative offsets from %rbp)
+        return std::make_shared<AsmStackNode>(-stack_offset);
     }
 }
 } // namespace
@@ -446,7 +481,8 @@ void AsmFunctionNode::fixUpInstructions(const int& stack_size) {
 /// @brief Round up the Stack Size up to the next multiple of 16 bytes.
 /// Make it easier to maintain correct stack alignment during function calls.
 /// https://math.stackexchange.com/questions/291468/how-to-find-the-nearest-multiple-of-16-to-my-given-number-n
-/// TODO(VachanVY): INVESTIGATE MORE ON THIS.
+///
+/// TODO(VachanVY): WHATS THE POINT OF THIS, SINCE WE ARE ALREADY PADDING DURING FUNCTION CALLS?
 /// @param instructions
 void AsmAllocateStackNode::fixUpInstructions(
     std::vector<std::unique_ptr<AsmInstructionNode>>& instructions) {
@@ -462,9 +498,10 @@ void AsmMovNode::fixUpInstructions(std::vector<std::unique_ptr<AsmInstructionNod
     if (src_stack && dest_stack) {
         // Eg:
         // Move(Stack(-4), Stack(-8)) ==Convert=to==>
-        // Move(Stack(-4), TmpReg); Move(TmpReg, Stack(-8))
+        // Move(Stack(-4), TmpReg); Move(TmpReg, Stack(-8));
 
-        auto tmp_reg = std::make_shared<AsmRegisterNode>("%r10d"); // using %r10d as temporary
+        auto tmp_reg =
+            std::make_shared<AsmRegisterNode>(getRegString(Reg::r10d)); // using %r10d as temporary
 
         auto first_move = std::make_unique<AsmMovNode>(this->src, tmp_reg);
         instructions.push_back(std::move(first_move));
@@ -490,7 +527,7 @@ void AsmBinaryNode::fixUpInstructions(
         // Binary(Op, Stack(-4), Stack(-8)) ==Convert=to==>
         // Move(Stack(-4), TmpReg1); Binary(Op, TmpReg1, Stack(-8));
 
-        auto tmp_reg = std::make_shared<AsmRegisterNode>("%r10d");
+        auto tmp_reg = std::make_shared<AsmRegisterNode>(getRegString(Reg::r10d));
         auto move_instr = std::make_unique<AsmMovNode>(this->src, tmp_reg);
         instructions.push_back(std::move(move_instr));
 
@@ -501,7 +538,7 @@ void AsmBinaryNode::fixUpInstructions(
         // Imul(Const(3), Stack(-4)) ==Convert=to==>
         // Move(Stack(-4), TmpReg); Imul(Const(3), TmpReg); Move(TmpReg, Stack(-4));
 
-        auto tmp_reg = std::make_shared<AsmRegisterNode>("%r11d");
+        auto tmp_reg = std::make_shared<AsmRegisterNode>(getRegString(Reg::r11d));
         auto first_move = std::make_unique<AsmMovNode>(this->dest, tmp_reg);
         instructions.push_back(std::move(first_move));
 
@@ -521,7 +558,7 @@ void AsmBinaryNode::fixUpInstructions(
 void AsmIdivNode::fixUpInstructions(
     std::vector<std::unique_ptr<AsmInstructionNode>>& instructions) {
     if (isa<AsmImmediateNode>(this->divisor.get())) {
-        auto tmp_reg = std::make_shared<AsmRegisterNode>("%r10d");
+        auto tmp_reg = std::make_shared<AsmRegisterNode>(getRegString(Reg::r10d));
         auto mov_instr = std::make_unique<AsmMovNode>(this->divisor, tmp_reg);
         instructions.push_back(std::move(mov_instr));
 
@@ -539,7 +576,7 @@ void AsmIdivNode::fixUpInstructions(
 /// @param instructions
 void AsmCmpNode::fixUpInstructions(std::vector<std::unique_ptr<AsmInstructionNode>>& instructions) {
     if (isa<AsmStackNode>(this->src1.get()) && isa<AsmStackNode>(this->src2.get())) {
-        auto tmp_reg = std::make_shared<AsmRegisterNode>("%r10d");
+        auto tmp_reg = std::make_shared<AsmRegisterNode>(getRegString(Reg::r10d));
         auto move_instr = std::make_unique<AsmMovNode>(this->src1, tmp_reg);
         instructions.push_back(std::move(move_instr));
 
@@ -550,7 +587,7 @@ void AsmCmpNode::fixUpInstructions(std::vector<std::unique_ptr<AsmInstructionNod
         // Eg:
         // Cmp(src, Imm(5)) ==Convert=to==>
         // Move(Imm(5), TmpReg); Cmp(src, TmpReg)
-        auto tmp_reg = std::make_shared<AsmRegisterNode>("%r10d");
+        auto tmp_reg = std::make_shared<AsmRegisterNode>(getRegString(Reg::r10d));
         auto move_instr = std::make_unique<AsmMovNode>(this->src2, tmp_reg);
         instructions.push_back(std::move(move_instr));
 
@@ -564,82 +601,3 @@ void AsmCmpNode::fixUpInstructions(std::vector<std::unique_ptr<AsmInstructionNod
 
 // Fix Instructions -- End
 
-/*
-#include "lexer.hpp"
-#include "checker.hpp"
-#include "parser.hpp"
-int main(int argc, char* argv[]) {
-    if (argc < 2) {
-        std::println(stderr,
-                     "Usage: {} [--lex|--parse|--validate|--tacky|--codegen]"
-                     "<source_file>",
-                     argv[0]);
-        return 1;
-    }
-
-    // Find the source file (non-flag argument)
-    std::string filename;
-    for (int i = 1; i < argc; i++) {
-        std::string arg = argv[i];
-        if (!arg.starts_with("--")) {
-            filename = arg;
-            break;
-        }
-    }
-
-    if (filename.empty()) {
-        std::println(stderr, "Error: No source file specified");
-        return 1;
-    }
-    auto contents = getFileContents(filename);
-    auto tokens = lexer(contents, true);
-    auto ast = parse(tokens, true);
-
-    IdentifierMap global_sym_table;
-    ast->resolveTypes(global_sym_table);
-    if (true) {
-        std::println("----- Identifier Resolution -----");
-        ast->dump();
-        std::println("---------------------------------");
-    }
-    TypeCheckerSymbolTable type_checker_map;
-    ast->checkTypes(type_checker_map);
-    if (true) {
-        std::println("----- Type Checking -----");
-        ast->dump();
-        std::println("-------------------------");
-    }
-    std::string loop_label = "";
-    ast->loopLabelling(loop_label);
-    if (true) {
-        std::println("----- Loop Labelling -----");
-        ast->dump();
-        std::println("--------------------------");
-    }
-    auto ir_program = ast->generateIR();
-    if (true) {
-        std::println("----- IR Generation -----");
-        ir_program->dump();
-        std::println("-------------------------");
-    }
-
-    auto asm_ast = ir_program->lowerToAsm();
-
-    // maps from `AsmPseudoNode::identifier` to assigned `AsmStackNode::offset`
-    std::unordered_map<std::string, int> pseudo_reg_map;
-    // for every function, stack offset starts at 0
-    int num_functions = asm_ast->functions.size();
-    // offsets grow in 4-byte (int) increments // increment by 4 then use
-    std::vector<int> stack_offsets(num_functions, 0);
-    asm_ast->resolvePseudoRegisters(pseudo_reg_map, stack_offsets);
-    if (true) {
-        for (std::size_t i = 0; i < stack_offsets.size(); i++) {
-            std::println("Function {}: Stack Size = {}", asm_ast->functions[i]->name,
-                         stack_offsets[i]);
-        }
-    }
-    asm_ast->fixUpInstructions(stack_offsets);
-
-    return 0;
-}
-// */

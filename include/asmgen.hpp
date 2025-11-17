@@ -363,11 +363,11 @@ class AsmPseudoNode : public AsmOperandNode {
     };
 };
 
+/// Ultimately we need to replace every usage of AsmPseudoNode with AsmStackNode
 class AsmStackNode : public AsmOperandNode {
-    /// Ultimately we need to replace every usage of AsmPseudoNode with
-    /// AsmStackNode
   public:
-    int offset = 0; // negate while emitting asm
+    // positive (for func args) or negative (for local vars)
+    int offset = 0;
 
     AsmStackNode() = default;
     explicit AsmStackNode(int offset) : offset(offset) {}

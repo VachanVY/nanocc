@@ -15,8 +15,10 @@ void AsmProgramNode::generateAsm(std::ostream& os) {
 void AsmFunctionNode::generateAsm(std::ostream& os) {
     os << TAB4 << ".globl " << name << "\n";
     os << name << ":\n";
-    os << TAB4 << "pushq %rbp\n";
-    os << TAB4 << "movq %rsp, %rbp\n";
+    // pushq %rbp
+    os << TAB4 << "pushq " << getRegString(Reg::rbp) << "\n";
+    // movq %rsp, %rbp
+    os << TAB4 << "movq " << getRegString(Reg::rsp) << ", " << getRegString(Reg::rbp) << "\n";
     for (const auto& instruction : instructions) {
         instruction->generateAsm(os);
     }
@@ -38,20 +40,12 @@ void AsmUnaryNode::generateAsm(std::ostream& os) {
     if (!operand) {
         throw std::runtime_error("AsmUnaryNode missing operand during emission");
     }
-    std::string mnemonic;
-    char ch = op_type.empty() ? '\0' : op_type[0];
-    switch (op_type[0]) {
-    case '-': {
-        mnemonic = "negl";
-        break;
-    }
-    case '~': {
-        mnemonic = "notl";
-        break;
-    }
-    default:
-        throw std::runtime_error("Unsupported unary op during emission: " + op_type);
-    }
+    static auto unop_map = std::unordered_map<char, std::string>{
+        {'-', "negl"},
+        {'~', "notl"},
+    };
+    // index 0 since op_type is string // returns char
+    std::string mnemonic = unop_map.at(op_type[0]);
 
     os << TAB4 << mnemonic << " ";
     operand->generateAsm(os);
@@ -59,15 +53,12 @@ void AsmUnaryNode::generateAsm(std::ostream& os) {
 }
 
 void AsmBinaryNode::generateAsm(std::ostream& os) {
-    if (this->op_type == "+") {
-        os << TAB4 << "addl ";
-    } else if (this->op_type == "-") {
-        os << TAB4 << "subl ";
-    } else if (this->op_type == "*") {
-        os << TAB4 << "imull ";
-    } else {
-        throw std::runtime_error("Unsupported binary op during emission: " + op_type);
-    }
+    static auto binops = std::unordered_map<std::string, std::string>{
+        {"+", "addl"},
+        {"-", "subl"},
+        {"*", "imull"},
+    };
+    os << TAB4 << binops.at(this->op_type) << " ";
     this->src->generateAsm(os);
     os << ", ";
     this->dest->generateAsm(os);
@@ -82,6 +73,17 @@ void AsmCmpNode::generateAsm(std::ostream& os) {
     os << '\n';
 }
 
+/*
+`a/b` quotient stored in `EAX`, remainder stored in `EDX`
+
+```asm
+movl $a, %eax      # move dividend to EAX
+movl $b, -4(%rbp)  # move divisor to stack
+cdq                # sign extend EAX to EDX:EAX
+idivl -4(%rbp)     # divide EDX:EAX by divisor at -4(%rbp)
+```
+
+*/
 void AsmIdivNode::generateAsm(std::ostream& os) {
     if (!divisor) {
         throw std::runtime_error("AsmIdivNode missing divisor during emission");
@@ -91,6 +93,11 @@ void AsmIdivNode::generateAsm(std::ostream& os) {
     os << '\n';
 }
 
+/*
+`cdq` sign extends the value of the `EAX` register into the `EDX:EAX`.
+if `%eax` is positive, all bits in edx are cleared to `0`.
+if `%eax` is negative, all bits in edx are set to `1`.
+*/
 void AsmCdqNode::generateAsm(std::ostream& os) { os << TAB4 << "cdq\n"; }
 
 void AsmJmpNode::generateAsm(std::ostream& os) { os << TAB4 << "jmp " << this->label << "\n"; }
@@ -110,16 +117,18 @@ void AsmLabelNode::generateAsm(std::ostream& os) {
 }
 
 void AsmAllocateStackNode::generateAsm(std::ostream& os) {
-    os << TAB4 << "subq $" << stack_size << ", %rsp\n";
+    // subq $stack_size, %rsp
+    os << TAB4 << "subq $" << stack_size << ", " << getRegString(Reg::rsp) << "\n";
 }
 
 void AsmDeallocateStackNode::generateAsm(std::ostream& os) {
-    os << TAB4 << "addq $" << stack_size << ", %rsp\n";
+    // addq $stack_size, %rsp
+    os << TAB4 << "addq $" << stack_size << ", " << getRegString(Reg::rsp) << "\n";
 }
 
 void AsmPushNode::generateAsm(std::ostream& os) {
     assert(operand && "AsmPushNode missing operand during emission");
-    os << TAB4 << "pushl ";
+    os << TAB4 << "pushq ";
     operand->generateAsm(os);
     os << '\n';
 }
@@ -138,8 +147,9 @@ void AsmCallNode::generateAsm(std::ostream& os) {
 }
 
 void AsmRetNode::generateAsm(std::ostream& os) {
-    os << TAB4 << "movq %rbp, %rsp\n";
-    os << TAB4 << "popq %rbp\n";
+    os << TAB4 << "movq"
+       << " " << getRegString(Reg::rbp) << ", " << getRegString(Reg::rsp) << "\n";
+    os << TAB4 << "popq " << getRegString(Reg::rbp) << "\n";
     os << TAB4 << "ret\n\n";
 }
 // Instruction Nodes -- end
@@ -149,5 +159,11 @@ void AsmImmediateNode::generateAsm(std::ostream& os) { os << "$" << value; }
 
 void AsmRegisterNode::generateAsm(std::ostream& os) { os << name; }
 
-void AsmStackNode::generateAsm(std::ostream& os) { os << "-" << offset << "(%rbp)"; }
+// `0(%rbp)`: rbp
+// `8(%rbp)`: return address of next instruction after `call func`
+// pos `offset`: `16(%rbp)`, `24(%rbp)`, ... (stack args beyond 6th)
+// neg `offset`: `-4(%rbp)`, `-8(%rbp)`, ... (local vars)
+void AsmStackNode::generateAsm(std::ostream& os) {
+    os << offset << "(" << getRegString(Reg::rbp) << ")";
+}
 // Operand Nodes -- end
