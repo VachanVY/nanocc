@@ -51,7 +51,7 @@ int main(void) {
 
 ```bash
 g++ -std=c++23 -Iinclude lexer.cpp parser.cpp checker.cpp irgen.cpp asmgen.cpp codegen.cpp test.cpp -o nanocc.out
-./nanocc.out asm.c
+./nanocc.out asm.c # compiles to assembly: asm.s
 gcc asm.s; ./a.out # gcc assembler .s => executable
 ```
 
