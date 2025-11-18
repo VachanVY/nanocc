@@ -64,3 +64,82 @@ Hello, World!
 4 24
 5 120
 ```
+
+
+<details>
+  <summary>Notes/Trash</summary>
+ 
+```c
+int foo(int a, int b, int c, int d, int e, int f, int g, int h) {
+    return a + h;
+}
+
+int caller(int arg) {
+    return arg + foo(1, 2, 3, 4, 5, 6, 7, 8);
+}
+```
+
+```asm
+    .globl foo
+foo:
+    pushq %rbp
+    movq %rsp, %rbp
+    subq $48, %rsp
+    movl %edi, -4(%rbp) # 4-bit registers, so gap is 4 between successive elements in stack
+    movl %esi, -8(%rbp)
+    movl %edx, -12(%rbp)
+    movl %ecx, -16(%rbp)
+    movl %r8d, -20(%rbp)
+    movl %r9d, -24(%rbp)
+    movl 16(%rbp), %r10d # pushq uses 8 bytes # stack args
+    movl %r10d, -28(%rbp)
+    movl 24(%rbp), %r10d # 24 - 16 = 8 # stack args
+    movl %r10d, -32(%rbp)
+    movl -4(%rbp), %r10d
+    movl %r10d, -36(%rbp)
+    movl -32(%rbp), %r10d
+    addl %r10d, -36(%rbp)
+    movl -36(%rbp), %eax
+    movq %rbp, %rsp
+    popq %rbp
+    ret
+
+    movl $0, %eax
+    movq %rbp, %rsp
+    popq %rbp
+    ret
+
+    .globl caller
+caller:
+    pushq %rbp
+    movq %rsp, %rbp
+    subq $16, %rsp
+    movl %edi, -4(%rbp)
+    movl $1, %edi
+    movl $2, %esi
+    movl $3, %edx
+    movl $4, %ecx
+    movl $5, %r8d
+    movl $6, %r9d
+    pushq $8       # pushq takes 64-bit values
+    pushq $7       # that's why "gap" between `7` and `8` will 8 bytes in memory 
+    call foo
+    addq $16, %rsp
+    movl %eax, -8(%rbp)
+    movl -4(%rbp), %r10d
+    movl %r10d, -12(%rbp)
+    movl -8(%rbp), %r10d
+    addl %r10d, -12(%rbp)
+    movl -12(%rbp), %eax
+    movq %rbp, %rsp
+    popq %rbp
+    ret
+
+    movl $0, %eax
+    movq %rbp, %rsp
+    popq %rbp
+    ret
+
+    .section .note.GNU-stack, "",@progbits
+```
+</details>
