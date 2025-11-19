@@ -1,7 +1,4 @@
-/*
-AI GENERATED CODE - I was too lazy to see how the 
-test framework (writing-a-c-compiler-tests) worked...
-*/
+/*Minimal code file for the compiler driver to pass test cases*/
 
 #include <print>
 
@@ -15,7 +12,7 @@ test framework (writing-a-c-compiler-tests) worked...
 #include "helper.hpp"
 
 // g++ -std=c++23 -I./include lexer.cpp parser.cpp checker.cpp irgen.cpp
-// asmgen.cpp codegen.cpp main.cpp -o main.out
+// asmgen.cpp codegen.cpp test.cpp -o main.out
 int main(int argc, char* argv[]) {
     if (argc < 2) {
         std::println(stderr,
