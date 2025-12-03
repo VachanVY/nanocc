@@ -4,6 +4,24 @@
 
 <!-- <img width="1101" height="288" alt="image" src="https://github.com/user-attachments/assets/40781b3b-ce70-44c4-9f00-296b379433de" /> -->
 
+## Build nanocc
+
+```python
+# build the compiler
+./buildcc.sh compiler
+## or
+./buildcc.sh rebuild  
+
+# build tests
+./buildcc.sh test
+## or
+./buildcc.sh rebuild_test
+
+# run tests
+git clone https://github.com/nlsandler/writing-a-c-compiler-tests.git
+./writing-a-c-compiler-tests/test_compiler ./build/test_nanocc --chapter 9 -v
+```
+
 ## nanocc progress
 ```c
 int putchar(int c);
@@ -645,8 +663,7 @@ main:
 
 
 ```bash
-g++ -std=c++23 -Iinclude lexer.cpp parser.cpp checker.cpp irgen.cpp asmgen.cpp codegen.cpp test.cpp -o nanocc.out
-./nanocc.out asm.c # compiles to assembly: asm.s
+./build/nanocc -S asm.c -o asm.s # compiles to assembly: asm.s
 gcc asm.s; ./a.out # gcc assembler .s => executable
 ```
 
