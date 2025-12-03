@@ -1,4 +1,5 @@
 #pragma once
+#include "utils.hpp"
 #include "asmgen.hpp"
 #include "codegen.hpp"
 #include "lexer.hpp"
@@ -76,4 +77,16 @@ inline std::ostringstream generateAsm(std::unique_ptr<AsmProgramNode>& asm_ast) 
     std::ostringstream os;
     asm_ast->generateAsm(os);
     return os;
+}
+
+inline std::string getAsmOutputFromCFile(const std::string& c_filename, bool debug = false) {
+    auto contents = getFileContents(c_filename);
+    auto tokens = lexer(contents, debug);
+    auto ast = parse(tokens, debug);
+    semanticAnalysis(ast, global_type_checker_map, debug);
+    auto ir = generateIR(ast, debug);
+    auto asm_ast = ir->lowerToAsm();
+    correctAsmInstructions(asm_ast, debug);
+    auto output = generateAsm(asm_ast);
+    return output.str();
 }

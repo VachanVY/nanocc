@@ -1,14 +1,6 @@
-/*Minimal code file for the compiler driver to pass test cases*/
+/*minimal code file just for the test framework*/
 
 #include <print>
-
-#include "asmgen.hpp"
-#include "codegen.hpp"
-#include "lexer.hpp"
-#include "parser.hpp"
-#include "checker.hpp"
-#include "irgen.hpp"
-#include "utils.hpp"
 #include "helper.hpp"
 
 // g++ -std=c++23 -I./include lexer.cpp parser.cpp checker.cpp irgen.cpp
@@ -40,17 +32,9 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    // Keep original filename for output
     std::string original_filename = filename;
 
-    auto contents = getFileContents(filename);
-    auto tokens = lexer(contents, true);
-    auto ast = parse(tokens, true);
-    semanticAnalysis(ast, global_type_checker_map, true);
-    auto ir = generateIR(ast, true);
-    auto asm_ast = ir->lowerToAsm();
-    correctAsmInstructions(asm_ast, true);
-    auto output = generateAsm(asm_ast);
+    std::string asm_output = getAsmOutputFromCFile(filename, true);
 
     // base filename without extension
     std::string base_filename = original_filename;
@@ -66,11 +50,11 @@ int main(int argc, char* argv[]) {
         std::println(stderr, "Error: Failed to write to {}", asm_filename);
         return 1;
     }
-    asm_file << output.str();
+    asm_file << asm_output;
     asm_file.close();
 
     if (compile_only) {
-        // Compile to object file only (for -c flag)
+        // to object file only (for -c flag)
         std::string obj_filename = base_filename + ".o";
         std::string gcc_command = "gcc -c " + asm_filename + " -o " + obj_filename;
         int result = std::system(gcc_command.c_str());
@@ -79,9 +63,8 @@ int main(int argc, char* argv[]) {
             std::println(stderr, "Error: gcc failed with exit code {}", result);
             return 1;
         }
-        return 0;
     } else {
-        // Link to create executable
+        // link => executable
         std::string gcc_command = "gcc " + asm_filename + " -o " + base_filename;
         int result = std::system(gcc_command.c_str());
 
@@ -90,6 +73,6 @@ int main(int argc, char* argv[]) {
             return 1;
         }
         std::println("Successfully compiled to executable with result: {}", result);
-        return 0;
     }
+    return 0;
 }
