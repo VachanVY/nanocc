@@ -9,17 +9,17 @@
 ```python
 # build the compiler
 ./buildcc.sh compiler
-## or
-./buildcc.sh rebuild  
+## or to rebuild codebase
+./buildcc.sh rebuild
 
-# build tests
+# build test.cpp for the test framework
 ./buildcc.sh test
-## or
+## or rebuild test.cpp for the test framework
 ./buildcc.sh rebuild_test
 
 # run tests
-git clone https://github.com/nlsandler/writing-a-c-compiler-tests.git
-./writing-a-c-compiler-tests/test_compiler ./build/test_nanocc --chapter 9 -v
+git clone https://github.com/VachanVY/cc_tests.git
+./cc_tests/test_compiler ./build/test_nanocc --chapter 9 -v
 ```
 
 ## nanocc progress
@@ -663,8 +663,10 @@ main:
 
 
 ```bash
-./build/nanocc -S asm.c -o asm.s # compiles to assembly: asm.s
-gcc asm.s; ./a.out # gcc assembler .s => executable
+# our compiler compiles to assembly: asm.s
+# gcc assembler asm.s => executable
+./nanocc asm.c -o asm
+./asm
 ```
 
 Output:

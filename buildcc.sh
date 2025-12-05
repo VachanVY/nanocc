@@ -9,10 +9,10 @@ if [ "$mode" = "compiler" ]; then
 
 elif [ "$mode" = "test" ]; then
     cmake -S . -B build -DBUILD_TEST=ON
-    cmake --build build 
+    cmake --build build
 
 elif [ "$mode" = "clean" ]; then
-        rm -rf build
+    rm -rf build
 
 elif [ "$mode" = "rebuild" ]; then
     rm -rf build
