@@ -1,6 +1,8 @@
 # Assembly
 * [asm docs](https://github.com/VachanVY/Psython/blob/main/.images/asm.md)
-* [ai asm docs](https://vachanvy.bearblog.dev/x64-assembly-language/)
+
+# Bash
+<img width="975" height="596" alt="Screenshot from 2025-12-05 22-23-20" src="https://github.com/user-attachments/assets/99d5450e-b013-47b4-8b4b-ab52b70f75be" />
 
 # Modern C++
 [Smart Pointers Video](https://www.youtube.com/watch?v=UOB7-B2MfwA&list=PLlrATfBNZ98dudnM48yfGUldqGD0S4FFb&index=45)
