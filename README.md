@@ -18,8 +18,8 @@
 ./buildcc.sh rebuild_test
 
 # run tests
-git clone https://github.com/VachanVY/cc_tests.git
-./cc_tests/test_compiler ./build/test_nanocc --chapter 9 -v
+git clone https://github.com/VachanVY/writing-a-c-compiler-tests.git
+./writing-a-c-compiler-tests/test_compiler ./build/test_nanocc --chapter 9 -v
 ```
 
 ## nanocc progress
