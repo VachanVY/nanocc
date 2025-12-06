@@ -78,4 +78,6 @@ CMakeUserPresets.json
 modules.order
 Module.symvers
 Mkfile.old
-dkms.conf
+dkms.conf*.s
+*_exe
+test_output
