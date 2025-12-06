@@ -56,6 +56,8 @@ A demonstration program that:
 
 ### Build the Demo
 
+Note: This project requires C++23 support (uses `<print>` header).
+
 ```bash
 cd build
 cmake .. -DCMAKE_CXX_COMPILER=g++-14

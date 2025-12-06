@@ -10,7 +10,7 @@
 #include "lexer.hpp"
 #include "checker.hpp"
 
-// Forward declaration for visitor pattern (proof of concept)
+// Forward declaration for visitor pattern interface
 class ASTVisitor;
 
 class ASTNode;

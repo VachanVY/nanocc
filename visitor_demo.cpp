@@ -5,7 +5,7 @@
  * It shows how visitors can traverse and process AST nodes without
  * tightly coupling the node classes to specific operations.
  * 
- * Usage: Build with BUILD_TEST=ON and run ./test_nanocc <file.c>
+ * Usage: Build and run ./visitor_demo <file.c>
  */
 
 #include <print>
@@ -52,8 +52,10 @@ void demonstrateVisitorPattern(const std::string& filename) {
                     if (expr_factor->unary) {
                         expr_factor->unary->accept(printVisitor);
                     }
-                    // Note: BinaryNode is in ExprFactorNode, would need casting
-                    if (auto* binary = dynamic_cast<BinaryNode*>(expr_factor.get())) {
+                    // Note: BinaryNode, AssignmentNode, and ConditionalNode are ExprFactorNode subclasses
+                    // They can be accessed if expr_factor points to one of those derived types
+                    auto* binary = dynamic_cast<BinaryNode*>(expr_factor.get());
+                    if (binary) {
                         binary->accept(printVisitor);
                     }
                 }
