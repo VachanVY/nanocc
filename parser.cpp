@@ -805,6 +805,36 @@ std::unique_ptr<ProgramNode> parse(std::deque<Token>& tokens, bool debug) {
     return ast;
 }
 
+// ============================================================================
+// Visitor Pattern Implementation (Proof of Concept)
+// ============================================================================
+
+// Accept methods for expression nodes
+void ConstantNode::accept(ASTVisitor& visitor) {
+    visitor.visit(*this);
+}
+
+void VarNode::accept(ASTVisitor& visitor) {
+    visitor.visit(*this);
+}
+
+void UnaryNode::accept(ASTVisitor& visitor) {
+    visitor.visit(*this);
+}
+
+void BinaryNode::accept(ASTVisitor& visitor) {
+    visitor.visit(*this);
+}
+
+// Accept methods for statement nodes
+void ReturnNode::accept(ASTVisitor& visitor) {
+    visitor.visit(*this);
+}
+
+void ExpressionNode::accept(ASTVisitor& visitor) {
+    visitor.visit(*this);
+}
+
 /*
 int main(int argc, char* argv[]) {
     if (argc < 2) {

@@ -2,6 +2,10 @@
 *learn/
 build/
 
+# Test outputs
+*.s
+test_*_exe
+
 # CMake
 CMakeLists.txt.user
 CMakeCache.txt

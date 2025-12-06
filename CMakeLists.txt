@@ -29,4 +29,7 @@ else()
     add_executable(nanocc nanocc.cpp ${COMMON_SOURCES})
 endif()
 
+# Add visitor pattern demo executable
+add_executable(visitor_demo visitor_demo.cpp ${COMMON_SOURCES})
+
 include_directories(${PROJECT_SOURCE_DIR}/include)

@@ -10,6 +10,9 @@
 #include "lexer.hpp"
 #include "checker.hpp"
 
+// Forward declaration for visitor pattern (proof of concept)
+class ASTVisitor;
+
 class ASTNode;
 class ProgramNode;
 
@@ -165,6 +168,9 @@ class ReturnNode : public StatementNode {
     void checkTypes(TypeCheckerSymbolTable& type_checker_map);
     void loopLabelling(std::string& loop_label); // no-op
     std::vector<std::unique_ptr<IRInstructionNode>> generateIR();
+    
+    // Visitor pattern (proof of concept)
+    void accept(ASTVisitor& visitor);
 };
 
 // for non-return statements
@@ -178,6 +184,9 @@ class ExpressionNode : public StatementNode {
     void checkTypes(TypeCheckerSymbolTable& type_checker_map);
     void loopLabelling(std::string& loop_label); // no-op
     std::vector<std::unique_ptr<IRInstructionNode>> generateIR();
+    
+    // Visitor pattern (proof of concept)
+    void accept(ASTVisitor& visitor);
 };
 
 class IfElseNode : public StatementNode {
@@ -352,6 +361,9 @@ class ConstantNode : public ExprFactorNode {
     void checkTypes(TypeCheckerSymbolTable& type_checker_map) override;
     std::shared_ptr<IRValNode>
     generateIR(std::vector<std::unique_ptr<IRInstructionNode>>& instructions) override;
+    
+    // Visitor pattern (proof of concept)
+    void accept(ASTVisitor& visitor);
 };
 
 class VarNode : public ExprFactorNode {
@@ -367,6 +379,9 @@ class VarNode : public ExprFactorNode {
     }
     std::shared_ptr<IRValNode>
     generateIR(std::vector<std::unique_ptr<IRInstructionNode>>& instructions) override;
+    
+    // Visitor pattern (proof of concept)
+    void accept(ASTVisitor& visitor);
 };
 
 class UnaryNode : public ExprFactorNode {
@@ -380,6 +395,9 @@ class UnaryNode : public ExprFactorNode {
     void checkTypes(TypeCheckerSymbolTable& type_checker_map) override;
     std::shared_ptr<IRValNode>
     generateIR(std::vector<std::unique_ptr<IRInstructionNode>>& instructions) override;
+    
+    // Visitor pattern (proof of concept)
+    void accept(ASTVisitor& visitor);
 };
 
 class BinaryNode : public ExprFactorNode {
@@ -401,6 +419,9 @@ class BinaryNode : public ExprFactorNode {
     }
     std::shared_ptr<IRValNode>
     generateIR(std::vector<std::unique_ptr<IRInstructionNode>>& instructions) override;
+    
+    // Visitor pattern (proof of concept)
+    void accept(ASTVisitor& visitor);
 };
 
 class AssignmentNode : public ExprFactorNode {
@@ -468,6 +489,27 @@ class IdentifierNode : public ASTNode {
     void parse(std::deque<Token>& tokens, size_t& pos);
     void dump(int indent = 0) const override { dump(indent, true); };
     void dump(int indent, bool new_line) const;
+};
+
+// ============================================================================
+// Visitor Pattern Interfaces (Proof of Concept)
+// ============================================================================
+
+/// @brief Visitor interface for traversing and processing AST nodes
+/// This is a proof of concept - implementations can delegate to existing methods
+class ASTVisitor {
+public:
+    virtual ~ASTVisitor() = default;
+    
+    // Visit methods for expression nodes (proof of concept subset)
+    virtual void visit(BinaryNode& node) = 0;
+    virtual void visit(UnaryNode& node) = 0;
+    virtual void visit(ConstantNode& node) = 0;
+    virtual void visit(VarNode& node) = 0;
+    
+    // Visit methods for statement nodes (proof of concept subset)
+    virtual void visit(ReturnNode& node) = 0;
+    virtual void visit(ExpressionNode& node) = 0;
 };
 
 /// @brief Parses the tokens into an AST.
