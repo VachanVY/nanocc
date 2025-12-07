@@ -8,14 +8,32 @@ debug_echo() {
     [ $DEBUG -eq 1 ] && echo "$@"
 }
 
-# to store intermediate files
-tmpdir=$(mktemp -d)
-debug_echo "using temporary directory: $tmpdir"
+show_usage() {
+    echo "Usage: $0 <files \`.s\` || \`.o\` || \`.c\`> -o <output file>"
+    echo "       $0 <files \`.s\` || \`.o\` || \`.c\`> -S"
+    echo "       $0 <files \`.s\` || \`.o\` || \`.c\`> -c"
+    echo ""
+    echo "Options:"
+    echo "  -o <output file>   Specify the name of the output executable file."
+    echo "  -S                 Compile C files to assembly files only."
+    echo "  -c                 Compile C files to object files only."
+}
 
-# ./build/nanocc <files `.s` || `.o` || `.c`> -o <output file>
-# ./build/nanocc <files `.s` || `.o` || `.c`> -S
-# ./build/nanocc <files `.s` || `.o` || `.c`> -c
-nanocc="./build/nanocc"
+print_usage() {
+    show_usage
+    exit 0
+}
+
+print_error_and_usage() {
+    echo "Error: $1"
+    show_usage
+    exit 1
+}
+
+# num args == 0
+if [ $# -eq 0 ]; then
+    print_usage
+fi
 
 # segregate files into asm files, object files and c files
 asm_files=()
@@ -28,11 +46,20 @@ for file in "$@"; do
         *.o) obj_files+=("$file") ;;
         *.c) c_files+=("$file") ;;
         -o|-S|-c) break ;;
-        *) echo "file type not supported: $file" ; exit 1 ;;
+        *) print_error_and_usage "Unknown file type '$file'" ;;
     esac # end of case
     debug_echo "file #$i: $file"
     i=$((i + 1))
 done
+
+# to store intermediate files
+tmpdir=$(mktemp -d)
+debug_echo "using temporary directory: $tmpdir"
+
+# ./build/nanocc <files `.s` || `.o` || `.c`> -o <output file>
+# ./build/nanocc <files `.s` || `.o` || `.c`> -S
+# ./build/nanocc <files `.s` || `.o` || `.c`> -c
+nanocc="./build/nanocc"
 
 # default output file
 output_file="a.out"
