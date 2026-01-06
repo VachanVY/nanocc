@@ -6,27 +6,11 @@ project(nanocc
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-option(
-    BUILD_TEST
-    "build test.cpp (minimal file for test framework) instead of nanocc.cpp (the actual C compiler)"
-)
+option(BUILD_NANOCC_TEST "Build nanocc test executable" OFF)
 
-set(
-    COMMON_SOURCES
-    lexer.cpp
-    parser.cpp
-    checker.cpp
-    irgen.cpp
-    asmgen.cpp
-    codegen.cpp
-)
+add_subdirectory(lib)
+add_subdirectory(tools)
 
-if(BUILD_TEST)
-    message(STATUS "Building test_nanocc executable")
-    add_executable(test_nanocc test.cpp ${COMMON_SOURCES})
-else()
-    message(STATUS "Building nanocc executable")
-    add_executable(nanocc nanocc.cpp ${COMMON_SOURCES})
-endif()
-
-include_directories(${PROJECT_SOURCE_DIR}/include)
+# PUBLIC — “I need this, and users of me need it too”
+# INTERFACE: "I don’t need it, but users of me do"
+# PRIVATE: "I need it, but users of me don’t"

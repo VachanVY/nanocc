@@ -181,3 +181,87 @@ main:
     ret
 
     .section .note.GNU-stack, "",@progbits
+
+# ----------- IR Generation -----------
+# Function[
+#  name='putint'
+#  parameters=[
+#    'x.1'
+#  ]
+#   instructions=[
+#     tmp.6 = x.1 < 0
+#     jump_if_false tmp.6, end.1
+#     tmp.7 = putchar(45)
+#     tmp.8 = - x.1
+#     x.1 = tmp.8
+#   end.1:
+#     tmp.9 = x.1 >= 10
+#     jump_if_false tmp.9, end.2
+#     tmp.10 = x.1 / 10
+#     tmp.11 = putint(tmp.10)
+#   end.2:
+#     tmp.12 = x.1 % 10
+#     tmp.13 = 48 + tmp.12
+#     tmp.14 = putchar(tmp.13)
+#     return 0
+#     return 0
+#   ]
+# ]
+# Function[
+#   name='factorial'
+#   parameters=[
+#     'n.2'
+#   ]
+#   instructions=[
+#     tmp.15 = n.2 <= 1
+#     jump_if_false tmp.15, else.3
+#     ret.3 = 1
+#     jump end.4
+#   else.3:
+#     tmp.16 = n.2 - 1
+#     tmp.17 = factorial(tmp.16)
+#     tmp.18 = n.2 * tmp.17
+#     ret.3 = tmp.18
+#   end.4:
+#     return ret.3
+#     return 0
+#   ]
+# ]
+# Function[
+#   name='main'
+#   parameters=[]
+#   instructions=[
+#     tmp.19 = putchar(72)
+#     tmp.20 = putchar(101)
+#     tmp.21 = putchar(108)
+#     tmp.22 = putchar(108)
+#     tmp.23 = putchar(111)
+#     tmp.24 = putchar(44)
+#     tmp.25 = putchar(32)
+#     tmp.26 = putchar(87)
+#     tmp.27 = putchar(111)
+#     tmp.28 = putchar(114)
+#     tmp.29 = putchar(108)
+#     tmp.30 = putchar(100)
+#     tmp.31 = putchar(33)
+#     tmp.32 = putchar(10)
+#     i.4 = 1
+#   start_for.0:
+#     tmp.33 = i.4 <= 5
+#     jump_if_false tmp.33, break_for.0
+#     tmp.34 = factorial(i.4)
+#     fact.5 = tmp.34
+#     tmp.35 = putint(i.4)
+#     tmp.36 = putchar(32)
+#     tmp.37 = putint(fact.5)
+#     tmp.38 = putchar(10)
+#   continue_for.0:
+#     tmp.39 = i.4 + 1
+#     i.4 = tmp.39
+#     jump start_for.0
+#   break_for.0:
+#     return 0
+#     return 0
+#   ]
+# ]
+# -------------------------------------

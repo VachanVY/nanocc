@@ -7,20 +7,89 @@
 ## Build nanocc
 
 ```python
+chmod +x buildcc.sh
+
 # build the compiler
 ./buildcc.sh compiler
 ## or to rebuild codebase
 ./buildcc.sh rebuild
 
-# build test.cpp for the test framework
+# build tools/test_nanocc.cpp for the testing
 ./buildcc.sh test
-## or rebuild test.cpp for the test framework
+## or rebuild it
 ./buildcc.sh rebuild_test
 
 # run tests
 git clone https://github.com/VachanVY/writing-a-c-compiler-tests.git
-./writing-a-c-compiler-tests/test_compiler ./build/test_nanocc --chapter 9 -v
+writing-a-c-compiler-tests/test_compiler ./build/tools/nanocc_test --chapter 9 -v
 ```
+
+## nanocc codebase
+
+<details>
+  <summary>nanocc codebase tree directory structure (LLVM style)</summary>
+ 
+```
+include
+└── nanocc
+    ├── AST
+    │   └── AST.hpp
+    ├── Codegen
+    │   ├── ASM.hpp
+    │   └── IRToPseudoAsmPass.hpp
+    ├── IR
+    │   └── IR.hpp
+    ├── Lexer
+    │   └── Lexer.hpp
+    ├── Parser
+    │   └── Parser.hpp
+    ├── Sema
+    │   └── Sema.hpp
+    ├── Target
+    │   └── X86
+    │       ├── X86TargetEmitter.hpp
+    │       └── X86TargetInfo.hpp
+    └── Utils.hpp
+lib
+├── CMakeLists.txt
+├── Codegen
+│   └── IRToPseudoAsmPass.cpp
+├── IR
+│   ├── IR.cpp
+│   ├── IRDump.cpp
+│   ├── IRGen.cpp
+│   └── IRHelper.hpp
+├── Lexer
+│   └── Lexer.cpp
+├── Parser
+│   └── Parser.cpp
+├── Sema
+│   ├── Sema.cpp
+│   ├── SemaDecl.cpp
+│   ├── SemaHelper.hpp
+│   ├── SemaLabel.cpp
+│   └── SemaType.cpp
+└── Target
+    └── X86
+        ├── X86InstrFixup.cpp
+        ├── X86PseudoLowering.cpp
+        └── X86TargetEmitter.cpp
+tools
+├── CMakeLists.txt
+├── CompilerPipeline.hpp
+├── nanocc.cpp
+└── test_nanocc.cpp
+
+nanocc_tests
+├── ...
+
+CMakeLists.txt
+buildcc.sh
+nanocc
+```
+
+</details>
+
 
 ## nanocc progress
 ```c
@@ -663,6 +732,7 @@ main:
 
 
 ```bash
+chmod +x nanocc
 # our compiler compiles to assembly: asm.s
 # gcc assembler asm.s => executable
 ./nanocc asm.c -o asm

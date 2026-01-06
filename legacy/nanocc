@@ -59,7 +59,7 @@ debug_echo "using temporary directory: $tmpdir"
 # ./build/nanocc <files `.s` || `.o` || `.c`> -o <output file>
 # ./build/nanocc <files `.s` || `.o` || `.c`> -S
 # ./build/nanocc <files `.s` || `.o` || `.c`> -c
-nanocc="./build/tools/nanocc"
+nanocc="./build/nanocc"
 
 # default output file
 output_file="a.out"
