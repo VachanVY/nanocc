@@ -1,4 +1,5 @@
-#pragma once
+#ifndef NANOCC_PARSER_PARSER_HPP
+#define NANOCC_PARSER_PARSER_HPP
 
 #include <memory>
 #include <deque>
@@ -13,3 +14,5 @@ namespace nanocc {
     /// @return The root of the generated AST.
     std::unique_ptr<ProgramNode> parse(std::deque<Token>& tokens, bool debug = false);    
 } // namespace nanocc
+
+#endif // NANOCC_PARSER_PARSER_HPP

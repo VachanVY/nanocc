@@ -1,4 +1,5 @@
-#pragma once
+#ifndef NANOCC_AST_AST_HPP
+#define NANOCC_AST_AST_HPP
 
 #include <vector>
 #include <memory>
@@ -358,4 +359,6 @@ class IdentifierNode : public ASTNode {
     void dump(int indent = 0) const override { dump(indent, true); };
     void dump(int indent, bool new_line) const;
 };
+
+#endif // NANOCC_AST_AST_HPP
 

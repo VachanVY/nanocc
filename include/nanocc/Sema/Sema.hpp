@@ -1,5 +1,6 @@
 
-#pragma once
+#ifndef NANOCC_SEMA_SEMA_HPP
+#define NANOCC_SEMA_SEMA_HPP
 
 #include <string>
 #include <unordered_map>
@@ -46,4 +47,6 @@ namespace nanocc {
     void semaCheckTypes(std::unique_ptr<ProgramNode>& ast, TypeCheckerSymbolTable& global_type_checker_map);
     void semaLoopLabelling(std::unique_ptr<ProgramNode>& ast);
 } // namespace nanocc
+
+#endif // NANOCC_SEMA_SEMA_HPP
 

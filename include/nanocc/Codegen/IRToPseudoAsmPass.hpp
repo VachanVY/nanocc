@@ -1,4 +1,5 @@
-#pragma once
+#ifndef NANOCC_CODEGEN_IRTOPSEUDOASMPASS_HPP
+#define NANOCC_CODEGEN_IRTOPSEUDOASMPASS_HPP
 
 #include <memory>
 
@@ -9,3 +10,5 @@ namespace nanocc {
 std::unique_ptr<AsmProgramNode> intermReprToPseudoAsm(std::unique_ptr<IRProgramNode>& ir_ast,
                         bool debug = false);
 } // namespace nanocc
+
+#endif // NANOCC_CODEGEN_IRTOPSEUDOASMPASS_HPP

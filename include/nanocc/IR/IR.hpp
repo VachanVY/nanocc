@@ -1,4 +1,5 @@
-#pragma once
+#ifndef NANOCC_IR_IR_HPP
+#define NANOCC_IR_IR_HPP
 
 #include <vector>
 #include <memory>
@@ -231,3 +232,5 @@ namespace nanocc {
 std::unique_ptr<IRProgramNode> generateIntermRepr(std::unique_ptr<ProgramNode>& ast,
                                                   bool debug = false);
 } // namespace nanocc
+
+#endif // NANOCC_IR_IR_HPP

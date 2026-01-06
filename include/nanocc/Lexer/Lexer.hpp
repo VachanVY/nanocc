@@ -1,4 +1,5 @@
-#pragma once
+#ifndef NANOCC_LEXER_LEXER_HPP
+#define NANOCC_LEXER_LEXER_HPP
 
 #include <string>
 #include <regex>
@@ -80,4 +81,6 @@ namespace nanocc {
 /// @param debug Whether to print debug information during lexing.
 /// @return A deque of tokens generated from the source code.
 std::deque<Token> lexer(const std::string& s, bool debug = false);
+
+#endif // NANOCC_LEXER_LEXER_HPP
 } // namespace nanocc

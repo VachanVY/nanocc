@@ -1,4 +1,5 @@
-#pragma once 
+#ifndef NANOCC_UTILS_HPP
+#define NANOCC_UTILS_HPP
 
 #include <cassert>
 #include <print>
@@ -71,3 +72,5 @@ inline std::string getFileContents(const std::string& filename) {
     return buffer.str();
 }
 } // namespace nanocc
+
+#endif // NANOCC_UTILS_HPP

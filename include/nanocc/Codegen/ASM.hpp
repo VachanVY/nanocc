@@ -1,4 +1,5 @@
-#pragma once
+#ifndef NANOCC_CODEGEN_ASM_HPP
+#define NANOCC_CODEGEN_ASM_HPP
 
 #include <memory>
 #include <string>
@@ -382,3 +383,5 @@ class AsmStackNode : public AsmOperandNode {
     void generateAsm(std::ostream& os) override;
 };
 // Operand Nodes -- end
+
+#endif // NANOCC_CODEGEN_ASM_HPP

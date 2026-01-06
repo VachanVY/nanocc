@@ -1,4 +1,5 @@
-#pragma once
+#ifndef NANOCC_TARGET_X86_X86TARGETINFO_HPP
+#define NANOCC_TARGET_X86_X86TARGETINFO_HPP
 
 /*
 use 64 bit registers in push instructions.
@@ -46,3 +47,5 @@ inline std::string getRegString(Reg reg) {
     // register in string form
     return regToString[static_cast<int>(reg)];
 }
+
+#endif // NANOCC_TARGET_X86_X86TARGETINFO_HPP

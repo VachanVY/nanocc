@@ -1,4 +1,5 @@
-#pragma once
+#ifndef NANOCC_TARGET_X86_X86TARGETEMITTER_HPP
+#define NANOCC_TARGET_X86_X86TARGETEMITTER_HPP
 
 #include <memory>
 #include <sstream>
@@ -16,3 +17,5 @@ namespace nanocc {
     /// @return The generated assembly code as a string stream
     std::ostringstream x86EmitAssembly(const std::unique_ptr<AsmProgramNode>& asm_program);
 } // namespace nanocc
+
+#endif // NANOCC_TARGET_X86_X86TARGETEMITTER_HPP
