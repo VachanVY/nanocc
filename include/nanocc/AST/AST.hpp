@@ -58,7 +58,6 @@ class ProgramNode : public ASTNode {
 
     void parse(std::deque<Token>& tokens, size_t& pos);
     void dump(int indent = 0) const override;
-    
 };
 
 class DeclarationNode : public ASTNode {
@@ -68,7 +67,6 @@ class DeclarationNode : public ASTNode {
 
     void parse(std::deque<Token>& tokens, size_t& pos);
     void dump(int indent = 0) const override;
-
 };
 
 // int "name"; | int "name" = <expr>;
@@ -358,4 +356,3 @@ class IdentifierNode : public ASTNode {
     void dump(int indent = 0) const override { dump(indent, true); };
     void dump(int indent, bool new_line) const;
 };
-

@@ -49,7 +49,6 @@
                                                                                                    \
     X(COMMA, ",")
 
-
 enum class TokenType {
 #define X(name, str) name,
     TOKEN_LIST

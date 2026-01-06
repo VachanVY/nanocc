@@ -6,10 +6,10 @@
 
 namespace nanocc {
 std::unique_ptr<IRProgramNode> generateIntermRepr(std::unique_ptr<ProgramNode>& ast, bool debug) {
-    auto interm_repr = IRGen::programNodeIRGen(ast);
+    auto interm_repr = irgen::programNodeIRGen(ast);
     if (debug) {
         std::println("----------- IR Generation -----------");
-        IRGen::irProgramNodeDump(interm_repr, 0);
+        irgen::programNodeIRDump(interm_repr, 0);
         std::println("-------------------------------------");
     }
     return interm_repr;

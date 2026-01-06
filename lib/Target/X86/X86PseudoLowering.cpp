@@ -1,7 +1,6 @@
 #include "nanocc/Utils.hpp"
 #include "nanocc/Codegen/ASM.hpp"
 
-
 // Resolve Pseudo Registers -- Start
 void AsmProgramNode::resolvePseudoRegisters(std::unordered_map<std::string, int>& pseudo_reg_map,
                                             std::vector<int>& stack_offset) {

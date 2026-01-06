@@ -4,82 +4,119 @@
 #include "nanocc/AST/AST.hpp"
 #include "nanocc/Sema/Sema.hpp"
 
+namespace sema {
 // indetifier resolution -- start
-void ProgramNodeResolveTypes(std::unique_ptr<ProgramNode>&, IdentifierMap&);
-void DeclarationNodeResolveTypes(std::unique_ptr<DeclarationNode>&, IdentifierMap&);
-void VariableDeclNodeResolveTypes(std::unique_ptr<VariableDeclNode>&, IdentifierMap&);
-void FunctionDeclNodeResolveTypes(std::unique_ptr<FunctionDeclNode>&, IdentifierMap&);
-void BlockNodeResolveTypes(std::unique_ptr<BlockNode>&, IdentifierMap&);
-void BlockItemNodeResolveTypes(const std::unique_ptr<BlockItemNode>&, IdentifierMap&);
-void StatementNodeResolveTypes(std::unique_ptr<StatementNode>&, IdentifierMap&);
-void ReturnNodeResolveTypes(std::unique_ptr<ReturnNode>&, IdentifierMap&);
-void ExpressionNodeResolveTypes(std::unique_ptr<ExpressionNode>&, IdentifierMap&);
-void IfElseNodeResolveTypes(std::unique_ptr<IfElseNode>&, IdentifierMap&);
-void CompoundNodeResolveTypes(std::unique_ptr<CompoundNode>&, IdentifierMap&);
-void BreakNodeResolveTypes(std::unique_ptr<BreakNode>&, IdentifierMap&);
-void ContinueNodeResolveTypes(std::unique_ptr<ContinueNode>&, IdentifierMap&);
-void WhileNodeResolveTypes(std::unique_ptr<WhileNode>&, IdentifierMap&);
-void DoWhileNodeResolveTypes(std::unique_ptr<DoWhileNode>&, IdentifierMap&);
-void ForNodeResolveTypes(std::unique_ptr<ForNode>&, IdentifierMap&);
-void ForInitNodeResolveTypes(std::unique_ptr<ForInitNode>&, IdentifierMap&);
-void NullNodeResolveTypes(std::unique_ptr<NullNode>&, IdentifierMap&);
-void ExprNodeResolveTypes(std::unique_ptr<ExprNode>&, IdentifierMap&);
-void ExprFactorNodeResolveTypes(std::unique_ptr<ExprFactorNode>&, IdentifierMap&);
-void VarNodeResolveTypes(std::unique_ptr<VarNode>&, IdentifierMap&);
-void ConstantNodeResolveTypes(std::unique_ptr<ConstantNode>&, IdentifierMap&);
-void BinaryNodeResolveTypes(std::unique_ptr<BinaryNode>&, IdentifierMap&);
-void AssignmentNodeResolveTypes(std::unique_ptr<AssignmentNode>&, IdentifierMap&);
-void ConditionalNodeResolveTypes(std::unique_ptr<ConditionalNode>&, IdentifierMap&);
-void FunctionCallNodeResolveTypes(std::unique_ptr<FunctionCallNode>&, IdentifierMap&);
-void UnaryNodeResolveTypes(std::unique_ptr<UnaryNode>&, IdentifierMap&);
+void programNodeResolveTypes(std::unique_ptr<ProgramNode>&, IdentifierMap&);
+void declarationNodeResolveTypes(std::unique_ptr<DeclarationNode>&, IdentifierMap&);
+void variableDeclNodeResolveTypes(std::unique_ptr<VariableDeclNode>&, IdentifierMap&);
+void functionDeclNodeResolveTypes(std::unique_ptr<FunctionDeclNode>&, IdentifierMap&);
+void blockNodeResolveTypes(std::unique_ptr<BlockNode>&, IdentifierMap&);
+void blockItemNodeResolveTypes(const std::unique_ptr<BlockItemNode>&, IdentifierMap&);
+void statementNodeResolveTypes(std::unique_ptr<StatementNode>&, IdentifierMap&);
+void returnNodeResolveTypes(std::unique_ptr<ReturnNode>&, IdentifierMap&);
+void expressionNodeResolveTypes(std::unique_ptr<ExpressionNode>&, IdentifierMap&);
+void ifElseNodeResolveTypes(std::unique_ptr<IfElseNode>&, IdentifierMap&);
+void compoundNodeResolveTypes(std::unique_ptr<CompoundNode>&, IdentifierMap&);
+void breakNodeResolveTypes(std::unique_ptr<BreakNode>&, IdentifierMap&);
+void continueNodeResolveTypes(std::unique_ptr<ContinueNode>&, IdentifierMap&);
+void whileNodeResolveTypes(std::unique_ptr<WhileNode>&, IdentifierMap&);
+void doWhileNodeResolveTypes(std::unique_ptr<DoWhileNode>&, IdentifierMap&);
+void forNodeResolveTypes(std::unique_ptr<ForNode>&, IdentifierMap&);
+void forInitNodeResolveTypes(std::unique_ptr<ForInitNode>&, IdentifierMap&);
+void nullNodeResolveTypes(std::unique_ptr<NullNode>&, IdentifierMap&);
+void exprNodeResolveTypes(std::unique_ptr<ExprNode>&, IdentifierMap&);
+void exprFactorNodeResolveTypes(std::unique_ptr<ExprFactorNode>&, IdentifierMap&);
+void varNodeResolveTypes(std::unique_ptr<VarNode>&, IdentifierMap&);
+void constantNodeResolveTypes(std::unique_ptr<ConstantNode>&, IdentifierMap&);
+void binaryNodeResolveTypes(std::unique_ptr<BinaryNode>&, IdentifierMap&);
+void assignmentNodeResolveTypes(std::unique_ptr<AssignmentNode>&, IdentifierMap&);
+void conditionalNodeResolveTypes(std::unique_ptr<ConditionalNode>&, IdentifierMap&);
+void functionCallNodeResolveTypes(std::unique_ptr<FunctionCallNode>&, IdentifierMap&);
+void unaryNodeResolveTypes(std::unique_ptr<UnaryNode>&, IdentifierMap&);
 // identifier resolution -- end
 
 // type checking -- start
-void ProgramNodeCheckTypes(std::unique_ptr<ProgramNode>& program_node, TypeCheckerSymbolTable& type_checker_map);
-void DeclarationNodeCheckTypes(std::unique_ptr<DeclarationNode>& declaration_node, TypeCheckerSymbolTable& type_checker_map);
-void VariableDeclNodeCheckTypes(std::unique_ptr<VariableDeclNode>& variable_decl_node, TypeCheckerSymbolTable& type_checker_map);
-void FunctionDeclNodeCheckTypes(std::unique_ptr<FunctionDeclNode>& function_decl_node, TypeCheckerSymbolTable& type_checker_map);
-void BlockNodeCheckTypes(std::unique_ptr<BlockNode>& block_node, TypeCheckerSymbolTable& type_checker_map);
-void BlockItemNodeCheckTypes(const std::unique_ptr<BlockItemNode>& block_item_node, TypeCheckerSymbolTable& type_checker_map);
-void StatementNodeCheckTypes(std::unique_ptr<StatementNode>& statement_node, TypeCheckerSymbolTable& type_checker_map);
-void ReturnNodeCheckTypes(std::unique_ptr<ReturnNode>& return_node, TypeCheckerSymbolTable& type_checker_map);
-void ExpressionNodeCheckTypes(std::unique_ptr<ExpressionNode>& expression_node, TypeCheckerSymbolTable& type_checker_map);
-void IfElseNodeCheckTypes(std::unique_ptr<IfElseNode>& ifelse_node, TypeCheckerSymbolTable& type_checker_map);
-void CompoundNodeCheckTypes(std::unique_ptr<CompoundNode>& compound_node, TypeCheckerSymbolTable& type_checker_map);
-void BreakNodeCheckTypes(std::unique_ptr<BreakNode>& break_node, TypeCheckerSymbolTable& type_checker_map);
-void ContinueNodeCheckTypes(std::unique_ptr<ContinueNode>& continue_node, TypeCheckerSymbolTable& type_checker_map);
-void WhileNodeCheckTypes(std::unique_ptr<WhileNode>& while_node, TypeCheckerSymbolTable& type_checker_map);
-void DoWhileNodeCheckTypes(std::unique_ptr<DoWhileNode>& dowhile_node, TypeCheckerSymbolTable& type_checker_map);
-void ForNodeCheckTypes(std::unique_ptr<ForNode>& for_node, TypeCheckerSymbolTable& type_checker_map);
-void ForInitNodeCheckTypes(std::unique_ptr<ForInitNode>& for_init_node, TypeCheckerSymbolTable& type_checker_map);
-void NullNodeCheckTypes(std::unique_ptr<NullNode>& null_node, TypeCheckerSymbolTable& type_checker_map);
-void ExprNodeCheckTypes(std::unique_ptr<ExprNode>& expr_node, TypeCheckerSymbolTable& type_checker_map);
-void ExprFactorNodeCheckTypes(std::unique_ptr<ExprFactorNode>& expr_factor_node, TypeCheckerSymbolTable& type_checker_map);
-void VarNodeCheckTypes(std::unique_ptr<VarNode>& var_node, TypeCheckerSymbolTable& type_checker_map);
-void ConstantNodeCheckTypes(std::unique_ptr<ConstantNode>& constant_node, TypeCheckerSymbolTable& type_checker_map);
-void UnaryNodeCheckTypes(std::unique_ptr<UnaryNode>& unary_node, TypeCheckerSymbolTable& type_checker_map);
-void BinaryNodeCheckTypes(std::unique_ptr<BinaryNode>& binary_node, TypeCheckerSymbolTable& type_checker_map);
-void AssignmentNodeCheckTypes(std::unique_ptr<AssignmentNode>& assignment_node, TypeCheckerSymbolTable& type_checker_map);
-void FunctionCallNodeCheckTypes(std::unique_ptr<FunctionCallNode>& function_call_node, TypeCheckerSymbolTable& type_checker_map);
-void ConditionalNodeCheckTypes(std::unique_ptr<ConditionalNode>& conditional_node, TypeCheckerSymbolTable& type_checker_map);
+void programNodeCheckTypes(std::unique_ptr<ProgramNode>& program_node,
+                           TypeCheckerSymbolTable& type_checker_map);
+void declarationNodeCheckTypes(std::unique_ptr<DeclarationNode>& declaration_node,
+                               TypeCheckerSymbolTable& type_checker_map);
+void variableDeclNodeCheckTypes(std::unique_ptr<VariableDeclNode>& variable_decl_node,
+                                TypeCheckerSymbolTable& type_checker_map);
+void functionDeclNodeCheckTypes(std::unique_ptr<FunctionDeclNode>& function_decl_node,
+                                TypeCheckerSymbolTable& type_checker_map);
+void blockNodeCheckTypes(std::unique_ptr<BlockNode>& block_node,
+                         TypeCheckerSymbolTable& type_checker_map);
+void blockItemNodeCheckTypes(const std::unique_ptr<BlockItemNode>& block_item_node,
+                             TypeCheckerSymbolTable& type_checker_map);
+void statementNodeCheckTypes(std::unique_ptr<StatementNode>& statement_node,
+                             TypeCheckerSymbolTable& type_checker_map);
+void returnNodeCheckTypes(std::unique_ptr<ReturnNode>& return_node,
+                          TypeCheckerSymbolTable& type_checker_map);
+void expressionNodeCheckTypes(std::unique_ptr<ExpressionNode>& expression_node,
+                              TypeCheckerSymbolTable& type_checker_map);
+void ifElseNodeCheckTypes(std::unique_ptr<IfElseNode>& ifelse_node,
+                          TypeCheckerSymbolTable& type_checker_map);
+void compoundNodeCheckTypes(std::unique_ptr<CompoundNode>& compound_node,
+                            TypeCheckerSymbolTable& type_checker_map);
+void breakNodeCheckTypes(std::unique_ptr<BreakNode>& break_node,
+                         TypeCheckerSymbolTable& type_checker_map);
+void continueNodeCheckTypes(std::unique_ptr<ContinueNode>& continue_node,
+                            TypeCheckerSymbolTable& type_checker_map);
+void whileNodeCheckTypes(std::unique_ptr<WhileNode>& while_node,
+                         TypeCheckerSymbolTable& type_checker_map);
+void doWhileNodeCheckTypes(std::unique_ptr<DoWhileNode>& dowhile_node,
+                           TypeCheckerSymbolTable& type_checker_map);
+void forNodeCheckTypes(std::unique_ptr<ForNode>& for_node,
+                       TypeCheckerSymbolTable& type_checker_map);
+void forInitNodeCheckTypes(std::unique_ptr<ForInitNode>& for_init_node,
+                           TypeCheckerSymbolTable& type_checker_map);
+void nullNodeCheckTypes(std::unique_ptr<NullNode>& null_node,
+                        TypeCheckerSymbolTable& type_checker_map);
+void exprNodeCheckTypes(std::unique_ptr<ExprNode>& expr_node,
+                        TypeCheckerSymbolTable& type_checker_map);
+void exprFactorNodeCheckTypes(std::unique_ptr<ExprFactorNode>& expr_factor_node,
+                              TypeCheckerSymbolTable& type_checker_map);
+void varNodeCheckTypes(std::unique_ptr<VarNode>& var_node,
+                       TypeCheckerSymbolTable& type_checker_map);
+void constantNodeCheckTypes(std::unique_ptr<ConstantNode>& constant_node,
+                            TypeCheckerSymbolTable& type_checker_map);
+void unaryNodeCheckTypes(std::unique_ptr<UnaryNode>& unary_node,
+                         TypeCheckerSymbolTable& type_checker_map);
+void binaryNodeCheckTypes(std::unique_ptr<BinaryNode>& binary_node,
+                          TypeCheckerSymbolTable& type_checker_map);
+void assignmentNodeCheckTypes(std::unique_ptr<AssignmentNode>& assignment_node,
+                              TypeCheckerSymbolTable& type_checker_map);
+void functionCallNodeCheckTypes(std::unique_ptr<FunctionCallNode>& function_call_node,
+                                TypeCheckerSymbolTable& type_checker_map);
+void conditionalNodeCheckTypes(std::unique_ptr<ConditionalNode>& conditional_node,
+                               TypeCheckerSymbolTable& type_checker_map);
 // type checking -- end
 
 // loop labelling -- start
-void ProgramNodeLoopLabelling(std::unique_ptr<ProgramNode>& program_node, std::string& loop_label);
-void DeclarationNodeLoopLabelling(std::unique_ptr<DeclarationNode>& declaration_node, std::string& loop_label);
-void VariableDeclNodeLoopLabelling(std::unique_ptr<VariableDeclNode>& variable_decl_node, std::string& loop_label);
-void FunctionDeclNodeLoopLabelling(std::unique_ptr<FunctionDeclNode>& function_decl_node, std::string& loop_label);
-void BlockNodeLoopLabelling(std::unique_ptr<BlockNode>& block_node, std::string& loop_label);
-void BlockItemNodeLoopLabelling(const std::unique_ptr<BlockItemNode>& block_item_node, std::string& loop_label);
-void StatementNodeLoopLabelling(std::unique_ptr<StatementNode>& statement_node, std::string& loop_label);
-void ReturnNodeLoopLabelling(std::unique_ptr<ReturnNode>& return_node, std::string& loop_label);
-void ExpressionNodeLoopLabelling(std::unique_ptr<ExpressionNode>& expression_node, std::string& loop_label);
-void IfElseNodeLoopLabelling(std::unique_ptr<IfElseNode>& ifelse_node, std::string& loop_label);
-void CompoundNodeLoopLabelling(std::unique_ptr<CompoundNode>& compound_node, std::string& loop_label);
-void BreakNodeLoopLabelling(std::unique_ptr<BreakNode>& break_node, std::string& loop_label);
-void ContinueNodeLoopLabelling(std::unique_ptr<ContinueNode>& continue_node, std::string& loop_label);
-void WhileNodeLoopLabelling(std::unique_ptr<WhileNode>& while_node, std::string& loop_label);
-void DoWhileNodeLoopLabelling(std::unique_ptr<DoWhileNode>& dowhile_node, std::string& loop_label);
-void ForNodeLoopLabelling(std::unique_ptr<ForNode>& for_node, std::string& loop_label);
-void NullNodeLoopLabelling(std::unique_ptr<NullNode>& null_node, std::string& loop_label);
+void programNodeLoopLabelling(std::unique_ptr<ProgramNode>& program_node, std::string& loop_label);
+void declarationNodeLoopLabelling(std::unique_ptr<DeclarationNode>& declaration_node,
+                                  std::string& loop_label);
+void variableDeclNodeLoopLabelling(std::unique_ptr<VariableDeclNode>& variable_decl_node,
+                                   std::string& loop_label);
+void functionDeclNodeLoopLabelling(std::unique_ptr<FunctionDeclNode>& function_decl_node,
+                                   std::string& loop_label);
+void blockNodeLoopLabelling(std::unique_ptr<BlockNode>& block_node, std::string& loop_label);
+void blockItemNodeLoopLabelling(const std::unique_ptr<BlockItemNode>& block_item_node,
+                                std::string& loop_label);
+void statementNodeLoopLabelling(std::unique_ptr<StatementNode>& statement_node,
+                                std::string& loop_label);
+void returnNodeLoopLabelling(std::unique_ptr<ReturnNode>& return_node, std::string& loop_label);
+void expressionNodeLoopLabelling(std::unique_ptr<ExpressionNode>& expression_node,
+                                 std::string& loop_label);
+void ifElseNodeLoopLabelling(std::unique_ptr<IfElseNode>& ifelse_node, std::string& loop_label);
+void compoundNodeLoopLabelling(std::unique_ptr<CompoundNode>& compound_node,
+                               std::string& loop_label);
+void breakNodeLoopLabelling(std::unique_ptr<BreakNode>& break_node, std::string& loop_label);
+void continueNodeLoopLabelling(std::unique_ptr<ContinueNode>& continue_node,
+                               std::string& loop_label);
+void whileNodeLoopLabelling(std::unique_ptr<WhileNode>& while_node, std::string& loop_label);
+void doWhileNodeLoopLabelling(std::unique_ptr<DoWhileNode>& dowhile_node, std::string& loop_label);
+void forNodeLoopLabelling(std::unique_ptr<ForNode>& for_node, std::string& loop_label);
+void nullNodeLoopLabelling(std::unique_ptr<NullNode>& null_node, std::string& loop_label);
 // loop labelling -- end
+} // namespace sema

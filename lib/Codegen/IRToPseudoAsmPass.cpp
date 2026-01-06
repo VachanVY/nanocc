@@ -9,7 +9,6 @@
 #include "nanocc/Codegen/ASM.hpp"
 #include "nanocc/Target/X86/X86TargetInfo.hpp"
 
-
 // Emit Assembly Functions -- Start
 
 /// @brief Lowers the given IR program to an ASM program.
@@ -301,9 +300,9 @@ std::vector<std::unique_ptr<AsmInstructionNode>> IRFunctionCallNode::lowerToAsm(
 // Emit Assembly Functions -- End
 
 namespace nanocc {
-std::unique_ptr<AsmProgramNode> intermReprToPseudoAsm(std::unique_ptr<IRProgramNode>& ir_ast,
-                        bool debug) {
-    auto asm_ast = ir_ast->lowerToAsm();
+std::unique_ptr<AsmProgramNode> intermReprToPseudoAsm(std::unique_ptr<IRProgramNode>& interm_repr,
+                                                      bool debug) {
+    auto asm_ast = interm_repr->lowerToAsm();
     return asm_ast;
 }
 } // namespace nanocc

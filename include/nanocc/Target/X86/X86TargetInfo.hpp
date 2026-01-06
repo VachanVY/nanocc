@@ -24,7 +24,7 @@ enum class Reg {
 #define X(r64, r32, r8) r64, r32, r8,
     REG_FAMILIES
 #undef X
-    rsp,
+        rsp,
     rbp
 };
 
@@ -39,8 +39,7 @@ static const std::string regToString[] = {
     REG_FAMILIES
 #undef X
     "%rsp",
-    "%rbp"
-};
+    "%rbp"};
 
 inline std::string getRegString(Reg reg) {
     // register in string form

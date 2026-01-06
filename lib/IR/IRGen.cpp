@@ -24,7 +24,6 @@ use shared_ptr for IRValNode (and its derived classes)
 
 #include "IRHelper.hpp"
 
-
 namespace { // helper function
 void extendInstrFromVector(std::vector<std::unique_ptr<IRInstructionNode>>&& src,
                            std::vector<std::unique_ptr<IRInstructionNode>>& dest) {
@@ -34,7 +33,9 @@ void extendInstrFromVector(std::vector<std::unique_ptr<IRInstructionNode>>&& src
 }
 } // namespace
 
-std::unique_ptr<IRProgramNode> IRGen::programNodeIRGen(std::unique_ptr<ProgramNode>& program_node) {
+namespace irgen {
+
+std::unique_ptr<IRProgramNode> programNodeIRGen(std::unique_ptr<ProgramNode>& program_node) {
     auto ir_program = std::make_unique<IRProgramNode>();
     for (auto& function : program_node->functions) {
         if (function->body) {
@@ -45,7 +46,8 @@ std::unique_ptr<IRProgramNode> IRGen::programNodeIRGen(std::unique_ptr<ProgramNo
     return ir_program;
 }
 
-std::vector<std::unique_ptr<IRInstructionNode>> IRGen::declarationNodeIRGen(std::unique_ptr<DeclarationNode>& declaration) {
+std::vector<std::unique_ptr<IRInstructionNode>>
+declarationNodeIRGen(std::unique_ptr<DeclarationNode>& declaration) {
     if (declaration->func) {
         // ignore function's with no body, functions with
         // definitions are handled in ProgramNode
@@ -57,7 +59,8 @@ std::vector<std::unique_ptr<IRInstructionNode>> IRGen::declarationNodeIRGen(std:
     }
 }
 
-std::unique_ptr<IRFunctionNode> IRGen::functionDeclNodeIRGen(std::unique_ptr<FunctionDeclNode>& function) {
+std::unique_ptr<IRFunctionNode>
+functionDeclNodeIRGen(std::unique_ptr<FunctionDeclNode>& function) {
     // a function has many blocks => many instructions
     std::vector<std::unique_ptr<IRInstructionNode>> instructions;
     extendInstrFromVector(blockNodeIRGen(function->body), instructions);
@@ -76,7 +79,8 @@ std::unique_ptr<IRFunctionNode> IRGen::functionDeclNodeIRGen(std::unique_ptr<Fun
     return ir_function;
 }
 
-std::vector<std::unique_ptr<IRInstructionNode>> IRGen::blockNodeIRGen(std::unique_ptr<BlockNode>& block) {
+std::vector<std::unique_ptr<IRInstructionNode>>
+blockNodeIRGen(std::unique_ptr<BlockNode>& block) {
     std::vector<std::unique_ptr<IRInstructionNode>> ir_instructions;
     for (auto& block_item : block->block_items) {
         extendInstrFromVector(blockItemNodeIRGen(block_item), ir_instructions);
@@ -84,7 +88,8 @@ std::vector<std::unique_ptr<IRInstructionNode>> IRGen::blockNodeIRGen(std::uniqu
     return ir_instructions;
 }
 
-std::vector<std::unique_ptr<IRInstructionNode>> IRGen::blockItemNodeIRGen(std::unique_ptr<BlockItemNode>& block_item) {
+std::vector<std::unique_ptr<IRInstructionNode>>
+blockItemNodeIRGen(std::unique_ptr<BlockItemNode>& block_item) {
     std::vector<std::unique_ptr<IRInstructionNode>> ir_instructions;
     if (block_item->declaration) {
         extendInstrFromVector(declarationNodeIRGen(block_item->declaration), ir_instructions);
@@ -96,7 +101,8 @@ std::vector<std::unique_ptr<IRInstructionNode>> IRGen::blockItemNodeIRGen(std::u
     return ir_instructions;
 }
 
-std::vector<std::unique_ptr<IRInstructionNode>> IRGen::variableDeclNodeIRGen(std::unique_ptr<VariableDeclNode>& var) {
+std::vector<std::unique_ptr<IRInstructionNode>>
+variableDeclNodeIRGen(std::unique_ptr<VariableDeclNode>& var) {
     std::vector<std::unique_ptr<IRInstructionNode>> ir_instructions;
     if (var->init_expr) {
         // get the value of the initialization expression
@@ -110,7 +116,8 @@ std::vector<std::unique_ptr<IRInstructionNode>> IRGen::variableDeclNodeIRGen(std
     return ir_instructions;
 }
 
-std::vector<std::unique_ptr<IRInstructionNode>> IRGen::statementNodeIRGen(std::unique_ptr<StatementNode>& statement) {
+std::vector<std::unique_ptr<IRInstructionNode>>
+statementNodeIRGen(std::unique_ptr<StatementNode>& statement) {
     std::vector<std::unique_ptr<IRInstructionNode>> ir_instructions;
 
     // get ir from `ExprNode`; `emit_tacky` func from the book;
@@ -142,7 +149,8 @@ std::vector<std::unique_ptr<IRInstructionNode>> IRGen::statementNodeIRGen(std::u
     return ir_instructions;
 }
 
-std::vector<std::unique_ptr<IRInstructionNode>> IRGen::returnNodeIRGen(std::unique_ptr<ReturnNode>& return_stmt) {
+std::vector<std::unique_ptr<IRInstructionNode>>
+returnNodeIRGen(std::unique_ptr<ReturnNode>& return_stmt) {
     std::vector<std::unique_ptr<IRInstructionNode>> ir_instructions;
     auto dest_var = exprNodeIRGen(return_stmt->ret_expr, ir_instructions);
     // emit return of the computed value
@@ -151,7 +159,8 @@ std::vector<std::unique_ptr<IRInstructionNode>> IRGen::returnNodeIRGen(std::uniq
     return ir_instructions;
 }
 
-std::vector<std::unique_ptr<IRInstructionNode>> IRGen::expressionNodeIRGen(std::unique_ptr<ExpressionNode>& expression_stmt) {
+std::vector<std::unique_ptr<IRInstructionNode>>
+expressionNodeIRGen(std::unique_ptr<ExpressionNode>& expression_stmt) {
     std::vector<std::unique_ptr<IRInstructionNode>> ir_instructions;
     // this will return a new temporary variable holding the expression result
     // but we won't use it that again in the IR Generation
@@ -159,7 +168,8 @@ std::vector<std::unique_ptr<IRInstructionNode>> IRGen::expressionNodeIRGen(std::
     return ir_instructions;
 }
 
-std::vector<std::unique_ptr<IRInstructionNode>> IRGen::ifElseNodeIRGen(std::unique_ptr<IfElseNode>& ifelse_stmt) {
+std::vector<std::unique_ptr<IRInstructionNode>>
+ifElseNodeIRGen(std::unique_ptr<IfElseNode>& ifelse_stmt) {
     std::vector<std::unique_ptr<IRInstructionNode>> ir_instructions;
 
     // no else block => `end` label
@@ -191,11 +201,13 @@ std::vector<std::unique_ptr<IRInstructionNode>> IRGen::ifElseNodeIRGen(std::uniq
     return ir_instructions;
 }
 
-std::vector<std::unique_ptr<IRInstructionNode>> IRGen::compoundNodeIRGen(std::unique_ptr<CompoundNode>& compound_stmt) {
+std::vector<std::unique_ptr<IRInstructionNode>>
+compoundNodeIRGen(std::unique_ptr<CompoundNode>& compound_stmt) {
     return blockNodeIRGen(compound_stmt->block);
 }
 
-std::vector<std::unique_ptr<IRInstructionNode>> IRGen::breakNodeIRGen(std::unique_ptr<BreakNode>& break_stmt) {
+std::vector<std::unique_ptr<IRInstructionNode>>
+breakNodeIRGen(std::unique_ptr<BreakNode>& break_stmt) {
     std::vector<std::unique_ptr<IRInstructionNode>> ir_instructions;
 
     std::string break_str = "break_" + break_stmt->label->name;
@@ -205,7 +217,8 @@ std::vector<std::unique_ptr<IRInstructionNode>> IRGen::breakNodeIRGen(std::uniqu
     return ir_instructions;
 }
 
-std::vector<std::unique_ptr<IRInstructionNode>> IRGen::continueNodeIRGen(std::unique_ptr<ContinueNode>& continue_stmt) {
+std::vector<std::unique_ptr<IRInstructionNode>>
+continueNodeIRGen(std::unique_ptr<ContinueNode>& continue_stmt) {
     std::vector<std::unique_ptr<IRInstructionNode>> ir_instructions;
 
     std::string continue_str = "continue_" + continue_stmt->label->name;
@@ -223,7 +236,8 @@ while (<condition>) {
 }
 // break will jump here
 ``` */
-std::vector<std::unique_ptr<IRInstructionNode>> IRGen::whileNodeIRGen(std::unique_ptr<WhileNode>& while_stmt) {
+std::vector<std::unique_ptr<IRInstructionNode>>
+whileNodeIRGen(std::unique_ptr<WhileNode>& while_stmt) {
     std::vector<std::unique_ptr<IRInstructionNode>> ir_instructions;
 
     // start/continue Label
@@ -258,7 +272,8 @@ do {
 } while (<condition>);
 // break will jump here
 ```*/
-std::vector<std::unique_ptr<IRInstructionNode>> IRGen::doWhileNodeIRGen(std::unique_ptr<DoWhileNode>& dowhile_stmt) {
+std::vector<std::unique_ptr<IRInstructionNode>>
+doWhileNodeIRGen(std::unique_ptr<DoWhileNode>& dowhile_stmt) {
     std::vector<std::unique_ptr<IRInstructionNode>> ir_instructions;
 
     // start Label
@@ -297,7 +312,8 @@ for(<init>; <condition>; <post>) {
 <body>         | continue_label after <body>
 <post> --------' break_label    after <post>
 ``` */
-std::vector<std::unique_ptr<IRInstructionNode>> IRGen::forNodeIRGen(std::unique_ptr<ForNode>& for_stmt) {
+std::vector<std::unique_ptr<IRInstructionNode>>
+forNodeIRGen(std::unique_ptr<ForNode>& for_stmt) {
     std::vector<std::unique_ptr<IRInstructionNode>> ir_instructions;
 
     // init
@@ -342,11 +358,13 @@ std::vector<std::unique_ptr<IRInstructionNode>> IRGen::forNodeIRGen(std::unique_
     return ir_instructions;
 }
 
-std::vector<std::unique_ptr<IRInstructionNode>> IRGen::nullNodeIRGen(std::unique_ptr<NullNode>& null_stmt) {
+std::vector<std::unique_ptr<IRInstructionNode>>
+nullNodeIRGen(std::unique_ptr<NullNode>& null_stmt) {
     return {}; // no-op for null statement
 }
 
-std::vector<std::unique_ptr<IRInstructionNode>> IRGen::forInitNodeIRGen(std::unique_ptr<ForInitNode>& init) {
+std::vector<std::unique_ptr<IRInstructionNode>>
+forInitNodeIRGen(std::unique_ptr<ForInitNode>& init) {
     std::vector<std::unique_ptr<IRInstructionNode>> ir_instructions;
     if (init->declaration) {
         extendInstrFromVector(variableDeclNodeIRGen(init->declaration), ir_instructions);
@@ -357,17 +375,20 @@ std::vector<std::unique_ptr<IRInstructionNode>> IRGen::forInitNodeIRGen(std::uni
     return ir_instructions;
 }
 
-std::shared_ptr<IRValNode> IRGen::exprNodeIRGen(std::unique_ptr<ExprNode>& expr, std::vector<std::unique_ptr<IRInstructionNode>>& instructions) {
+std::shared_ptr<IRValNode>
+exprNodeIRGen(std::unique_ptr<ExprNode>& expr,
+                     std::vector<std::unique_ptr<IRInstructionNode>>& instructions) {
     assert(expr->left_exprf && "IR Generation Error: Malformed Expression");
     return exprFactorNodeIRGen(expr->left_exprf, instructions);
 }
 
 namespace { // helper functions to handle binary short-circuiting operators
 /// @brief handle non-short-circuiting binary operations
-std::shared_ptr<IRValNode> handleOtherBinOps(BinaryNode* binop, // TODO(VachanVY): anyway to NOT use raw pointer here?
-                          std::vector<std::unique_ptr<IRInstructionNode>>& instructions) {
-    auto left_val = IRGen::exprNodeIRGen(binop->left_expr, instructions);
-    auto right_val = IRGen::exprNodeIRGen(binop->right_expr, instructions);
+std::shared_ptr<IRValNode>
+handleOtherBinOps(BinaryNode* binop, // TODO(VachanVY): anyway to NOT use raw pointer here?
+                  std::vector<std::unique_ptr<IRInstructionNode>>& instructions) {
+    auto left_val = exprNodeIRGen(binop->left_expr, instructions);
+    auto right_val = exprNodeIRGen(binop->right_expr, instructions);
 
     std::string tmp = getUniqueName("tmp");
     auto val_dest = std::make_shared<IRVariableNode>(tmp);
@@ -381,7 +402,9 @@ std::shared_ptr<IRValNode> handleOtherBinOps(BinaryNode* binop, // TODO(VachanVY
 /// @param binop
 /// @param instructions
 /// @return result variable holding the final value of the operation
-std::shared_ptr<IRValNode> handleShortCircuitOps(BinaryNode* binop, std::vector<std::unique_ptr<IRInstructionNode>>& instructions) {
+std::shared_ptr<IRValNode>
+handleShortCircuitOps(BinaryNode* binop,
+                      std::vector<std::unique_ptr<IRInstructionNode>>& instructions) {
     assert(binop->op_type == "&&" || binop->op_type == "||" && "Not a short-circuit operator");
     auto result = std::make_shared<IRVariableNode>(getUniqueName("tmp"));
 
@@ -390,7 +413,7 @@ std::shared_ptr<IRValNode> handleShortCircuitOps(BinaryNode* binop, std::vector<
 
     bool is_and = (binop->op_type == "&&");
 
-    auto left_val = IRGen::exprNodeIRGen(binop->left_expr, instructions);
+    auto left_val = exprNodeIRGen(binop->left_expr, instructions);
     // jump to short-circuit if left determines the result
     if (is_and) {
         instructions.push_back(std::make_unique<IRJumpIfZeroNode>(left_val, short_label));
@@ -398,7 +421,7 @@ std::shared_ptr<IRValNode> handleShortCircuitOps(BinaryNode* binop, std::vector<
         instructions.push_back(std::make_unique<IRJumpIfNotZeroNode>(left_val, short_label));
     }
 
-    auto right_val = IRGen::exprNodeIRGen(binop->right_expr, instructions);
+    auto right_val = exprNodeIRGen(binop->right_expr, instructions);
     // jump to short-circuit if right determines the result
     if (is_and) {
         instructions.push_back(std::make_unique<IRJumpIfZeroNode>(right_val, short_label));
@@ -421,7 +444,9 @@ std::shared_ptr<IRValNode> handleShortCircuitOps(BinaryNode* binop, std::vector<
 }
 } // namespace
 
-std::shared_ptr<IRValNode> IRGen::exprFactorNodeIRGen(std::unique_ptr<ExprFactorNode>& exprf, std::vector<std::unique_ptr<IRInstructionNode>>& instructions) {
+std::shared_ptr<IRValNode>
+exprFactorNodeIRGen(std::unique_ptr<ExprFactorNode>& exprf,
+                           std::vector<std::unique_ptr<IRInstructionNode>>& instructions) {
     if (auto binop = dyn_cast<BinaryNode>(exprf.get())) {
         return binaryNodeIRGen(binop, instructions);
     } else if (auto assignop = dyn_cast<AssignmentNode>(exprf.get())) {
@@ -442,15 +467,21 @@ std::shared_ptr<IRValNode> IRGen::exprFactorNodeIRGen(std::unique_ptr<ExprFactor
     throw std::runtime_error("IR Generation Error: Malformed Expression Factor");
 }
 
-std::shared_ptr<IRValNode> IRGen::constantNodeIRGen(std::unique_ptr<ConstantNode>& constant, std::vector<std::unique_ptr<IRInstructionNode>>& instructions) {
+std::shared_ptr<IRValNode>
+constantNodeIRGen(std::unique_ptr<ConstantNode>& constant,
+                         std::vector<std::unique_ptr<IRInstructionNode>>& instructions) {
     return std::make_shared<IRConstNode>(constant->val);
 }
 
-std::shared_ptr<IRValNode> IRGen::varNodeIRGen(std::unique_ptr<VarNode>& var, std::vector<std::unique_ptr<IRInstructionNode>>& instructions) {
+std::shared_ptr<IRValNode>
+varNodeIRGen(std::unique_ptr<VarNode>& var,
+                    std::vector<std::unique_ptr<IRInstructionNode>>& instructions) {
     return std::make_shared<IRVariableNode>(var->var_name->name);
 }
 
-std::shared_ptr<IRValNode> IRGen::unaryNodeIRGen(std::unique_ptr<UnaryNode>& unary, std::vector<std::unique_ptr<IRInstructionNode>>& instructions) {
+std::shared_ptr<IRValNode>
+unaryNodeIRGen(std::unique_ptr<UnaryNode>& unary,
+                      std::vector<std::unique_ptr<IRInstructionNode>>& instructions) {
     // get inner most expression's value
     auto src_val = exprFactorNodeIRGen(unary->operand, instructions);
     std::string tmp = getUniqueName("tmp");
@@ -461,7 +492,9 @@ std::shared_ptr<IRValNode> IRGen::unaryNodeIRGen(std::unique_ptr<UnaryNode>& una
     return dest_var;
 }
 
-std::shared_ptr<IRValNode> IRGen::binaryNodeIRGen(BinaryNode* binop, std::vector<std::unique_ptr<IRInstructionNode>>& instructions) {
+std::shared_ptr<IRValNode>
+binaryNodeIRGen(BinaryNode* binop,
+                       std::vector<std::unique_ptr<IRInstructionNode>>& instructions) {
     if (binop->op_type == "&&" || binop->op_type == "||") {
         return handleShortCircuitOps(binop, instructions);
     } else {
@@ -469,13 +502,14 @@ std::shared_ptr<IRValNode> IRGen::binaryNodeIRGen(BinaryNode* binop, std::vector
     }
 }
 
-std::shared_ptr<IRValNode> IRGen::assignmentNodeIRGen(AssignmentNode* assignop, std::vector<std::unique_ptr<IRInstructionNode>>& instructions) {
+std::shared_ptr<IRValNode>
+assignmentNodeIRGen(AssignmentNode* assignop,
+                           std::vector<std::unique_ptr<IRInstructionNode>>& instructions) {
     // evaluate rhs expr, add it's instructions to the list, then
     // evaluate lhs expr to get the variable to assign to result of rhs. add instructions to
     // list on the way...
-    auto right_val =
-        exprNodeIRGen(assignop->right_expr, instructions); // result of the rhs expr
-    auto left_val = exprNodeIRGen(assignop->left_expr, instructions); // VarNode->generateIR()
+    auto right_val = exprNodeIRGen(assignop->right_expr, instructions); // result of the rhs expr
+    auto left_val = exprNodeIRGen(assignop->left_expr, instructions);   // VarNode->generateIR()
 
     auto ir_copy = std::make_unique<IRCopyNode>(right_val, left_val); // left_val <= right_val
     instructions.push_back(std::move(ir_copy));
@@ -483,7 +517,9 @@ std::shared_ptr<IRValNode> IRGen::assignmentNodeIRGen(AssignmentNode* assignop, 
     return left_val;
 }
 
-std::shared_ptr<IRValNode> IRGen::conditionalNodeIRGen(ConditionalNode* condop, std::vector<std::unique_ptr<IRInstructionNode>>& instructions) {
+std::shared_ptr<IRValNode>
+conditionalNodeIRGen(ConditionalNode* condop,
+                            std::vector<std::unique_ptr<IRInstructionNode>>& instructions) {
     // result = condition ? true_expr : false_expr
     auto result = std::make_shared<IRVariableNode>(getUniqueName("tmp"));
 
@@ -509,8 +545,9 @@ std::shared_ptr<IRValNode> IRGen::conditionalNodeIRGen(ConditionalNode* condop, 
     return result;
 }
 
-std::shared_ptr<IRValNode> IRGen::functionCallNodeIRGen(std::unique_ptr<FunctionCallNode>& func_call,
-                              std::vector<std::unique_ptr<IRInstructionNode>>& instructions) {
+std::shared_ptr<IRValNode>
+functionCallNodeIRGen(std::unique_ptr<FunctionCallNode>& func_call,
+                             std::vector<std::unique_ptr<IRInstructionNode>>& instructions) {
     auto func_name = func_call->func_identifier->name;
     std::vector<std::shared_ptr<IRValNode>> args_vals;
     for (auto& arg : func_call->arguments) {
@@ -523,4 +560,4 @@ std::shared_ptr<IRValNode> IRGen::functionCallNodeIRGen(std::unique_ptr<Function
     instructions.push_back(std::move(ir_func_call));
     return result;
 }
-
+} // namespace irgen

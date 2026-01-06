@@ -6,7 +6,6 @@
 #include "nanocc/AST/AST.hpp"
 #include "nanocc/Parser/Parser.hpp"
 
-
 namespace { // some helper vars/functions
 static const std::unordered_map<std::string, int> BINOP_PRECEDENCE = {
     {"*", 50},  {"/", 50},  {"%", 50},  {"+", 45},  {"-", 45}, {"<", 35}, {"<=", 35}, {">", 35},
@@ -25,7 +24,6 @@ constexpr int getPrecedence(const std::string& op) {
 }
 constexpr bool isBinop(const std::string& op) { return BINOP_PRECEDENCE.contains(op); }
 } // namespace
-
 
 void expect(const std::deque<Token>& tokens, TokenType expected, size_t& pos) {
     if (pos >= tokens.size()) {
