@@ -21,7 +21,7 @@ void declarationNodeLoopLabelling(std::unique_ptr<DeclarationNode>& declaration_
 }
 
 void variableDeclNodeLoopLabelling(std::unique_ptr<VariableDeclNode>& variable_decl_node,
-                                   std::string& loop_label) {}; // no-op
+                                   std::string& loop_label){}; // no-op
 
 void functionDeclNodeLoopLabelling(std::unique_ptr<FunctionDeclNode>& function_decl_node,
                                    std::string& loop_label) {
@@ -72,10 +72,10 @@ void statementNodeLoopLabelling(std::unique_ptr<StatementNode>& statement_node,
     }
 }
 
-void returnNodeLoopLabelling(std::unique_ptr<ReturnNode>& return_node, std::string& loop_label) {
-}; // no-op
+void returnNodeLoopLabelling(std::unique_ptr<ReturnNode>& return_node,
+                             std::string& loop_label){}; // no-op
 void expressionNodeLoopLabelling(std::unique_ptr<ExpressionNode>& expression_node,
-                                 std::string& loop_label) {}; // no-op
+                                 std::string& loop_label){}; // no-op
 
 void ifElseNodeLoopLabelling(std::unique_ptr<IfElseNode>& ifelse_node, std::string& loop_label) {
     statementNodeLoopLabelling(ifelse_node->if_block, loop_label);
@@ -127,8 +127,8 @@ void forNodeLoopLabelling(std::unique_ptr<ForNode>& for_node, std::string& loop_
     statementNodeLoopLabelling(for_node->body, new_label);
 }
 
-void nullNodeLoopLabelling(std::unique_ptr<NullNode>& null_node, std::string& loop_label) {
-}; // no-op
+void nullNodeLoopLabelling(std::unique_ptr<NullNode>& null_node,
+                           std::string& loop_label){}; // no-op
 // loop labelling -- end
 } // namespace sema
 

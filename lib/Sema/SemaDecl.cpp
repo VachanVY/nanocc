@@ -197,11 +197,11 @@ void compoundNodeResolveTypes(std::unique_ptr<CompoundNode>& compound_node,
     blockNodeResolveTypes(compound_node->block, new_sym_table);
 }
 
-void breakNodeResolveTypes(std::unique_ptr<BreakNode>& break_node, IdentifierMap& identifier_map) {
-}; // no-op
+void breakNodeResolveTypes(std::unique_ptr<BreakNode>& break_node,
+                           IdentifierMap& identifier_map){}; // no-op
 
 void continueNodeResolveTypes(std::unique_ptr<ContinueNode>& continue_node,
-                              IdentifierMap& identifier_map) {}; // no-op
+                              IdentifierMap& identifier_map){}; // no-op
 
 void whileNodeResolveTypes(std::unique_ptr<WhileNode>& while_node, IdentifierMap& identifier_map) {
     exprNodeResolveTypes(while_node->condition, identifier_map);
@@ -240,8 +240,8 @@ void forInitNodeResolveTypes(std::unique_ptr<ForInitNode>& for_init_node,
     }
 }
 
-void nullNodeResolveTypes(std::unique_ptr<NullNode>& null_node, IdentifierMap& identifier_map) {
-}; // no-op
+void nullNodeResolveTypes(std::unique_ptr<NullNode>& null_node,
+                          IdentifierMap& identifier_map){}; // no-op
 
 void exprNodeResolveTypes(std::unique_ptr<ExprNode>& expr_node, IdentifierMap& identifier_map) {
     exprFactorNodeResolveTypes(expr_node->left_exprf, identifier_map);
@@ -259,13 +259,13 @@ void exprFactorNodeResolveTypes(std::unique_ptr<ExprFactorNode>& expr_factor_nod
         constantNodeResolveTypes(expr_factor_node->constant, identifier_map); // no-op
     } else if (expr_factor_node->func_call) {
         functionCallNodeResolveTypes(expr_factor_node->func_call, identifier_map);
-    } else if (auto* binary = dyn_cast<BinaryNode>(expr_factor_node.get())) {
+    } else if (isa<BinaryNode>(expr_factor_node.get())) {
         binaryNodeResolveTypes(reinterpret_cast<std::unique_ptr<BinaryNode>&>(expr_factor_node),
                                identifier_map);
-    } else if (auto* assignment = dyn_cast<AssignmentNode>(expr_factor_node.get())) {
+    } else if (isa<AssignmentNode>(expr_factor_node.get())) {
         assignmentNodeResolveTypes(
             reinterpret_cast<std::unique_ptr<AssignmentNode>&>(expr_factor_node), identifier_map);
-    } else if (auto* conditional = dyn_cast<ConditionalNode>(expr_factor_node.get())) {
+    } else if (isa<ConditionalNode>(expr_factor_node.get())) {
         conditionalNodeResolveTypes(
             reinterpret_cast<std::unique_ptr<ConditionalNode>&>(expr_factor_node), identifier_map);
     } else {
@@ -284,7 +284,7 @@ void varNodeResolveTypes(std::unique_ptr<VarNode>& var_node, IdentifierMap& iden
 }
 
 void constantNodeResolveTypes(std::unique_ptr<ConstantNode>& constant_node,
-                              IdentifierMap& identifier_map) {}; // no-op
+                              IdentifierMap& identifier_map){}; // no-op
 
 void binaryNodeResolveTypes(std::unique_ptr<BinaryNode>& binary_node,
                             IdentifierMap& identifier_map) {

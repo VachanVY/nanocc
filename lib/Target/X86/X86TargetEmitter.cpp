@@ -2,6 +2,7 @@
 #include "nanocc/Sema/Sema.hpp"
 #include "nanocc/Codegen/ASM.hpp"
 #include "nanocc/Target/X86/X86TargetInfo.hpp"
+#include "nanocc/Target/X86/X86TargetEmitter.hpp"
 
 void AsmProgramNode::generateAsm(std::ostream& os) {
     for (const auto& function : this->functions) {

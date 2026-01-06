@@ -143,9 +143,9 @@ void compoundNodeCheckTypes(std::unique_ptr<CompoundNode>& compound_node,
 }
 
 void breakNodeCheckTypes(std::unique_ptr<BreakNode>& break_node,
-                         TypeCheckerSymbolTable& type_checker_map) {}; // no-op
+                         TypeCheckerSymbolTable& type_checker_map){}; // no-op
 void continueNodeCheckTypes(std::unique_ptr<ContinueNode>& continue_node,
-                            TypeCheckerSymbolTable& type_checker_map) {}; // no-op
+                            TypeCheckerSymbolTable& type_checker_map){}; // no-op
 
 void whileNodeCheckTypes(std::unique_ptr<WhileNode>& while_node,
                          TypeCheckerSymbolTable& type_checker_map) {
@@ -181,7 +181,7 @@ void forInitNodeCheckTypes(std::unique_ptr<ForInitNode>& for_init_node,
 }
 
 void nullNodeCheckTypes(std::unique_ptr<NullNode>& null_node,
-                        TypeCheckerSymbolTable& type_checker_map) {}; // no-op
+                        TypeCheckerSymbolTable& type_checker_map){}; // no-op
 
 void exprNodeCheckTypes(std::unique_ptr<ExprNode>& expr_node,
                         TypeCheckerSymbolTable& type_checker_map) {
