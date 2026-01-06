@@ -1,0 +1,132 @@
+#!/bin/bash
+set -e # if any command fails, kill the script immediately
+
+# DEBUG=1 ./nanocc asm.c -o asm
+DEBUG=${DEBUG:-0}
+
+debug_echo() {
+    [ $DEBUG -eq 1 ] && echo "$@"
+}
+
+show_usage() {
+    echo "Usage: $0 <files \`.s\` || \`.o\` || \`.c\`> -o <output file>"
+    echo "       $0 <files \`.s\` || \`.o\` || \`.c\`> -S"
+    echo "       $0 <files \`.s\` || \`.o\` || \`.c\`> -c"
+    echo ""
+    echo "Options:"
+    echo "  -o <output file>   Specify the name of the output executable file."
+    echo "  -S                 Compile C files to assembly files only."
+    echo "  -c                 Compile C files to object files only."
+}
+
+print_usage() {
+    show_usage
+    exit 0
+}
+
+print_error_and_usage() {
+    echo "Error: $1"
+    show_usage
+    exit 1
+}
+
+# num args == 0
+if [ $# -eq 0 ]; then
+    print_usage
+fi
+
+# segregate files into asm files, object files and c files
+asm_files=()
+obj_files=()
+c_files=()
+i=1
+for file in "$@"; do
+    case "$file" in
+        *.s) asm_files+=("$file") ;;
+        *.o) obj_files+=("$file") ;;
+        *.c) c_files+=("$file") ;;
+        -o|-S|-c) break ;;
+        *) print_error_and_usage "Unknown file type '$file'" ;;
+    esac # end of case
+    debug_echo "file #$i: $file"
+    i=$((i + 1))
+done
+
+# to store intermediate files
+tmpdir=$(mktemp -d)
+debug_echo "using temporary directory: $tmpdir"
+
+# ./build/nanocc <files `.s` || `.o` || `.c`> -o <output file>
+# ./build/nanocc <files `.s` || `.o` || `.c`> -S
+# ./build/nanocc <files `.s` || `.o` || `.c`> -c
+nanocc="./build/tools/nanocc"
+
+# default output file
+output_file="a.out"
+# -o : output file
+# -S : compile only to asm
+# -c : compile only to object file
+_o=1 # -o # boolean
+_S=0 # -S # boolean
+_c=0 # -c # boolean
+debug_echo "$i"
+if [ "${!i}" = "-o" ]; then
+    next=$((i + 1))
+    output_file="${!next}"
+    debug_echo "output_file: $output_file"
+
+elif [ "${!i}" = "-S" ]; then
+    _S=1
+    _o=0
+    debug_echo "compile C to assembly files"
+
+elif [ "${!i}" = "-c" ]; then
+    _c=1
+    _o=0
+    debug_echo "compile C to object files"
+fi
+
+
+debug_echo "ASM files: ${asm_files[*]}"
+debug_echo "OBJ files: ${obj_files[*]}"
+debug_echo "C files: ${c_files[*]}"
+
+# use nanocc to compile c files into asm files
+# -o or -S or -c option, this will always part will always
+if [ $_o -eq 1 ] || [ $_c -eq 1 ] || [ $_S -eq 1 ]; then # this line was not required but for clarity
+    for c_file in "${c_files[@]}"; do
+        asm_file="$tmpdir/$(basename "${c_file%.*}.s")"
+        debug_echo "$c_file to $asm_file"
+        $nanocc -S "$c_file" -o "$asm_file"
+        asm_files+=("$asm_file")
+        # if -S move those asm files from tmpdir to current directory
+        if [ $_S -eq 1 ]; then
+            mv "$asm_file" .
+        fi
+    done
+fi
+
+# use gcc as assembler: asm files into object files
+# for -o or -c option, this part will run
+if [ $_o -eq 1 ] || [ $_c -eq 1 ]; then 
+    for asm_file in "${asm_files[@]}"; do
+        obj_file="$tmpdir/$(basename "${asm_file%.*}.o")"
+        debug_echo "$asm_file to $obj_file"
+        gcc -c "$asm_file" -o "$obj_file"
+        obj_files+=("$obj_file")
+        # if -c move those object files from tmpdir to current directory
+        if [ $_c -eq 1 ]; then
+            mv "$obj_file" .
+        fi
+    done
+fi
+
+# use gcc to link object files into executable
+# only for -o option
+if [ $_o -eq 1 ]; then
+    for obj_file in "${obj_files[@]}"; do
+        debug_echo "$obj_file into $output_file"
+    done
+    gcc "${obj_files[@]}" -o "$output_file"
+    debug_echo "executable file: $output_file"
+fi
