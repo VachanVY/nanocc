@@ -1,3 +1,3 @@
 [submodule "nanocc-tests"]
 	path = nanocc_tests
-	url = https://github.com/VachanVY/nanocc_tests/tree/main
+	url = https://github.com/VachanVY/nanocc_tests.git
