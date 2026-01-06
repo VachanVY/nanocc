@@ -1,6 +1,6 @@
-#include "include/utils.hpp"
-#include "include/parser.hpp"
-#include "include/checker.hpp"
+#include "utils.hpp"
+#include "parser.hpp"
+#include "checker.hpp"
 
 TypeCheckerSymbolTable global_type_checker_map;
 

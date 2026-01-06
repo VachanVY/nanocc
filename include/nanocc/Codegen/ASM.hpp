@@ -37,7 +37,7 @@ class AsmRegisterNode;
 class AsmPseudoNode;
 class AsmStackNode;
 
-// TODO(VachanVY): Should be detach Asm*Node class methods into functions in
+// TODO(VachanVY): Should I detach Asm*X*Node class methods into functions in
 // different files doing same type of work?
 
 class AsmProgramNode : public AsmASTNode {

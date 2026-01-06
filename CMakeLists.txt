@@ -6,6 +6,8 @@ project(nanocc
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+option(BUILD_NANOCC_TEST "Build nanocc test executable" OFF)
+
 add_subdirectory(lib)
 add_subdirectory(tools)
 
