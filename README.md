@@ -26,8 +26,11 @@ writing-a-c-compiler-tests/test_compiler ./build/tools/nanocc_test --chapter 9 -
 
 ## nanocc codebase
 
-<details>
-  <summary>nanocc codebase tree directory structure (LLVM style)</summary>
+nanocc codebase tree directory structure (LLVM style)
+
+```
+setopt nullglob && tree -a -L 4 -I '.git' --noreport include lib tools --dirsfirst && echo "" && ls -1 *.cpp *.c *.sh *.md CMakeLists.txt LICENSE nanocc 2>/dev/null | sort
+```
  
 ```
 include
@@ -51,7 +54,6 @@ include
     │       └── X86TargetInfo.hpp
     └── Utils.hpp
 lib
-├── CMakeLists.txt
 ├── Codegen
 │   └── IRToPseudoAsmPass.cpp
 ├── IR
@@ -60,6 +62,13 @@ lib
 │   ├── IRGen.cpp
 │   └── IRHelper.hpp
 ├── Lexer
+│   ├── CAPI
+│   │   ├── lexer.c
+│   │   ├── lexer.h
+│   │   ├── lexer_internal.h
+│   │   ├── regex.c
+│   │   ├── regex.h
+│   │   └── tokens.def
 │   └── Lexer.cpp
 ├── Parser
 │   └── Parser.cpp
@@ -69,27 +78,25 @@ lib
 │   ├── SemaHelper.hpp
 │   ├── SemaLabel.cpp
 │   └── SemaType.cpp
-└── Target
-    └── X86
-        ├── X86InstrFixup.cpp
-        ├── X86PseudoLowering.cpp
-        └── X86TargetEmitter.cpp
+├── Target
+│   └── X86
+│       ├── X86InstrFixup.cpp
+│       ├── X86PseudoLowering.cpp
+│       └── X86TargetEmitter.cpp
+└── CMakeLists.txt
 tools
 ├── CMakeLists.txt
 ├── CompilerPipeline.hpp
 ├── nanocc.cpp
 └── test_nanocc.cpp
 
-nanocc_tests
-├── ...
-
-CMakeLists.txt
+asm.c
 buildcc.sh
+CMakeLists.txt
+LICENSE
 nanocc
+README.md
 ```
-
-</details>
-
 
 ## nanocc progress
 ```c
