@@ -1,5 +1,7 @@
 add_library(nanocc_lib # nanocc_lib is a library
     Lexer/Lexer.cpp
+    Lexer/CAPI/lexer.c
+    Lexer/CAPI/regex.c
 
     Parser/Parser.cpp
 
