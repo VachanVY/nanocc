@@ -22,6 +22,9 @@ chmod +x buildcc.sh
 # run tests
 git clone https://github.com/VachanVY/writing-a-c-compiler-tests.git
 writing-a-c-compiler-tests/test_compiler ./build/tools/nanocc_test --chapter 9 -v
+
+# clang format
+find . -type f \( -name "*.cpp" -o -name "*.cc" -o -name "*.c" -o -name "*.hpp" -o -name "*.hh" -o -name "*.h" \) -exec clang-format -i {} +
 ```
 
 ## nanocc codebase

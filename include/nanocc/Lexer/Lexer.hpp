@@ -6,7 +6,7 @@
 
 enum class TokenType {
 #define X(name, str) name,
-    #include "../../../lib/Lexer/CAPI/tokens.def"
+#include "../../../lib/Lexer/CAPI/tokens.def"
 #undef X
 };
 
@@ -20,7 +20,7 @@ constexpr std::string_view tokenTypeToString(TokenType type) {
 #define X(name, str)                                                                               \
     case TokenType::name:                                                                          \
         return str;
-    #include "../../../lib/Lexer/CAPI/tokens.def"
+#include "../../../lib/Lexer/CAPI/tokens.def"
 #undef X
     }
     throw std::runtime_error("Unknown TokenType");
