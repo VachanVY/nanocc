@@ -1,0 +1,51 @@
+#ifndef X
+#error "X must be defined before including this file..."
+#endif
+
+X(INVALID, "")
+X(INT, "int")
+X(VOID, "void")
+X(RETURN, "return")
+X(IF, "if")                                                                                    
+X(ELSE, "else")                                                                                
+X(QUESTION, "?")                                                                               
+X(COLON, ":")                                                                                  
+X(DO, "do")                                                                                    
+X(WHILE, "while")                                                                              
+X(FOR, "for")                                                                                  
+X(BREAK, "break")     
+X(CONTINUE, "continue")                                                                        
+                                                                                               
+X(TILDE, "~")                                                                                  
+X(DECREMENT, "--")                                                                            
+X(NOT, "!")                                                                                    
+                                                                                               
+X(MINUS, "-")                                                                                  
+                                                                                               
+X(PLUS, "+")                                                                                   
+X(STAR, "*")                                                                                   
+X(SLASH, "/")                                                                                  
+X(PERCENT, "%")                                                                               
+X(AND, "&&")                                                                                  
+X(OR, "||")                                                                                    
+                                                                                               
+X(ASSIGN, "=")                                                                                 
+                                                                                               
+X(EQUAL, "==")                                                                                 
+X(NOT_EQUAL, "!=")                                                                             
+X(LESSTHAN, "<")                                                                               
+X(GREATERTHAN, ">")                                                                            
+X(LESS_EQUAL, "<=")                                                                           
+X(GREATER_EQUAL, ">=")                                                                        
+                                                                                               
+X(IDENTIFIER, "identifier")                                                                   
+X(CONSTANT, "constant")                                                                       
+X(LPAREN, "(")                                                                                
+X(RPAREN, ")")                                                                                
+X(LBRACE, "{")    
+X(RBRACE, "}")                                                                                 
+X(SEMICOLON, ";")                                                                              
+                                                                                                
+X(COMMA, ",")
+
+#undef X
