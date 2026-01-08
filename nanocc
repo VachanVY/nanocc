@@ -5,7 +5,7 @@ set -e # if any command fails, kill the script immediately
 DEBUG=${DEBUG:-0}
 
 debug_echo() {
-    [ $DEBUG -eq 1 ] && echo "$@"
+    [ $DEBUG -eq 1 ] && echo "$@" || true
 }
 
 show_usage() {
