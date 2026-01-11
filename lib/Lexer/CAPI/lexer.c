@@ -99,15 +99,3 @@ CTokenVec clexer(char* s, size_t slen, bool debug) {
     }
     return tokens;
 }
-
-/*
-int main() {
-    char* fbuf = read_file("lextestfile.c");
-
-    CTokenVec tokens = clexer(fbuf, strlen(fbuf), false);
-    tokensPrint(tokens);
-
-    free(fbuf);
-    return 0;
-}
-*/

@@ -298,13 +298,3 @@ int comma_fsm(const char* s) {
     }
     return 1;
 }
-
-// int main() {
-//     // printf("%d\n", int_fsm("int\t"));
-//     // printf("%d\n", int_fsm("int  "));
-//     // printf("%d\n", int_fsm("in"));
-//     // printf("%d\n", int_fsm("i"));
-
-//     printf("%d\n", constant_fsm("43234"));
-//     printf("%d\n", identifier_fsm("rer323"));
-// }
