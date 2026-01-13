@@ -10,7 +10,6 @@
 bool _iswordbreaker(char c) { return !(isalnum(c) || c == '_'); }
 
 int int_fsm(const char* s) {
-    // printf("%s ", s);
     if (s[0] != 'i' || s[1] != 'n' || s[2] != 't' || !_iswordbreaker(s[3])) {
         return 0;
     }

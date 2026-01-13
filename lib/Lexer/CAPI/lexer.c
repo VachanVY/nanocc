@@ -67,7 +67,6 @@ CTokenVec clexer(char* s, size_t slen, bool debug) {
         class_type = INVALID;
         matched = false;
         for (int i = 0; i < NUMFMA; i++) {
-            char* temp_match;
             char* remainder = s + pos; // s[pos:]
             int curr_match_length;
             if ((curr_match_length = token_specs[i].second(remainder)) != 0) {
