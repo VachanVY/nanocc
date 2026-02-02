@@ -3,6 +3,7 @@
 #endif
 
 X(INVALID, "")
+
 X(INT, "int")
 X(VOID, "void")
 X(RETURN, "return")
@@ -14,7 +15,9 @@ X(DO, "do")
 X(WHILE, "while")                                                                              
 X(FOR, "for")                                                                                  
 X(BREAK, "break")     
-X(CONTINUE, "continue")                                                                        
+X(CONTINUE, "continue")                                           
+X(EXTERN, "extern")
+X(STATIC, "static")                                                   
                                                                                                
 X(TILDE, "~")                                                                                  
 X(DECREMENT, "--")                                                                            

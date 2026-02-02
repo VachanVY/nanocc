@@ -97,6 +97,22 @@ int continue_fsm(const char* s) {
     return 8;
 }
 
+int extern_fsm(const char* s) {
+    if (s[0] != 'e' || s[1] != 'x' || s[2] != 't' || s[3] != 'e' || s[4] != 'r' || s[5] != 'n' ||
+        !_iswordbreaker(s[6])) {
+        return 0;
+    }
+    return 6;
+}
+
+int static_fsm(const char* s) {
+    if (s[0] != 's' || s[1] != 't' || s[2] != 'a' || s[3] != 't' || s[4] != 'i' || s[5] != 'c' ||
+        !_iswordbreaker(s[6])) {
+        return 0;
+    }
+    return 6;
+}
+
 int tilde_fsm(const char* s) {
     if (s[0] != '~') {
         return 0;
