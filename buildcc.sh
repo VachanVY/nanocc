@@ -19,7 +19,7 @@ elif [ "$mode" = "test" ]; then
 elif [ "$mode" = "rebuild_test" ]; then
     test_component="$2"
     ./buildcc.sh clean
-    ./buildcc.sh test
+    ./buildcc.sh test "$test_component"
 
 elif [ "$mode" = "clean" ]; then
     rm -rf build
