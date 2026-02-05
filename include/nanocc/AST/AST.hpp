@@ -13,6 +13,7 @@ class ProgramNode;
 class DeclarationNode;
 class VariableDeclNode;
 class FunctionDeclNode;
+enum class StorageClass;
 
 // a BlockNode will contain multiple BlockItemNodes which are either statements or declarations
 class BlockNode;
@@ -54,7 +55,7 @@ class ASTNode {
 
 class ProgramNode : public ASTNode {
   public:
-    std::vector<std::unique_ptr<FunctionDeclNode>> functions;
+    std::vector<std::unique_ptr<DeclarationNode>> declarations;
 
     void parse(std::deque<Token>& tokens, size_t& pos);
     void dump(int indent = 0) const override;
@@ -73,7 +74,8 @@ class DeclarationNode : public ASTNode {
 class VariableDeclNode : public ASTNode {
   public:
     std::unique_ptr<IdentifierNode> var_identifier;
-    std::unique_ptr<ExprNode> init_expr; // OPTIONAL
+    std::unique_ptr<ExprNode> init_expr;             // OPTIONAL
+    StorageClass storage_class;
 
     void parse(std::deque<Token>& tokens, size_t& pos);
     void dump(int indent = 0) const override;
@@ -85,10 +87,19 @@ class FunctionDeclNode : public ASTNode {
     std::vector<std::unique_ptr<IdentifierNode>> parameters;
     // OPTIONAL(body): present for function definitions; absent for function declarations;
     std::unique_ptr<BlockNode> body;
+    StorageClass storage_class;
 
     void parse(std::deque<Token>& tokens, size_t& pos);
     void dump(int indent = 0) const override;
 };
+
+enum class StorageClass { None, Static, Extern };
+
+// As of now, only int datatype is supported,
+// not used in any AST Nodes, only while parsing,
+// just for logic, so that it can be extented in the future easily.
+// The design decisions on Types will change in the future
+enum class DataTypes { Int };
 
 class BlockNode : public ASTNode {
   public:

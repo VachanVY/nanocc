@@ -40,34 +40,92 @@ void expect(const std::deque<Token>& tokens, TokenType expected, size_t& pos) {
     pos++;
 }
 
-// method definitions of parser.hpp
+// method definitions
 void ProgramNode::parse(std::deque<Token>& tokens, size_t& pos) {
     while (pos < tokens.size()) {
-        auto function_decl = std::make_unique<FunctionDeclNode>();
-        function_decl->parse(tokens, pos);
-        this->functions.push_back(std::move(function_decl));
+        auto decl = std::make_unique<DeclarationNode>();
+        decl->parse(tokens, pos);
+        this->declarations.push_back(std::move(decl));
     }
 }
 
 void ProgramNode::dump(int indent) const {
     printIndent(indent);
     std::println("Program(");
-    for (const auto& func : this->functions) {
-        func->dump(indent + 1);
+    for (const auto& decl : this->declarations) {
+        decl->dump(indent + 1);
     }
     std::println(")");
 }
 
+namespace {
+struct DeclSpec {
+    std::vector<DataTypes> dtypes;
+    std::vector<StorageClass> storage_classes;
+};
+
+bool isDeclSpec(std::deque<Token>& token, size_t pos) {
+    return (token[pos].type == TokenType::EXTERN || token[pos].type == TokenType::STATIC ||
+            token[pos].type == TokenType::INT);
+}
+
+// int static // static int
+// extern int // int extern
+// any order
+DeclSpec parseTypeAndStorageClassSpecifiers(std::deque<Token>& token, size_t& pos) {
+    // there will be atleast one specifier, so use a do while loop
+    DeclSpec spec;
+    do {
+        TokenType specType = token[pos].type;
+        if (specType == TokenType::INT) {
+            spec.dtypes.push_back(DataTypes::Int);
+        } else if (specType == TokenType::EXTERN) {
+            spec.storage_classes.push_back(StorageClass::Extern);
+        } else if (specType == TokenType::STATIC) {
+            spec.storage_classes.push_back(StorageClass::Static);
+        } else {
+            throw std::runtime_error(
+                std::format("Expected datatype or storage class specifier but got {}", tokenTypeToString(specType))
+            );
+        }
+        pos++;
+    } while (isDeclSpec(token, pos));
+
+    // as of now only `int`
+    if (spec.dtypes.size() != 1) {
+        throw std::runtime_error(
+            std::format("Expected only `int` datatype, but got more or less than one datatype")
+        );
+    }
+    // either static or extern or nothing, can't mix extern and static or use them more than once
+    if (spec.storage_classes.size() > 1) {
+        throw std::runtime_error(
+            std::format("Expected either `static` or `extern`, but got more than one storage class specifier")
+        );
+    }
+    
+    if (spec.storage_classes.size() == 0) {
+        spec.storage_classes.push_back(StorageClass::None);
+    }
+    return spec;
+}
+} // namespace
+
 void DeclarationNode::parse(std::deque<Token>& tokens, size_t& pos) {
     // can be a function declaration or variable declaration
-    // <func_decl> := "int" <identifier> "(" <param_list> ")" (<block> | ";")
-    // <var_decl> := "int" <identifier> OPTIONAL( "=" <expr>) ";"
+    // <func_decl> := { <specifier> }+ <identifier> "(" <param_list> ")" (<block> | ";")
+    // <var_decl>  := { <specifier> }+ <identifier> OPTIONAL( "=" <expr>) ";"
     // if token after identifier is '(', then function decl else variable decl
-    assert(tokens[pos].type == TokenType::INT &&
-           "Expected 'int' token at the start of declaration");
-    assert(tokens[pos + 1].type == TokenType::IDENTIFIER &&
-           "Expected identifier token after 'int' in declaration");
-    if (tokens[pos + 2].type == TokenType::LPAREN) {
+
+    // skip { <specifier> }+ tokens
+    int offset = 0;
+    do {
+        offset += 1;
+    } while (tokens[pos + offset].type != TokenType::IDENTIFIER);
+
+    assert(tokens[pos + offset].type == TokenType::IDENTIFIER &&
+           "Expected identifier token after type and storage class specifiers in declaration");
+    if (tokens[pos + offset + 1].type == TokenType::LPAREN) {
         this->func = std::make_unique<FunctionDeclNode>();
         this->func->parse(tokens, pos);
     } else {
@@ -85,7 +143,8 @@ void DeclarationNode::dump(int indent) const {
 }
 
 void VariableDeclNode::parse(std::deque<Token>& tokens, size_t& pos) {
-    expect(tokens, TokenType::INT, pos);
+    auto declspec = parseTypeAndStorageClassSpecifiers(tokens, pos);
+    this->storage_class = declspec.storage_classes[0];
     this->var_identifier = std::make_unique<IdentifierNode>();
     this->var_identifier->parse(tokens, pos);
     if (tokens[pos].type == TokenType::ASSIGN) {
@@ -108,7 +167,8 @@ void VariableDeclNode::dump(int indent) const {
 }
 
 void FunctionDeclNode::parse(std::deque<Token>& tokens, size_t& pos) {
-    expect(tokens, TokenType::INT, pos);
+    auto declspec = parseTypeAndStorageClassSpecifiers(tokens, pos);
+    this->storage_class = declspec.storage_classes[0];
     this->func_name = std::make_unique<IdentifierNode>();
     this->func_name->parse(tokens, pos); // parse function name
     expect(tokens, TokenType::LPAREN, pos);
@@ -188,7 +248,7 @@ void BlockNode::dump(int indent) const {
 }
 
 void BlockItemNode::parse(std::deque<Token>& tokens, size_t& pos) {
-    if (tokens[pos].type == TokenType::INT) { // int <var_name>; | int <var_name> = <expr>;
+    if (isDeclSpec(tokens, pos)) { // static int <var_name>; | int extern <var_name> | ...
         this->declaration = std::make_unique<DeclarationNode>();
         this->declaration->parse(tokens, pos);
     } else {
@@ -468,7 +528,7 @@ void ForNode::dump(int indent) const {
 }
 
 void ForInitNode::parse(std::deque<Token>& tokens, size_t& pos) {
-    if (tokens[pos].type == TokenType::INT) {
+    if (isDeclSpec(tokens, pos)) {
         this->declaration = std::make_unique<VariableDeclNode>();
         this->declaration->parse(tokens, pos);
         return;
