@@ -116,15 +116,16 @@ void variableDeclNodeBlockScopeCheckTypes(std::unique_ptr<VariableDeclNode>& var
     if (variable_decl_node->storage_class == StorageClass::Extern) {
         if (variable_decl_node->init_expr) {
             // extern int x = 5; // error, extern variables cannot have initializers
-            throw std::runtime_error(std::format(
-                "Type Error: Block scope variable '{}' declared as extern cannot have an initializer",
-                variable_decl_node->var_identifier->name));
+            throw std::runtime_error(std::format("Type Error: Block scope variable '{}' declared "
+                                                 "as extern cannot have an initializer",
+                                                 variable_decl_node->var_identifier->name));
         }
         if (type_checker_map.contains(variable_decl_node->var_identifier->name)) {
             auto& existing_entry = type_checker_map[variable_decl_node->var_identifier->name];
             if (!std::holds_alternative<IntType>(existing_entry.type)) {
-                throw std::runtime_error(std::format("Type Error: Conflicting types for variable '{}'",
-                                                     variable_decl_node->var_identifier->name));
+                throw std::runtime_error(
+                    std::format("Type Error: Conflicting types for variable '{}'",
+                                variable_decl_node->var_identifier->name));
             }
         } else {
             // if not previously declared, add to symbol table with type IntType and no initializer
@@ -149,16 +150,16 @@ void variableDeclNodeBlockScopeCheckTypes(std::unique_ptr<VariableDeclNode>& var
             */
             init_value = Initial{.value = "0"};
         } else {
-            throw std::runtime_error(std::format(
-                "Type Error: Block scope variable '{}' declared as static must have a constant initializer or no initializer",
-                variable_decl_node->var_identifier->name));
+            throw std::runtime_error(
+                std::format("Type Error: Block scope variable '{}' declared as static must have a "
+                            "constant initializer or no initializer",
+                            variable_decl_node->var_identifier->name));
         }
-        type_checker_map[variable_decl_node->var_identifier->name] = {
-            .type = IntType{},
-            .attrs = StaticAttr{
-                .init = init_value,
-                .global = false,
-            }};
+        type_checker_map[variable_decl_node->var_identifier->name] = {.type = IntType{},
+                                                                      .attrs = StaticAttr{
+                                                                          .init = init_value,
+                                                                          .global = false,
+                                                                      }};
     } else {
         type_checker_map[variable_decl_node->var_identifier->name].type = IntType{};
         if (variable_decl_node->init_expr) {
@@ -190,7 +191,7 @@ void functionDeclNodeCheckTypes(std::unique_ptr<FunctionDeclNode>& function_decl
             }
             /* functions can never change linkage.
             ```
-            int foo(void); // external linkage 
+            int foo(void); // external linkage
             static int foo(void) { ... } // error, trying to go from external to internal
             ```
             ```
@@ -203,7 +204,7 @@ void functionDeclNodeCheckTypes(std::unique_ptr<FunctionDeclNode>& function_decl
             ```
             */
             bool existing_global = std::get<FuncAttr>(existing_entry.attrs).global;
-            
+
             if (function_decl_node->storage_class == StorageClass::Static) {
                 if (existing_global) {
                     // trying to change from external to internal - error
@@ -259,9 +260,9 @@ void blockItemNodeCheckTypes(const std::unique_ptr<BlockItemNode>& block_item_no
     if (block_item_node->declaration) {
         if (block_item_node->declaration->func) {
             functionDeclNodeCheckTypes(block_item_node->declaration->func, type_checker_map);
-        }
-        else if (block_item_node->declaration->var) {
-            variableDeclNodeBlockScopeCheckTypes(block_item_node->declaration->var, type_checker_map);
+        } else if (block_item_node->declaration->var) {
+            variableDeclNodeBlockScopeCheckTypes(block_item_node->declaration->var,
+                                                 type_checker_map);
         }
     } else if (block_item_node->statement) {
         statementNodeCheckTypes(block_item_node->statement, type_checker_map);
@@ -357,9 +358,9 @@ void forInitNodeCheckTypes(std::unique_ptr<ForInitNode>& for_init_node,
         for (static int x = 5; i < 10; i++) { ... }
         */
         if (variable_decl_node->storage_class != StorageClass::None) {
-            throw std::runtime_error(std::format(
-                "Type Error: For loop initializer variable '{}' cannot have storage class specifier",
-                variable_decl_node->var_identifier->name));
+            throw std::runtime_error(std::format("Type Error: For loop initializer variable '{}' "
+                                                 "cannot have storage class specifier",
+                                                 variable_decl_node->var_identifier->name));
         }
         variableDeclNodeBlockScopeCheckTypes(variable_decl_node, type_checker_map);
     } else if (for_init_node->init_expr) {

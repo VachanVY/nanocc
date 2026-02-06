@@ -85,8 +85,8 @@ DeclSpec parseTypeAndStorageClassSpecifiers(std::deque<Token>& token, size_t& po
             spec.storage_classes.push_back(StorageClass::Static);
         } else {
             throw std::runtime_error(
-                std::format("Expected datatype or storage class specifier but got {}", tokenTypeToString(specType))
-            );
+                std::format("Expected datatype or storage class specifier but got {}",
+                            tokenTypeToString(specType)));
         }
         pos++;
     } while (isDeclSpec(token, pos));
@@ -94,16 +94,14 @@ DeclSpec parseTypeAndStorageClassSpecifiers(std::deque<Token>& token, size_t& po
     // as of now only `int`
     if (spec.dtypes.size() != 1) {
         throw std::runtime_error(
-            std::format("Expected only `int` datatype, but got more or less than one datatype")
-        );
+            std::format("Expected only `int` datatype, but got more or less than one datatype"));
     }
     // either static or extern or nothing, can't mix extern and static or use them more than once
     if (spec.storage_classes.size() > 1) {
-        throw std::runtime_error(
-            std::format("Expected either `static` or `extern`, but got more than one storage class specifier")
-        );
+        throw std::runtime_error(std::format(
+            "Expected either `static` or `extern`, but got more than one storage class specifier"));
     }
-    
+
     if (spec.storage_classes.size() == 0) {
         spec.storage_classes.push_back(StorageClass::None);
     }

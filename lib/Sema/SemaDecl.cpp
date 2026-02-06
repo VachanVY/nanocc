@@ -210,16 +210,17 @@ void blockItemNodeResolveTypes(const std::unique_ptr<BlockItemNode>& block_item_
             // not allowed for functions, so error
             */
             if (func->storage_class == StorageClass::Static) {
-                throw std::runtime_error(
-                    std::format("Type Error: Static function '{}' inside a BlockItem, static storage "
-                                "class not allowed for functions",
-                                func->func_name->name));
+                throw std::runtime_error(std::format(
+                    "Type Error: Static function '{}' inside a BlockItem, static storage "
+                    "class not allowed for functions",
+                    func->func_name->name));
             }
             declarationNodeResolveTypes(block_item_node->declaration, identifier_map);
         }
         // Handle variable declarations
         else if (block_item_node->declaration->var) {
-            variableDeclNodeBlockScopeResolveTypes(block_item_node->declaration->var, identifier_map);
+            variableDeclNodeBlockScopeResolveTypes(block_item_node->declaration->var,
+                                                   identifier_map);
         }
     } else if (block_item_node->statement) {
         statementNodeResolveTypes(block_item_node->statement, identifier_map);
