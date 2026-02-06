@@ -14,6 +14,7 @@ class DeclarationNode;
 class VariableDeclNode;
 class FunctionDeclNode;
 enum class StorageClass;
+enum class DataTypes;
 
 // a BlockNode will contain multiple BlockItemNodes which are either statements or declarations
 class BlockNode;
@@ -70,11 +71,10 @@ class DeclarationNode : public ASTNode {
     void dump(int indent = 0) const override;
 };
 
-// int "name"; | int "name" = <expr>;
 class VariableDeclNode : public ASTNode {
   public:
     std::unique_ptr<IdentifierNode> var_identifier;
-    std::unique_ptr<ExprNode> init_expr;             // OPTIONAL
+    std::unique_ptr<ExprNode> init_expr; // OPTIONAL
     StorageClass storage_class;
 
     void parse(std::deque<Token>& tokens, size_t& pos);

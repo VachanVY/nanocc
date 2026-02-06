@@ -20,46 +20,98 @@ IdentifierMap copyIdentifierMapForNewScope(const IdentifierMap& old_sym_table,
 /// add to symbol table after giving unique name;
 void resolveVariableIdentifiers(IdentifierMap& identifier_map,
                                 std::unique_ptr<IdentifierNode>& var_name) {
+    /* error case
+    {int a = 1; int a = 2;}
+    */
     if (identifier_map.contains(var_name->name) && identifier_map[var_name->name].from_curr_scope) {
         throw std::runtime_error(
             std::format("Type Error: Redeclaration of parameter '{}'", var_name->name));
     }
     std::string unique_name = getUniqueName(var_name->name);
     identifier_map[var_name->name] =
-        (VariableScope){unique_name, /*from_curr_scope=*/true, /*external_linkage=*/false};
+        (VariableScope){unique_name, /*from_curr_scope=*/true, /*no_renaming=*/false};
     var_name->name = unique_name; // update parameter name too
 }
 } // namespace
 
-namespace sema {
+namespace Sema {
 // identifier resolution -- start
 void programNodeResolveTypes(std::unique_ptr<ProgramNode>& program_node,
                              IdentifierMap& identifier_map) {
     // both function definitions and declarations are handled here
-    for (auto& function : program_node->functions) {
-        functionDeclNodeResolveTypes(function, identifier_map);
+    for (auto& decl : program_node->declarations) {
+        declarationNodeResolveTypes(decl, identifier_map);
     }
 }
 
 void declarationNodeResolveTypes(std::unique_ptr<DeclarationNode>& declaration_node,
                                  IdentifierMap& identifier_map) {
     if (declaration_node->func) {
-        // only function declarations (not definitions) are allowed inside Blocks/BlockItems
-        if (declaration_node->func->body) {
-            throw std::runtime_error(std::format(
-                "Type Error: Defined function '{}' inside a BlockItem, define at top level",
-                declaration_node->func->func_name->name));
-        }
+        // file scope function defination and declarations
         functionDeclNodeResolveTypes(declaration_node->func, identifier_map);
     } else if (declaration_node->var) {
-        variableDeclNodeResolveTypes(declaration_node->var, identifier_map);
+        // resolve file scope variable declarations
+        variableDeclNodeFileScopeResolveType(declaration_node->var, identifier_map);
     }
+}
+
+/*```
+// Eg: at file scope
+static int x;
+extern int a;
+int b;
+
+// file-scope variables have static storage duration and stable symbol names
+// so `no_renaming` is set to `true`
+```*/
+void variableDeclNodeFileScopeResolveType(
+    std::unique_ptr<VariableDeclNode>& file_scope_variable_decl_node,
+    IdentifierMap& identifier_map) {
+    std::string& var_name = file_scope_variable_decl_node->var_identifier->name;
+    identifier_map[var_name] =
+        (VariableScope){var_name, /*from_curr_scope=*/true, /*no_renaming=*/true};
 }
 
 /// @brief resolve variable identifiers `resolveVariableIdentifiers`;
 /// resolve the optional initializer expression
-void variableDeclNodeResolveTypes(std::unique_ptr<VariableDeclNode>& variable_decl_node,
-                                  IdentifierMap& identifier_map) {
+void variableDeclNodeBlockScopeResolveTypes(std::unique_ptr<VariableDeclNode>& variable_decl_node,
+                                            IdentifierMap& identifier_map) {
+    /* error cases
+    {        int x;        static int x;    }
+    {        static int a;        int a;    }
+    {        static int b;        static int b;    }
+    */
+    /* no error cases
+    {        extern int a;        extern int a;    }
+    {        int a = 1;        int b = 2;    }
+    */
+    auto& var_identifier = variable_decl_node->var_identifier;
+    if (identifier_map.contains(var_identifier->name)) {
+        auto& prev_entry = identifier_map[var_identifier->name];
+        // `no_renaming` field will be false when a identifier in block scope
+        // has `StorageClass::None` or `StorageClass::Static`
+        // extern variables have external linkage, used in other files too, so we don't rename them
+        if (prev_entry.from_curr_scope &&
+            (!prev_entry.no_renaming ||
+             variable_decl_node->storage_class != StorageClass::Extern)) {
+            throw std::runtime_error(
+                std::format("Type Error: Redeclaration of variable '{}' in the same scope",
+                            var_identifier->name));
+        }
+    }
+
+    if (variable_decl_node->storage_class == StorageClass::Extern) {
+        identifier_map[var_identifier->name] =
+            (VariableScope){var_identifier->name, /*from_curr_scope=*/true, /*no_renaming=*/true};
+        return;
+    }
+
+    /*
+    {   // renaming will be done here
+        int x = 1;
+        static int a = 1;
+    }
+    */
     resolveVariableIdentifiers(identifier_map, variable_decl_node->var_identifier);
     if (variable_decl_node->init_expr) {
         exprNodeResolveTypes(variable_decl_node->init_expr, identifier_map);
@@ -77,6 +129,8 @@ int main(void) {
 ```
 // redeclarations in different scopes is okay
 // new declaration shall shadow previous one
+// anyway they refer to the same function as
+// they have external linkage, so no issues
 int foo(void);
 int main(void) {
     int foo(void);
@@ -86,12 +140,16 @@ int main(void) {
 ```
 // if redeclarations in the same scope is an error UNLESS they have external linkage
 int main(void) {
+    // both refer to the same function as they have external linkage
+    // SO VALID
     int foo(void);
     int foo(void);
     return foo();
 }
 // that's why the below program is INVALID
 int main(void) {
+    // you can't have `static` function declarations in block scope;
+    // functions don't have storage specifiers like variables
     static int foo(void); // although static not added yet... just giving an example
     int foo(void); // even if you delete this line, still INVALID
     return foo();
@@ -101,7 +159,7 @@ void functionDeclNodeResolveTypes(std::unique_ptr<FunctionDeclNode>& function_de
                                   IdentifierMap& identifier_map) {
     if (identifier_map.contains(function_decl_node->func_name->name)) {
         auto& prev_entry = identifier_map[function_decl_node->func_name->name];
-        if (prev_entry.from_curr_scope && !prev_entry.external_linkage) {
+        if (prev_entry.from_curr_scope && !prev_entry.no_renaming) {
             throw std::runtime_error(
                 std::format("Type Error: Redeclaration of function '{}' with no external linkage",
                             function_decl_node->func_name->name));
@@ -110,8 +168,8 @@ void functionDeclNodeResolveTypes(std::unique_ptr<FunctionDeclNode>& function_de
 
     // external linkage functions don't change their names
     function_decl_node->func_name->name = function_decl_node->func_name->name; // simulate no change
-    identifier_map[function_decl_node->func_name->name] =
-        (VariableScope){function_decl_node->func_name->name, true, /*external_linkage=*/true};
+    identifier_map[function_decl_node->func_name->name] = (VariableScope){
+        function_decl_node->func_name->name, /*from_curr_scope*/ true, /*no_renaming=*/true};
 
     // create new scope for function params and body
     // they will share the same scope therefore below will give error
@@ -137,7 +195,32 @@ void blockNodeResolveTypes(std::unique_ptr<BlockNode>& block_node, IdentifierMap
 void blockItemNodeResolveTypes(const std::unique_ptr<BlockItemNode>& block_item_node,
                                IdentifierMap& identifier_map) {
     if (block_item_node->declaration) {
-        declarationNodeResolveTypes(block_item_node->declaration, identifier_map);
+        // Handle function declarations
+        if (block_item_node->declaration->func) {
+            // only function declarations (not definitions) are allowed inside Blocks/BlockItems
+            const auto& func = block_item_node->declaration->func;
+            if (func->body) {
+                throw std::runtime_error(std::format(
+                    "Type Error: Defined function '{}' inside a BlockItem, define it at top level",
+                    func->func_name->name));
+            }
+            /* error case
+            { static int foo(void); }
+            // at block scope static controls storage duration, which is only for variables
+            // not allowed for functions, so error
+            */
+            if (func->storage_class == StorageClass::Static) {
+                throw std::runtime_error(
+                    std::format("Type Error: Static function '{}' inside a BlockItem, static storage "
+                                "class not allowed for functions",
+                                func->func_name->name));
+            }
+            declarationNodeResolveTypes(block_item_node->declaration, identifier_map);
+        }
+        // Handle variable declarations
+        else if (block_item_node->declaration->var) {
+            variableDeclNodeBlockScopeResolveTypes(block_item_node->declaration->var, identifier_map);
+        }
     } else if (block_item_node->statement) {
         statementNodeResolveTypes(block_item_node->statement, identifier_map);
     }
@@ -234,7 +317,7 @@ void forNodeResolveTypes(std::unique_ptr<ForNode>& for_node, IdentifierMap& iden
 void forInitNodeResolveTypes(std::unique_ptr<ForInitNode>& for_init_node,
                              IdentifierMap& identifier_map) {
     if (for_init_node->declaration) {
-        variableDeclNodeResolveTypes(for_init_node->declaration, identifier_map);
+        variableDeclNodeBlockScopeResolveTypes(for_init_node->declaration, identifier_map);
     } else if (for_init_node->init_expr) {
         exprNodeResolveTypes(for_init_node->init_expr, identifier_map);
     }
@@ -273,7 +356,7 @@ void exprFactorNodeResolveTypes(std::unique_ptr<ExprFactorNode>& expr_factor_nod
     }
 }
 
-/// @brief Should already be added to the symbol table by `variableDeclNodeResolveTypes`
+/// @brief Should already be added to the symbol table by `variableDeclNodeBlockScopeResolveTypes`
 void varNodeResolveTypes(std::unique_ptr<VarNode>& var_node, IdentifierMap& identifier_map) {
     if (identifier_map.contains(var_node->var_name->name)) {
         var_node->var_name->name = identifier_map[var_node->var_name->name].unique_name;
@@ -331,8 +414,7 @@ void functionCallNodeResolveTypes(std::unique_ptr<FunctionCallNode>& function_ca
 
 /*
 - detect errors of type `<unary_op> <exprfactor> = <expr>`
-- eg: `ar x /usr/lib/x86_64-linux-gnu/libc.a putchar.o = 3` ==parsed_as=> `UnaryNode('!',
-AssignmentNode(VarNode('a'), ConstantNode('3')))`;
+- eg: `!a = 3` ==parsed_as=> `UnaryNode('!', AssignmentNode(VarNode('a'), ConstantNode('3')))`;
 */
 void unaryNodeResolveTypes(std::unique_ptr<UnaryNode>& unary_node, IdentifierMap& identifier_map) {
     assert(unary_node->operand && "Operand is null in `unaryNodeResolveTypes`");
@@ -342,11 +424,11 @@ void unaryNodeResolveTypes(std::unique_ptr<UnaryNode>& unary_node, IdentifierMap
     exprFactorNodeResolveTypes(unary_node->operand, identifier_map);
 }
 // identifier resolution -- end
-} // namespace sema
+} // namespace Sema
 
 namespace nanocc {
 void semaIdentifierResolution(std::unique_ptr<ProgramNode>& program_node) {
     IdentifierMap identifier_map;
-    sema::programNodeResolveTypes(program_node, identifier_map);
+    Sema::programNodeResolveTypes(program_node, identifier_map);
 }
 } // namespace nanocc
