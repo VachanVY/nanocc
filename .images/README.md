@@ -5,6 +5,10 @@
 <img width="975" height="596" alt="Screenshot from 2025-12-05 22-23-20" src="https://github.com/user-attachments/assets/99d5450e-b013-47b4-8b4b-ab52b70f75be" />
 
 # Modern C++
+
+<img width="753" height="469" alt="image" src="https://github.com/user-attachments/assets/53c1732c-3f24-4db2-857a-a7cead75200a" />
+
+
 [Smart Pointers Video](https://www.youtube.com/watch?v=UOB7-B2MfwA&list=PLlrATfBNZ98dudnM48yfGUldqGD0S4FFb&index=45)
 
 <!-- <img width="1244" height="309" alt="image" src="https://github.com/user-attachments/assets/c77a0927-ed04-419a-ba20-ee5c6d003038" /> -->
