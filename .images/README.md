@@ -19,6 +19,20 @@ Shared pointer is destroyed after its reference count becomes 0
 Weak pointers: you can ask a weak pointer, Are you there or dead... it doesn't increase the reference count
 
 <img width="1333" height="582" alt="image" src="https://github.com/user-attachments/assets/a5d4cf46-0484-448b-ae70-a4a2cfecab2e" />
+```
+struct Parent;
+struct Child;
+
+struct Parent {
+    std::shared_ptr<Child> child;
+};
+
+struct Child {
+    std::weak_ptr<Parent> parent;
+};
+
+avoid cyclic dependency
+```
 
 # cmake
 ![sasas](cmake.png)
