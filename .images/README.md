@@ -6,6 +6,12 @@
 
 # Modern C++
 
+`extern "C"`
+
+<img width="766" height="1053" alt="image" src="https://github.com/user-attachments/assets/7ba1f768-27f7-4306-b6d2-2b2eb061aea1" />
+<img width="736" height="481" alt="image" src="https://github.com/user-attachments/assets/9732dfd5-1cf4-4f83-8e83-255073afa8a1" />
+
+
 <img width="753" height="469" alt="image" src="https://github.com/user-attachments/assets/53c1732c-3f24-4db2-857a-a7cead75200a" />
 
 
