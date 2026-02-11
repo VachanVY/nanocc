@@ -25,6 +25,15 @@ void resolveVariableIdentifiers(IdentifierMap& identifier_map,
             std::format("Type Error: Redeclaration of parameter '{}'", var_name->name));
     }
     std::string unique_name = getUniqueName(var_name->name);
+    /*
+    {
+        int x; // x.0
+        {
+            int x; // x.1, shadows x.0
+        }
+    }
+    */
+    // overwrite variable name in new scope
     identifier_map[var_name->name] =
         (VariableScope){unique_name, /*from_curr_scope=*/true, /*external_linkage=*/false};
     var_name->name = unique_name; // update parameter name too

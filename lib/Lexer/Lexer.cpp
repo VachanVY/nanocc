@@ -15,6 +15,7 @@ std::deque<Token> lexer(std::string& s, bool debug) {
         token.type = static_cast<TokenType>(c_tokens.items[i].type);
         // TODO(VachanVY): can we avoid this allocation? use string_view?
         token.lexeme = std::string(c_tokens.items[i].start, c_tokens.items[i].length);
+        // why std::move used here? enable move assignment operator instead of copy assignment operator
         tokens[i] = std::move(token);
     }
     freeCTokens(c_tokens);

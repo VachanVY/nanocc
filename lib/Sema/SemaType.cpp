@@ -200,13 +200,13 @@ void exprFactorNodeCheckTypes(std::unique_ptr<ExprFactorNode>& expr_factor_node,
         constantNodeCheckTypes(expr_factor_node->constant, type_checker_map); // no-op for now??
     } else if (expr_factor_node->func_call) {
         functionCallNodeCheckTypes(expr_factor_node->func_call, type_checker_map);
-    } else if (auto* binary = dyn_cast<BinaryNode>(expr_factor_node.get())) {
+    } else if (isa<BinaryNode>(expr_factor_node.get())) {
         binaryNodeCheckTypes(reinterpret_cast<std::unique_ptr<BinaryNode>&>(expr_factor_node),
                              type_checker_map);
-    } else if (auto* assignment = dyn_cast<AssignmentNode>(expr_factor_node.get())) {
+    } else if (isa<AssignmentNode>(expr_factor_node.get())) {
         assignmentNodeCheckTypes(
             reinterpret_cast<std::unique_ptr<AssignmentNode>&>(expr_factor_node), type_checker_map);
-    } else if (auto* conditional = dyn_cast<ConditionalNode>(expr_factor_node.get())) {
+    } else if (isa<ConditionalNode>(expr_factor_node.get())) {
         conditionalNodeCheckTypes(
             reinterpret_cast<std::unique_ptr<ConditionalNode>&>(expr_factor_node),
             type_checker_map);

@@ -23,9 +23,8 @@ constexpr int getPrecedence(const std::string& op) {
     return it->second;
 }
 constexpr bool isBinop(const std::string& op) { return BINOP_PRECEDENCE.contains(op); }
-} // namespace
 
-void expect(const std::deque<Token>& tokens, TokenType expected, size_t& pos) {
+static void expect(const std::deque<Token>& tokens, TokenType expected, size_t& pos) {
     if (pos >= tokens.size()) {
         throw std::runtime_error(std::format(
             "Syntax Error: Expected '{}', but reached end of input", tokenTypeToString(expected)));
@@ -39,6 +38,7 @@ void expect(const std::deque<Token>& tokens, TokenType expected, size_t& pos) {
     }
     pos++;
 }
+} // namespace
 
 // method definitions of parser.hpp
 void ProgramNode::parse(std::deque<Token>& tokens, size_t& pos) {

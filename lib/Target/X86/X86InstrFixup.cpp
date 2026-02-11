@@ -31,6 +31,13 @@ void AsmFunctionNode::fixUpInstructions(const int& stack_size) {
 /// https://math.stackexchange.com/questions/291468/how-to-find-the-nearest-multiple-of-16-to-my-given-number-n
 ///
 /// TODO(VachanVY): WHATS THE POINT OF THIS, SINCE WE ARE ALREADY PADDING DURING FUNCTION CALLS?
+/// Func Defination:
+///     > already 16 bit alligned at start
+
+///     > before Func Call what if the stack is not 16 bit alligned? because of of odd number of stack args?
+///     > thats why we add padding of 8 bytes to make it 16 bit alligned before the call, and then remove 
+///       the padding + stack args after the call. 
+/// Func Call:
 /// @param instructions
 void AsmAllocateStackNode::fixUpInstructions(
     std::vector<std::unique_ptr<AsmInstructionNode>>& instructions) {

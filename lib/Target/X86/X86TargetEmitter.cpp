@@ -81,7 +81,6 @@ movl $b, -4(%rbp)  # move divisor to stack
 cdq                # sign extend EAX to EDX:EAX
 idivl -4(%rbp)     # divide EDX:EAX by divisor at -4(%rbp)
 ```
-
 */
 void AsmIdivNode::generateAsm(std::ostream& os) {
     if (!divisor) {
