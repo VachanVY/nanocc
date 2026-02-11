@@ -21,6 +21,8 @@ CTokenSpec token_specs[] = {{INT, int_fsm},
                             {FOR, for_fsm},
                             {BREAK, break_fsm},
                             {CONTINUE, continue_fsm},
+                            {EXTERN, extern_fsm},
+                            {STATIC, static_fsm},
 
                             {TILDE, tilde_fsm},
                             {DECREMENT, decrement_fsm},
@@ -63,7 +65,7 @@ CTokenVec clexer(char* s, size_t slen, bool debug) {
             continue;
         }
 
-        match_length = 0;
+        match_length = 0; // store the longest match length // reset for each new position
         class_type = INVALID;
         matched = false;
         for (int i = 0; i < NUMFMA; i++) {

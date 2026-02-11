@@ -3,11 +3,11 @@
 
 #include "SemaHelper.hpp"
 
-namespace sema {
+namespace Sema {
 // loop labelling -- start
 void programNodeLoopLabelling(std::unique_ptr<ProgramNode>& program_node, std::string& loop_label) {
-    for (auto& functions : program_node->functions) {
-        functionDeclNodeLoopLabelling(functions, loop_label);
+    for (auto& decl : program_node->declarations) {
+        declarationNodeLoopLabelling(decl, loop_label);
     }
 }
 
@@ -130,11 +130,11 @@ void forNodeLoopLabelling(std::unique_ptr<ForNode>& for_node, std::string& loop_
 void nullNodeLoopLabelling(std::unique_ptr<NullNode>& null_node,
                            std::string& loop_label){}; // no-op
 // loop labelling -- end
-} // namespace sema
+} // namespace Sema
 
 namespace nanocc {
 void semaLoopLabelling(std::unique_ptr<ProgramNode>& ast) {
     std::string loop_label = "";
-    sema::programNodeLoopLabelling(ast, loop_label);
+    Sema::programNodeLoopLabelling(ast, loop_label);
 }
 } // namespace nanocc

@@ -12,7 +12,11 @@
 struct VariableScope {
     std::string unique_name;
     bool from_curr_scope;
-    bool external_linkage;
+    // IF NOT `no_renaming` then variable will be given a unique name in identifier resolution pass
+    // in the identifier resolution pass in semantic analysis,
+    // Eg: static int x; at file scope, `no_renaming` will be true, so won't be renamed
+    //     int x       ; at block scope, `no_renaming` will be false, so will be renamed
+    bool no_renaming;
 };
 
 /// @brief maps variables names given in source code to unique identifier names
@@ -32,12 +36,44 @@ struct FuncType {
     bool defined; // tracks whether we have already type-checked a defination of that function
 };
 
+// declare attricutes for `TypeCheckerSymbolTable`
+struct FuncAttr;
+struct StaticAttr;
+struct LocalAttr;
+using IdentifierAttrs = std::variant<FuncAttr, StaticAttr, LocalAttr>;
+
+struct Tentative;
+struct Initial;
+struct NoIntializer;
+using InitValue = std::variant<Tentative, Initial, NoIntializer>;
+
+struct Tentative {};
+struct Initial {
+    std::string value;
+};
+struct NoIntializer {};
+
+struct FuncAttr {
+    bool defined;
+    bool global;
+};
+struct StaticAttr {
+    InitValue init;
+    bool global;
+};
+struct LocalAttr {};
+
+struct SymbolTableEntry {
+    Type type;
+    IdentifierAttrs attrs;
+};
+
 /// @brief type checker symbol table
-using TypeCheckerSymbolTable = std::unordered_map<std::string, Type>;
+using TypeCheckerSymbolTable = std::unordered_map<std::string, SymbolTableEntry>;
 
 namespace nanocc {
 /// @brief global type checker symbol table, helpful in codegen phase
-// add suffix @PLT for non defined function
+/// add suffix @PLT for non defined function
 extern TypeCheckerSymbolTable global_type_checker_map;
 
 void semanticAnalysis(std::unique_ptr<ProgramNode>& ast, bool debug = false);

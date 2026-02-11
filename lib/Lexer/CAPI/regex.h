@@ -1,5 +1,6 @@
 #pragma once
 
+// keyword FSMs
 int int_fsm(const char* s);
 int void_fsm(const char* s);
 int return_fsm(const char* s);
@@ -12,6 +13,8 @@ int while_fsm(const char* s);
 int for_fsm(const char* s);
 int break_fsm(const char* s);
 int continue_fsm(const char* s);
+int extern_fsm(const char* s);
+int static_fsm(const char* s);
 
 // "unary operators"
 int tilde_fsm(const char* s);

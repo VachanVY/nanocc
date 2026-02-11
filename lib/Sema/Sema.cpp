@@ -17,7 +17,6 @@ void semanticAnalysis(std::unique_ptr<ProgramNode>& ast, bool debug) {
         ast->dump();
         std::println("-------------------------");
     }
-
     nanocc::semaLoopLabelling(ast);
     if (debug) {
         std::println("----- Loop Labelling -----");
