@@ -18,11 +18,11 @@ use shared_ptr for IRValNode (and its derived classes)
 #include <vector>
 #include <memory>
 
+#include "IRHelper.hpp"
 #include "nanocc/AST/AST.hpp"
 #include "nanocc/IR/IR.hpp"
 #include "nanocc/Utils.hpp"
-
-#include "IRHelper.hpp"
+#include "nanocc/Sema/Sema.hpp"
 
 namespace { // helper function
 void extendInstrFromVector(std::vector<std::unique_ptr<IRInstructionNode>>&& src,
@@ -33,14 +33,51 @@ void extendInstrFromVector(std::vector<std::unique_ptr<IRInstructionNode>>&& src
 }
 } // namespace
 
-namespace irgen {
-
+namespace IRGen {
 std::unique_ptr<IRProgramNode> programNodeIRGen(std::unique_ptr<ProgramNode>& program_node) {
     auto ir_program = std::make_unique<IRProgramNode>();
-    for (auto& function : program_node->functions) {
-        if (function->body) {
-            auto ir_function = functionDeclNodeIRGen(function);
-            ir_program->functions.push_back(std::move(ir_function));
+    for (auto& decl : program_node->declarations) {
+        if (decl->func && decl->func->body) {
+            auto ir_function = functionDeclNodeIRGen(decl->func);
+            ir_program->top_level.push_back(std::move(ir_function));
+        }
+    }
+
+    // we won't generate any IR for FILE SCOPE VARIABLE DECLARATIONS or
+    // for local variable declarations with static or extern specifiers.
+    // Instead after we have traversed the whole AST, we'll perform an
+    // additional step where some symbols in the symbol table are attached
+    // with IRStaticVarNode
+
+    // SO: FUNCTION DEFINITIONS from AST NODES
+    //     VARIABLE DEFINITIONS from SYMBOL TABLE (after traversing the whole AST)
+    for (auto& [var_name, var_sym_entry] : nanocc::global_type_checker_map) {
+        if (auto* static_attr = std::get_if<StaticAttr>(&var_sym_entry.attrs)) {
+            if (auto* init_value = std::get_if<Initial>(&static_attr->init)) {
+                /*
+                int x = 5;
+                static int y = 5;
+                */
+                auto identifier = std::make_unique<IdentifierNode>();
+                identifier->name = var_name;
+                auto ir_static = std::make_unique<IRStaticVarNode>(std::move(identifier), static_attr->global, init_value->value);
+                ir_program->top_level.push_back(std::move(ir_static));
+            } else if (auto* tentative_value = std::get_if<Tentative>(&static_attr->init)) {
+                /*
+                int x; // Tentative, treat as if initialized to 0
+                */
+                auto identifier = std::make_unique<IdentifierNode>();
+                identifier->name = var_name;
+                auto ir_static = std::make_unique<IRStaticVarNode>(std::move(identifier), static_attr->global, "0");
+                ir_program->top_level.push_back(std::move(ir_static));
+            }
+                /*
+                If it's initial value is NoInitializer, we skip over it since because it's not defined in this
+                translation-unit/file
+                ```
+                extern int x; // NoInitializer, skip
+                ```
+                */
         }
     }
     return ir_program;
@@ -68,8 +105,9 @@ std::unique_ptr<IRFunctionNode> functionDeclNodeIRGen(std::unique_ptr<FunctionDe
     auto ret0 = std::make_unique<IRRetNode>(std::make_shared<IRConstNode>("0"));
     instructions.push_back(std::move(ret0));
 
+    bool global = function->storage_class != StorageClass::Static;
     auto ir_function =
-        std::make_unique<IRFunctionNode>(function->func_name->name, std::move(instructions));
+        std::make_unique<IRFunctionNode>(function->func_name->name, global, std::move(instructions));
 
     for (const auto& param : function->parameters) {
         ir_function->parameters.push_back(param->name);
@@ -444,11 +482,11 @@ handleShortCircuitOps(BinaryNode* binop,
 std::shared_ptr<IRValNode>
 exprFactorNodeIRGen(std::unique_ptr<ExprFactorNode>& exprf,
                     std::vector<std::unique_ptr<IRInstructionNode>>& instructions) {
-    if (auto binop = dyn_cast<BinaryNode>(exprf.get())) {
+    if (auto* binop = dyn_cast<BinaryNode>(exprf.get())) {
         return binaryNodeIRGen(binop, instructions);
-    } else if (auto assignop = dyn_cast<AssignmentNode>(exprf.get())) {
+    } else if (auto* assignop = dyn_cast<AssignmentNode>(exprf.get())) {
         return assignmentNodeIRGen(assignop, instructions);
-    } else if (auto condop = dyn_cast<ConditionalNode>(exprf.get())) {
+    } else if (auto* condop = dyn_cast<ConditionalNode>(exprf.get())) {
         return conditionalNodeIRGen(condop, instructions);
     } else if (exprf->var_identifier) {
         return varNodeIRGen(exprf->var_identifier, instructions);
@@ -556,4 +594,4 @@ functionCallNodeIRGen(std::unique_ptr<FunctionCallNode>& func_call,
     instructions.push_back(std::move(ir_func_call));
     return result;
 }
-} // namespace irgen
+} // namespace IRGen

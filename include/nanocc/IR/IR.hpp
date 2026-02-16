@@ -5,7 +5,6 @@
 #include <string>
 
 #include "nanocc/AST/AST.hpp"
-#include "nanocc/Codegen/ASM.hpp"
 
 class IRNode {
   public:
@@ -14,7 +13,9 @@ class IRNode {
 
 class IRProgramNode;
 
+class IRTopLevelNode;
 class IRFunctionNode;
+class IRStaticVarNode;
 
 class IRInstructionNode; // base class
 class IRRetNode;
@@ -34,33 +35,53 @@ class IRVariableNode;
 // skeleton of the defined class above
 class IRProgramNode : public IRNode {
   public:
-    std::vector<std::unique_ptr<IRFunctionNode>> functions;
+    std::vector<std::unique_ptr<IRTopLevelNode>> top_level;
 
     IRProgramNode() = default;
-    explicit IRProgramNode(std::vector<std::unique_ptr<IRFunctionNode>> func_list)
-        : functions(std::move(func_list)) {}
-
-    std::unique_ptr<AsmProgramNode> lowerToAsm();
+    explicit IRProgramNode(std::vector<std::unique_ptr<IRTopLevelNode>> top_level)
+        : top_level(std::move(top_level)) {}
 };
 
-class IRFunctionNode : public IRNode {
+class IRTopLevelNode : public IRNode {
+  public:
+    virtual ~IRTopLevelNode() = default;
+};
+
+class IRFunctionNode : public IRTopLevelNode {
   public:
     std::string func_name;
+    bool global;
     std::vector<std::string> parameters;
     std::vector<std::unique_ptr<IRInstructionNode>> ir_instructions;
 
     IRFunctionNode() = default;
-    IRFunctionNode(std::string name,
+    IRFunctionNode(std::string name, bool global,
                    std::vector<std::unique_ptr<IRInstructionNode>> instruction_list)
-        : func_name(std::move(name)), ir_instructions(std::move(instruction_list)) {}
+        : func_name(std::move(name)), global(global), ir_instructions(std::move(instruction_list)) {}
 
-    std::unique_ptr<AsmFunctionNode> lowerToAsm();
+    static bool classof(const IRTopLevelNode* node) {
+        return dynamic_cast<const IRFunctionNode*>(node) != nullptr;
+    }
+};
+
+class IRStaticVarNode : public IRTopLevelNode {
+  public:
+    std::unique_ptr<IdentifierNode> var_name;
+    bool global;
+    std::string init;
+
+    IRStaticVarNode() = default;
+    IRStaticVarNode(std::unique_ptr<IdentifierNode> name, bool global, std::string init)
+        : var_name(std::move(name)), global(global), init(std::move(init)) {}
+
+    static bool classof(const IRTopLevelNode* node) {
+        return dynamic_cast<const IRStaticVarNode*>(node) != nullptr;
+    }
 };
 
 class IRInstructionNode : public IRNode {
   public:
     virtual ~IRInstructionNode() = default;
-    virtual std::vector<std::unique_ptr<AsmInstructionNode>> lowerToAsm() = 0;
 };
 
 class IRRetNode : public IRInstructionNode {
@@ -70,7 +91,6 @@ class IRRetNode : public IRInstructionNode {
     IRRetNode() = default;
     explicit IRRetNode(std::shared_ptr<IRValNode> val_ptr) : ret_val(std::move(val_ptr)) {}
 
-    std::vector<std::unique_ptr<AsmInstructionNode>> lowerToAsm() override;
     static bool classof(const IRInstructionNode* u) {
         return dynamic_cast<const IRRetNode*>(u) != nullptr;
     }
@@ -86,7 +106,6 @@ class IRUnaryNode : public IRInstructionNode {
     IRUnaryNode(std::string op, std::shared_ptr<IRValNode> src, std::shared_ptr<IRValNode> dest)
         : op_type(std::move(op)), val_src(std::move(src)), val_dest(std::move(dest)) {}
 
-    std::vector<std::unique_ptr<AsmInstructionNode>> lowerToAsm() override;
     static bool classof(const IRInstructionNode* u) {
         return dynamic_cast<const IRUnaryNode*>(u) != nullptr;
     }
@@ -105,7 +124,6 @@ class IRBinaryNode : public IRInstructionNode {
         : op_type(std::move(op)), val_src1(std::move(src1)), val_src2(std::move(src2)),
           val_dest(std::move(dest)) {}
 
-    std::vector<std::unique_ptr<AsmInstructionNode>> lowerToAsm() override;
     static bool classof(const IRInstructionNode* u) {
         return dynamic_cast<const IRBinaryNode*>(u) != nullptr;
     }
@@ -121,7 +139,6 @@ class IRCopyNode : public IRInstructionNode {
     IRCopyNode(std::shared_ptr<IRValNode> src, std::shared_ptr<IRValNode> dest)
         : val_src(std::move(src)), val_dest(std::move(dest)) {}
 
-    std::vector<std::unique_ptr<AsmInstructionNode>> lowerToAsm() override;
     static bool classof(const IRInstructionNode* u) {
         return dynamic_cast<const IRCopyNode*>(u) != nullptr;
     }
@@ -134,7 +151,6 @@ class IRJumpNode : public IRInstructionNode {
     IRJumpNode() = default;
     explicit IRJumpNode(std::string label) : target_label(std::move(label)) {}
 
-    std::vector<std::unique_ptr<AsmInstructionNode>> lowerToAsm() override;
     static bool classof(const IRInstructionNode* u) {
         return dynamic_cast<const IRJumpNode*>(u) != nullptr;
     }
@@ -149,7 +165,6 @@ class IRJumpIfZeroNode : public IRInstructionNode {
     IRJumpIfZeroNode(std::shared_ptr<IRValNode> cond, std::string label)
         : condition(std::move(cond)), target_label(std::move(label)) {}
 
-    std::vector<std::unique_ptr<AsmInstructionNode>> lowerToAsm() override;
     static bool classof(const IRInstructionNode* u) {
         return dynamic_cast<const IRJumpIfZeroNode*>(u) != nullptr;
     }
@@ -164,7 +179,6 @@ class IRJumpIfNotZeroNode : public IRInstructionNode {
     IRJumpIfNotZeroNode(std::shared_ptr<IRValNode> cond, std::string label)
         : condition(std::move(cond)), target_label(std::move(label)) {}
 
-    std::vector<std::unique_ptr<AsmInstructionNode>> lowerToAsm() override;
     static bool classof(const IRInstructionNode* u) {
         return dynamic_cast<const IRJumpIfNotZeroNode*>(u) != nullptr;
     }
@@ -177,7 +191,6 @@ class IRLabelNode : public IRInstructionNode {
     IRLabelNode() = default;
     explicit IRLabelNode(std::string name) : label_name(std::move(name)) {}
 
-    std::vector<std::unique_ptr<AsmInstructionNode>> lowerToAsm() override;
     static bool classof(const IRInstructionNode* u) {
         return dynamic_cast<const IRLabelNode*>(u) != nullptr;
     }
@@ -195,7 +208,6 @@ class IRFunctionCallNode : public IRInstructionNode {
         : func_name(std::move(name)), arguments(std::move(args)), return_dest(std::move(ret_dest)) {
     }
 
-    std::vector<std::unique_ptr<AsmInstructionNode>> lowerToAsm() override;
     static bool classof(const IRInstructionNode* u) {
         return dynamic_cast<const IRFunctionCallNode*>(u) != nullptr;
     }
@@ -204,7 +216,6 @@ class IRFunctionCallNode : public IRInstructionNode {
 class IRValNode : public IRNode {
   public:
     virtual ~IRValNode() = default;
-    virtual std::shared_ptr<AsmOperandNode> lowerToAsm() = 0;
 };
 
 class IRConstNode : public IRValNode {
@@ -214,7 +225,9 @@ class IRConstNode : public IRValNode {
     IRConstNode() = default;
     explicit IRConstNode(std::string value) : val(std::move(value)) {}
 
-    std::shared_ptr<AsmOperandNode> lowerToAsm() override; // return AsmImmediateNode
+    static bool classof(const IRValNode* v) {
+        return dynamic_cast<const IRConstNode*>(v) != nullptr;
+    }
 };
 
 class IRVariableNode : public IRValNode {
@@ -224,7 +237,9 @@ class IRVariableNode : public IRValNode {
     IRVariableNode() = default;
     explicit IRVariableNode(std::string name) : var_name(std::move(name)) {}
 
-    std::shared_ptr<AsmOperandNode> lowerToAsm() override; // return AsmPseudoNode
+    static bool classof(const IRValNode* v) {
+        return dynamic_cast<const IRVariableNode*>(v) != nullptr;
+    }
 };
 
 namespace nanocc {

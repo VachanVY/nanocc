@@ -9,7 +9,7 @@ template <typename T> using VecPtr = std::vector<std::unique_ptr<T>>;
 template <typename T> using UPtr = std::unique_ptr<T>;
 template <typename T> using ShPtr = std::shared_ptr<T>;
 
-namespace irgen {
+namespace IRGen {
 UPtr<IRProgramNode> programNodeIRGen(UPtr<ProgramNode>& program_node);
 UPtr<IRFunctionNode> functionDeclNodeIRGen(UPtr<FunctionDeclNode>& function);
 
@@ -49,7 +49,8 @@ ShPtr<IRValNode> functionCallNodeIRGen(UPtr<FunctionCallNode>& func_call,
 
 // dump functions
 void programNodeIRDump(UPtr<IRProgramNode>& ir_program, int indent);
-void functionNodeIRDump(UPtr<IRFunctionNode>& ir_function, int indent);
+void functionNodeIRDump(IRFunctionNode* ir_function, int indent);
+void staticVarNodeIRDump(IRStaticVarNode* ir_static_var, int indent);
 void retNodeIRDump(IRRetNode* ret_node, int indent);
 void unaryNodeIRDump(IRUnaryNode* unary_node, int indent);
 void binaryNodeIRDump(IRBinaryNode* binary_node, int indent);
@@ -61,4 +62,4 @@ void labelNodeIRDump(IRLabelNode* label_node, int indent);
 void functionCallNodeIRDump(IRFunctionCallNode* func_call_node, int indent);
 std::string valNodeIRDump(ShPtr<IRValNode>& val_node);
 void instructionNodeIRDump(UPtr<IRInstructionNode>& instr_node, int indent);
-} // namespace irgen
+} // namespace IRGen
