@@ -12,12 +12,14 @@ elif [ "$mode" = "rebuild" ]; then
     ./buildcc.sh compiler
 
 elif [ "$mode" = "test" ]; then
+    test_component="$2"
     cmake -S . -B build -DBUILD_NANOCC_TEST=ON
-    cmake --build build
+    cmake --build build --target "$test_component"
 
 elif [ "$mode" = "rebuild_test" ]; then
+    test_component="$2"
     ./buildcc.sh clean
-    ./buildcc.sh test
+    ./buildcc.sh test "$test_component"
 
 elif [ "$mode" = "clean" ]; then
     rm -rf build

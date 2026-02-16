@@ -4,11 +4,12 @@
 #include "nanocc/AST/AST.hpp"
 #include "nanocc/Sema/Sema.hpp"
 
-namespace sema {
+namespace Sema {
 // indetifier resolution -- start
 void programNodeResolveTypes(std::unique_ptr<ProgramNode>&, IdentifierMap&);
 void declarationNodeResolveTypes(std::unique_ptr<DeclarationNode>&, IdentifierMap&);
-void variableDeclNodeResolveTypes(std::unique_ptr<VariableDeclNode>&, IdentifierMap&);
+void variableDeclNodeFileScopeResolveType(std::unique_ptr<VariableDeclNode>&, IdentifierMap&);
+void variableDeclNodeBlockScopeResolveTypes(std::unique_ptr<VariableDeclNode>&, IdentifierMap&);
 void functionDeclNodeResolveTypes(std::unique_ptr<FunctionDeclNode>&, IdentifierMap&);
 void blockNodeResolveTypes(std::unique_ptr<BlockNode>&, IdentifierMap&);
 void blockItemNodeResolveTypes(const std::unique_ptr<BlockItemNode>&, IdentifierMap&);
@@ -40,8 +41,10 @@ void programNodeCheckTypes(std::unique_ptr<ProgramNode>& program_node,
                            TypeCheckerSymbolTable& type_checker_map);
 void declarationNodeCheckTypes(std::unique_ptr<DeclarationNode>& declaration_node,
                                TypeCheckerSymbolTable& type_checker_map);
-void variableDeclNodeCheckTypes(std::unique_ptr<VariableDeclNode>& variable_decl_node,
-                                TypeCheckerSymbolTable& type_checker_map);
+void variableDeclNodeFileScopeCheckTypes(std::unique_ptr<VariableDeclNode>& variable_decl_node,
+                                         TypeCheckerSymbolTable& type_checker_map);
+void variableDeclNodeBlockScopeCheckTypes(std::unique_ptr<VariableDeclNode>& variable_decl_node,
+                                          TypeCheckerSymbolTable& type_checker_map);
 void functionDeclNodeCheckTypes(std::unique_ptr<FunctionDeclNode>& function_decl_node,
                                 TypeCheckerSymbolTable& type_checker_map);
 void blockNodeCheckTypes(std::unique_ptr<BlockNode>& block_node,
@@ -119,4 +122,4 @@ void doWhileNodeLoopLabelling(std::unique_ptr<DoWhileNode>& dowhile_node, std::s
 void forNodeLoopLabelling(std::unique_ptr<ForNode>& for_node, std::string& loop_label);
 void nullNodeLoopLabelling(std::unique_ptr<NullNode>& null_node, std::string& loop_label);
 // loop labelling -- end
-} // namespace sema
+} // namespace Sema

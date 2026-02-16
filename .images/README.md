@@ -1,5 +1,43 @@
+<!--
 # Assembly
 * [asm docs](https://github.com/VachanVY/Psython/blob/main/.images/asm.md)
+-->
+
+# `extern "C"` in C++
+Same code in C and C++, notice the difference?
+* C
+  <img width="1736" height="675" alt="image" src="https://github.com/user-attachments/assets/6b8c4a3c-1b72-4b19-8de5-0e08f2c1a356" />
+* C++
+  <img width="1763" height="703" alt="image" src="https://github.com/user-attachments/assets/5305ebd1-b1bd-4e43-b785-595260efe415" />
+```C
+#pragma once
+
+#include <stdbool.h>
+#include <stdlib.h>
+
+/*
+in C++
+void foo(int);       // might become: _Z3fooi
+void foo(double);    // might become: _Z3food
+
+in C
+void foo(int);       // stays: foo
+
+extern "C" tells the C++ compiler to use C linkage (no name mangling).
+So that C++ code can link against C functions. The C Code is compiled using a C compiler
+that doesn't do name mangling in the first place.
+*/
+#ifdef __cplusplus
+extern "C" { // C Compiler doesn't understand extern "C" // tell C++ compiler to use C linkage
+#endif
+
+...
+
+#ifdef __cplusplus
+}
+#endif
+
+```
 
 # Bash
 <img width="975" height="596" alt="Screenshot from 2025-12-05 22-23-20" src="https://github.com/user-attachments/assets/99d5450e-b013-47b4-8b4b-ab52b70f75be" />

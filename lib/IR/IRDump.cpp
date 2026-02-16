@@ -8,15 +8,21 @@
 
 #include "IRHelper.hpp"
 
-namespace irgen {
+namespace IRGen {
 
 void programNodeIRDump(std::unique_ptr<IRProgramNode>& ir_program, int indent) {
-    for (auto& functions : ir_program->functions) {
-        functionNodeIRDump(functions, indent);
+    for (auto& decl : ir_program->top_level) {
+        if (auto func = dyn_cast<IRFunctionNode>(decl.get())){
+            functionNodeIRDump(func, indent);
+        } else if (auto static_var = dyn_cast<IRStaticVarNode>(decl.get())) {
+            staticVarNodeIRDump(static_var, indent);
+        } else {
+            throw std::runtime_error("IR Dump Error: Unknown IRTopLevelNode type");
+        }
     }
 }
 
-void functionNodeIRDump(std::unique_ptr<IRFunctionNode>& ir_function, int indent) {
+void functionNodeIRDump(IRFunctionNode* ir_function, int indent) {
     printIndent(indent);
     std::println("Function[");
     printIndent(indent + 1);
@@ -42,6 +48,12 @@ void functionNodeIRDump(std::unique_ptr<IRFunctionNode>& ir_function, int indent
     std::println("]"); // end instructions
     printIndent(indent);
     std::println("]"); // end function
+}
+
+void staticVarNodeIRDump(IRStaticVarNode* ir_static_var, int indent) {
+    printIndent(indent);
+    std::println("StaticVar[name='{}', global={}, init={}]", ir_static_var->var_name->name,
+                 ir_static_var->global, ir_static_var->init);
 }
 
 void retNodeIRDump(IRRetNode* ret_node, int indent) {
@@ -140,4 +152,4 @@ void instructionNodeIRDump(std::unique_ptr<IRInstructionNode>& instr_node, int i
         throw std::runtime_error("IR Dump Error: Unknown IRInstructionNode type");
     }
 }
-} // namespace irgen
+} // namespace IRGen

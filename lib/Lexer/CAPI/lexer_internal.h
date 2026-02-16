@@ -46,7 +46,7 @@ static inline char* tokenTypeToString(CTokenType type) {
                                                                                                    \
         for (int i = 0; i < tokens.count; i++) {                                                   \
             CToken tok = tokens.items[i];                                                          \
-            printf("    %-4d %-15s %-15.*s\n", i + 1, tokenTypeToString(tok.type), tok.length,     \
+            printf("    %-4d %-15s %-15.*s\n", i, tokenTypeToString(tok.type), tok.length,         \
                    tok.start);                                                                     \
         }                                                                                          \
     } while (0)

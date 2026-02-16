@@ -13,7 +13,3 @@ option(BUILD_NANOCC_TEST "Build nanocc test executable" OFF)
 
 add_subdirectory(lib)
 add_subdirectory(tools)
-
-# PUBLIC — “I need this, and users of me need it too”
-# INTERFACE: "I don’t need it, but users of me do"
-# PRIVATE: "I need it, but users of me don’t"
