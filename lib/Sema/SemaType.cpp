@@ -22,11 +22,13 @@ void declarationNodeCheckTypes(std::unique_ptr<DeclarationNode>& declaration_nod
     }
 }
 
+namespace {
 static std::string isConstInitExpr(const VariableDeclNode& node) {
     if (node.init_expr && node.init_expr->left_exprf && node.init_expr->left_exprf->constant)
         return node.init_expr->left_exprf->constant->val;
     return "";
 };
+} // namespace
 
 void variableDeclNodeFileScopeCheckTypes(std::unique_ptr<VariableDeclNode>& variable_decl_node,
                                          TypeCheckerSymbolTable& type_checker_map) {

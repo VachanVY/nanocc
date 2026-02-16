@@ -55,10 +55,14 @@ struct NoIntializer {};
 
 struct FuncAttr {
     bool defined;
+    /// @brief false if has internal linkage (`static`), true otherwise
     bool global;
 };
 struct StaticAttr {
     InitValue init;
+    /// @brief || false for block scope `static` variables ||
+    /// true for block scope `extern` variables ||
+    /// true for all NON `static` variables in file scope ||
     bool global;
 };
 struct LocalAttr {};
