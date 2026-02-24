@@ -1,14 +1,14 @@
 #pragma once
 
-#include <vector>
 #include <memory>
 #include <string>
+#include <vector>
 
 #include "nanocc/AST/AST.hpp"
 
 class IRNode {
-  public:
-    virtual ~IRNode() = default;
+public:
+  virtual ~IRNode() = default;
 };
 
 class IRProgramNode;
@@ -28,221 +28,229 @@ class IRJumpIfNotZeroNode;
 class IRLabelNode;
 class IRFunctionCallNode;
 
-class IRValNode; // base class || use `shared_ptr` for this and its derived classes
+class IRValNode; // base class || use `shared_ptr` for this and its derived
+                 // classes
 class IRConstNode;
 class IRVariableNode;
 
 // skeleton of the defined class above
 class IRProgramNode : public IRNode {
-  public:
-    std::vector<std::unique_ptr<IRTopLevelNode>> top_level;
+public:
+  std::vector<std::unique_ptr<IRTopLevelNode>> top_level;
 
-    IRProgramNode() = default;
-    explicit IRProgramNode(std::vector<std::unique_ptr<IRTopLevelNode>> top_level)
-        : top_level(std::move(top_level)) {}
+  IRProgramNode() = default;
+  explicit IRProgramNode(std::vector<std::unique_ptr<IRTopLevelNode>> top_level)
+      : top_level(std::move(top_level)) {}
 };
 
 class IRTopLevelNode : public IRNode {
-  public:
-    virtual ~IRTopLevelNode() = default;
+public:
+  virtual ~IRTopLevelNode() = default;
 };
 
 class IRFunctionNode : public IRTopLevelNode {
-  public:
-    std::string func_name;
-    bool global;
-    std::vector<std::string> parameters;
-    std::vector<std::unique_ptr<IRInstructionNode>> ir_instructions;
+public:
+  std::string func_name;
+  bool global;
+  std::vector<std::string> parameters;
+  std::vector<std::unique_ptr<IRInstructionNode>> ir_instructions;
 
-    IRFunctionNode() = default;
-    IRFunctionNode(std::string name, bool global,
-                   std::vector<std::unique_ptr<IRInstructionNode>> instruction_list)
-        : func_name(std::move(name)), global(global), ir_instructions(std::move(instruction_list)) {}
+  IRFunctionNode() = default;
+  IRFunctionNode(
+      std::string name, bool global,
+      std::vector<std::unique_ptr<IRInstructionNode>> instruction_list)
+      : func_name(std::move(name)), global(global),
+        ir_instructions(std::move(instruction_list)) {}
 
-    static bool classof(const IRTopLevelNode* node) {
-        return dynamic_cast<const IRFunctionNode*>(node) != nullptr;
-    }
+  static bool classof(const IRTopLevelNode *node) {
+    return dynamic_cast<const IRFunctionNode *>(node) != nullptr;
+  }
 };
 
 class IRStaticVarNode : public IRTopLevelNode {
-  public:
-    std::unique_ptr<IdentifierNode> var_name;
-    bool global;
-    std::string init;
+public:
+  std::unique_ptr<IdentifierNode> var_name;
+  bool global;
+  std::string init;
 
-    IRStaticVarNode() = default;
-    IRStaticVarNode(std::unique_ptr<IdentifierNode> name, bool global, std::string init)
-        : var_name(std::move(name)), global(global), init(std::move(init)) {}
+  IRStaticVarNode() = default;
+  IRStaticVarNode(std::unique_ptr<IdentifierNode> name, bool global,
+                  std::string init)
+      : var_name(std::move(name)), global(global), init(std::move(init)) {}
 
-    static bool classof(const IRTopLevelNode* node) {
-        return dynamic_cast<const IRStaticVarNode*>(node) != nullptr;
-    }
+  static bool classof(const IRTopLevelNode *node) {
+    return dynamic_cast<const IRStaticVarNode *>(node) != nullptr;
+  }
 };
 
 class IRInstructionNode : public IRNode {
-  public:
-    virtual ~IRInstructionNode() = default;
+public:
+  virtual ~IRInstructionNode() = default;
 };
 
 class IRRetNode : public IRInstructionNode {
-  public:
-    std::shared_ptr<IRValNode> ret_val;
+public:
+  std::shared_ptr<IRValNode> ret_val;
 
-    IRRetNode() = default;
-    explicit IRRetNode(std::shared_ptr<IRValNode> val_ptr) : ret_val(std::move(val_ptr)) {}
+  IRRetNode() = default;
+  explicit IRRetNode(std::shared_ptr<IRValNode> val_ptr)
+      : ret_val(std::move(val_ptr)) {}
 
-    static bool classof(const IRInstructionNode* u) {
-        return dynamic_cast<const IRRetNode*>(u) != nullptr;
-    }
+  static bool classof(const IRInstructionNode *u) {
+    return dynamic_cast<const IRRetNode *>(u) != nullptr;
+  }
 };
 
 class IRUnaryNode : public IRInstructionNode {
-  public:
-    std::string op_type;
-    std::shared_ptr<IRValNode> val_src;
-    std::shared_ptr<IRValNode> val_dest;
+public:
+  std::string op_type;
+  std::shared_ptr<IRValNode> val_src;
+  std::shared_ptr<IRValNode> val_dest;
 
-    IRUnaryNode() = default;
-    IRUnaryNode(std::string op, std::shared_ptr<IRValNode> src, std::shared_ptr<IRValNode> dest)
-        : op_type(std::move(op)), val_src(std::move(src)), val_dest(std::move(dest)) {}
+  IRUnaryNode() = default;
+  IRUnaryNode(std::string op, std::shared_ptr<IRValNode> src,
+              std::shared_ptr<IRValNode> dest)
+      : op_type(std::move(op)), val_src(std::move(src)),
+        val_dest(std::move(dest)) {}
 
-    static bool classof(const IRInstructionNode* u) {
-        return dynamic_cast<const IRUnaryNode*>(u) != nullptr;
-    }
+  static bool classof(const IRInstructionNode *u) {
+    return dynamic_cast<const IRUnaryNode *>(u) != nullptr;
+  }
 };
 
 class IRBinaryNode : public IRInstructionNode {
-  public:
-    std::string op_type;
-    std::shared_ptr<IRValNode> val_src1;
-    std::shared_ptr<IRValNode> val_src2;
-    std::shared_ptr<IRValNode> val_dest;
+public:
+  std::string op_type;
+  std::shared_ptr<IRValNode> val_src1;
+  std::shared_ptr<IRValNode> val_src2;
+  std::shared_ptr<IRValNode> val_dest;
 
-    IRBinaryNode() = default;
-    IRBinaryNode(std::string op, std::shared_ptr<IRValNode> src1, std::shared_ptr<IRValNode> src2,
-                 std::shared_ptr<IRValNode> dest)
-        : op_type(std::move(op)), val_src1(std::move(src1)), val_src2(std::move(src2)),
-          val_dest(std::move(dest)) {}
+  IRBinaryNode() = default;
+  IRBinaryNode(std::string op, std::shared_ptr<IRValNode> src1,
+               std::shared_ptr<IRValNode> src2, std::shared_ptr<IRValNode> dest)
+      : op_type(std::move(op)), val_src1(std::move(src1)),
+        val_src2(std::move(src2)), val_dest(std::move(dest)) {}
 
-    static bool classof(const IRInstructionNode* u) {
-        return dynamic_cast<const IRBinaryNode*>(u) != nullptr;
-    }
+  static bool classof(const IRInstructionNode *u) {
+    return dynamic_cast<const IRBinaryNode *>(u) != nullptr;
+  }
 };
 
 /// @brief val_src => val_dest
 class IRCopyNode : public IRInstructionNode {
-  public:
-    std::shared_ptr<IRValNode> val_src;
-    std::shared_ptr<IRValNode> val_dest;
+public:
+  std::shared_ptr<IRValNode> val_src;
+  std::shared_ptr<IRValNode> val_dest;
 
-    IRCopyNode() = default;
-    IRCopyNode(std::shared_ptr<IRValNode> src, std::shared_ptr<IRValNode> dest)
-        : val_src(std::move(src)), val_dest(std::move(dest)) {}
+  IRCopyNode() = default;
+  IRCopyNode(std::shared_ptr<IRValNode> src, std::shared_ptr<IRValNode> dest)
+      : val_src(std::move(src)), val_dest(std::move(dest)) {}
 
-    static bool classof(const IRInstructionNode* u) {
-        return dynamic_cast<const IRCopyNode*>(u) != nullptr;
-    }
+  static bool classof(const IRInstructionNode *u) {
+    return dynamic_cast<const IRCopyNode *>(u) != nullptr;
+  }
 };
 
 class IRJumpNode : public IRInstructionNode {
-  public:
-    std::string target_label;
+public:
+  std::string target_label;
 
-    IRJumpNode() = default;
-    explicit IRJumpNode(std::string label) : target_label(std::move(label)) {}
+  IRJumpNode() = default;
+  explicit IRJumpNode(std::string label) : target_label(std::move(label)) {}
 
-    static bool classof(const IRInstructionNode* u) {
-        return dynamic_cast<const IRJumpNode*>(u) != nullptr;
-    }
+  static bool classof(const IRInstructionNode *u) {
+    return dynamic_cast<const IRJumpNode *>(u) != nullptr;
+  }
 };
 
 class IRJumpIfZeroNode : public IRInstructionNode {
-  public:
-    std::shared_ptr<IRValNode> condition;
-    std::string target_label;
+public:
+  std::shared_ptr<IRValNode> condition;
+  std::string target_label;
 
-    IRJumpIfZeroNode() = default;
-    IRJumpIfZeroNode(std::shared_ptr<IRValNode> cond, std::string label)
-        : condition(std::move(cond)), target_label(std::move(label)) {}
+  IRJumpIfZeroNode() = default;
+  IRJumpIfZeroNode(std::shared_ptr<IRValNode> cond, std::string label)
+      : condition(std::move(cond)), target_label(std::move(label)) {}
 
-    static bool classof(const IRInstructionNode* u) {
-        return dynamic_cast<const IRJumpIfZeroNode*>(u) != nullptr;
-    }
+  static bool classof(const IRInstructionNode *u) {
+    return dynamic_cast<const IRJumpIfZeroNode *>(u) != nullptr;
+  }
 };
 
 class IRJumpIfNotZeroNode : public IRInstructionNode {
-  public:
-    std::shared_ptr<IRValNode> condition;
-    std::string target_label;
+public:
+  std::shared_ptr<IRValNode> condition;
+  std::string target_label;
 
-    IRJumpIfNotZeroNode() = default;
-    IRJumpIfNotZeroNode(std::shared_ptr<IRValNode> cond, std::string label)
-        : condition(std::move(cond)), target_label(std::move(label)) {}
+  IRJumpIfNotZeroNode() = default;
+  IRJumpIfNotZeroNode(std::shared_ptr<IRValNode> cond, std::string label)
+      : condition(std::move(cond)), target_label(std::move(label)) {}
 
-    static bool classof(const IRInstructionNode* u) {
-        return dynamic_cast<const IRJumpIfNotZeroNode*>(u) != nullptr;
-    }
+  static bool classof(const IRInstructionNode *u) {
+    return dynamic_cast<const IRJumpIfNotZeroNode *>(u) != nullptr;
+  }
 };
 
 class IRLabelNode : public IRInstructionNode {
-  public:
-    std::string label_name;
+public:
+  std::string label_name;
 
-    IRLabelNode() = default;
-    explicit IRLabelNode(std::string name) : label_name(std::move(name)) {}
+  IRLabelNode() = default;
+  explicit IRLabelNode(std::string name) : label_name(std::move(name)) {}
 
-    static bool classof(const IRInstructionNode* u) {
-        return dynamic_cast<const IRLabelNode*>(u) != nullptr;
-    }
+  static bool classof(const IRInstructionNode *u) {
+    return dynamic_cast<const IRLabelNode *>(u) != nullptr;
+  }
 };
 
 class IRFunctionCallNode : public IRInstructionNode {
-  public:
-    std::string func_name;
-    std::vector<std::shared_ptr<IRValNode>> arguments;
-    std::shared_ptr<IRValNode> return_dest;
+public:
+  std::string func_name;
+  std::vector<std::shared_ptr<IRValNode>> arguments;
+  std::shared_ptr<IRValNode> return_dest;
 
-    IRFunctionCallNode() = default;
-    explicit IRFunctionCallNode(std::string name, std::vector<std::shared_ptr<IRValNode>> args,
-                                std::shared_ptr<IRValNode> ret_dest)
-        : func_name(std::move(name)), arguments(std::move(args)), return_dest(std::move(ret_dest)) {
-    }
+  IRFunctionCallNode() = default;
+  explicit IRFunctionCallNode(std::string name,
+                              std::vector<std::shared_ptr<IRValNode>> args,
+                              std::shared_ptr<IRValNode> ret_dest)
+      : func_name(std::move(name)), arguments(std::move(args)),
+        return_dest(std::move(ret_dest)) {}
 
-    static bool classof(const IRInstructionNode* u) {
-        return dynamic_cast<const IRFunctionCallNode*>(u) != nullptr;
-    }
+  static bool classof(const IRInstructionNode *u) {
+    return dynamic_cast<const IRFunctionCallNode *>(u) != nullptr;
+  }
 };
 
 class IRValNode : public IRNode {
-  public:
-    virtual ~IRValNode() = default;
+public:
+  virtual ~IRValNode() = default;
 };
 
 class IRConstNode : public IRValNode {
-  public:
-    std::string val;
+public:
+  std::string val;
 
-    IRConstNode() = default;
-    explicit IRConstNode(std::string value) : val(std::move(value)) {}
+  IRConstNode() = default;
+  explicit IRConstNode(std::string value) : val(std::move(value)) {}
 
-    static bool classof(const IRValNode* v) {
-        return dynamic_cast<const IRConstNode*>(v) != nullptr;
-    }
+  static bool classof(const IRValNode *v) {
+    return dynamic_cast<const IRConstNode *>(v) != nullptr;
+  }
 };
 
 class IRVariableNode : public IRValNode {
-  public:
-    std::string var_name;
+public:
+  std::string var_name;
 
-    IRVariableNode() = default;
-    explicit IRVariableNode(std::string name) : var_name(std::move(name)) {}
+  IRVariableNode() = default;
+  explicit IRVariableNode(std::string name) : var_name(std::move(name)) {}
 
-    static bool classof(const IRValNode* v) {
-        return dynamic_cast<const IRVariableNode*>(v) != nullptr;
-    }
+  static bool classof(const IRValNode *v) {
+    return dynamic_cast<const IRVariableNode *>(v) != nullptr;
+  }
 };
 
 namespace nanocc {
-std::unique_ptr<IRProgramNode> generateIntermRepr(std::unique_ptr<ProgramNode>& ast,
-                                                  bool debug = false);
+std::unique_ptr<IRProgramNode>
+generateIntermRepr(std::unique_ptr<ProgramNode> &ast, bool debug = false);
 } // namespace nanocc

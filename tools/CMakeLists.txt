@@ -11,7 +11,7 @@ if (BUILD_NANOCC_TEST)
     add_executable(nanocc_ir test/TestIR.cpp)
     target_link_libraries(nanocc_ir PRIVATE nanoccIR)
 
-    add_executable(nanocc_codegen test/TestAsmGen.cpp)
+    add_executable(nanocc_codegen test/TestX86AsmGen.cpp)
     target_link_libraries(nanocc_codegen PRIVATE nanoccCodegen nanoccX86Target)
 else()
     add_executable(nanocc NanoCC.cpp)
