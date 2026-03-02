@@ -26,7 +26,6 @@ constexpr int getPrecedence(const std::string &op) {
 constexpr bool isBinop(const std::string &op) {
   return BINOP_PRECEDENCE.contains(op);
 }
-} // namespace
 
 void expect(const std::deque<Token> &tokens, TokenType expected, size_t &pos) {
   if (pos >= tokens.size()) {
