@@ -128,6 +128,61 @@ int factorial(int n) {
     return ret;
 }
 ```
+<details>
+  <summary>assembly output</summary>
+ 
+```asm
+      .globl factorial
+    .text
+factorial:
+    pushq %rbp
+    movq %rsp, %rbp
+    subq $32, %rsp
+    movl %edi, -4(%rbp)
+    cmpl $1, -4(%rbp)
+    movl $0, -8(%rbp)
+    setle -8(%rbp)
+    cmpl $0, -8(%rbp)
+    je else.0
+    movl $1, -12(%rbp)
+    jmp end.1
+  else.0:
+    movl -4(%rbp), %r10d
+    movl %r10d, -16(%rbp)
+    subl $1, -16(%rbp)
+    movl -16(%rbp), %edi
+    call factorial
+    movl %eax, -20(%rbp)
+    movl -4(%rbp), %r10d
+    movl %r10d, -24(%rbp)
+    movl -24(%rbp), %r11d
+    imull -20(%rbp), %r11d
+    movl %r11d, -24(%rbp)
+    movl -24(%rbp), %r10d
+    movl %r10d, -12(%rbp)
+  end.1:
+    movl -12(%rbp), %eax
+    movq %rbp, %rsp
+    popq %rbp
+    ret
+
+    movl $0, %eax
+    movq %rbp, %rsp
+    popq %rbp
+    ret
+
+    .globl num_times
+    .data
+    .align 4
+num_times:
+    .long 10
+
+    .section .note.GNU-stack, "",@progbits
+
+```
+
+</details>
+
 ```c
 // examples/linkage_utils.c
 int putchar(int c);
@@ -171,6 +226,168 @@ int init_sys(void) {
     return 1;
 }
 ```
+<details>
+  <summary>assembly output</summary>
+ 
+```asm
+    .globl putint
+    .text
+putint:
+    pushq %rbp
+    movq %rsp, %rbp
+    subq $48, %rsp
+    movl %edi, -4(%rbp)
+    cmpl $0, -4(%rbp)
+    movl $0, -8(%rbp)
+    setl -8(%rbp)
+    cmpl $0, -8(%rbp)
+    je end.0
+    movl $45, %edi
+    call putchar@PLT
+    movl %eax, -12(%rbp)
+    movl -4(%rbp), %r10d
+    movl %r10d, -16(%rbp)
+    negl -16(%rbp)
+    movl -16(%rbp), %r10d
+    movl %r10d, -4(%rbp)
+  end.0:
+    cmpl $10, -4(%rbp)
+    movl $0, -20(%rbp)
+    setge -20(%rbp)
+    cmpl $0, -20(%rbp)
+    je end.1
+    movl -4(%rbp), %eax
+    cdq
+    movl $10, %r10d
+    idivl %r10d
+    movl %eax, -24(%rbp)
+    movl -24(%rbp), %edi
+    call putint
+    movl %eax, -28(%rbp)
+  end.1:
+    movl -4(%rbp), %eax
+    cdq
+    movl $10, %r10d
+    idivl %r10d
+    movl %edx, -32(%rbp)
+    movl $48, -36(%rbp)
+    movl -32(%rbp), %r10d
+    addl %r10d, -36(%rbp)
+    movl -36(%rbp), %edi
+    call putchar@PLT
+    movl %eax, -40(%rbp)
+    movl $0, %eax
+    movq %rbp, %rsp
+    popq %rbp
+    ret
+
+    .globl hello_world
+    .text
+hello_world:
+    pushq %rbp
+    movq %rsp, %rbp
+    subq $64, %rsp
+    movl $72, %edi
+    call putchar@PLT
+    movl %eax, -4(%rbp)
+    movl $101, %edi
+    call putchar@PLT
+    movl %eax, -8(%rbp)
+    movl $108, %edi
+    call putchar@PLT
+    movl %eax, -12(%rbp)
+    movl $108, %edi
+    call putchar@PLT
+    movl %eax, -16(%rbp)
+    movl $111, %edi
+    call putchar@PLT
+    movl %eax, -20(%rbp)
+    movl $44, %edi
+    call putchar@PLT
+    movl %eax, -24(%rbp)
+    movl $32, %edi
+    call putchar@PLT
+    movl %eax, -28(%rbp)
+    movl $87, %edi
+    call putchar@PLT
+    movl %eax, -32(%rbp)
+    movl $111, %edi
+    call putchar@PLT
+    movl %eax, -36(%rbp)
+    movl $114, %edi
+    call putchar@PLT
+    movl %eax, -40(%rbp)
+    movl $108, %edi
+    call putchar@PLT
+    movl %eax, -44(%rbp)
+    movl $100, %edi
+    call putchar@PLT
+    movl %eax, -48(%rbp)
+    movl $33, %edi
+    call putchar@PLT
+    movl %eax, -52(%rbp)
+    movl $10, %edi
+    call putchar@PLT
+    movl %eax, -56(%rbp)
+    movl $0, %eax
+    movq %rbp, %rsp
+    popq %rbp
+    ret
+
+    .globl init_sys
+    .text
+init_sys:
+    pushq %rbp
+    movq %rsp, %rbp
+    subq $32, %rsp
+    cmpl $1, initialized.2(%rip)
+    movl $0, -4(%rbp)
+    sete -4(%rbp)
+    cmpl $0, -4(%rbp)
+    je end.2
+    movl $0, %eax
+    movq %rbp, %rsp
+    popq %rbp
+    ret
+
+  end.2:
+    call hello_world
+    movl %eax, -8(%rbp)
+    movl $73, %edi
+    call putchar@PLT
+    movl %eax, -12(%rbp)
+    movl $78, %edi
+    call putchar@PLT
+    movl %eax, -16(%rbp)
+    movl $73, %edi
+    call putchar@PLT
+    movl %eax, -20(%rbp)
+    movl $84, %edi
+    call putchar@PLT
+    movl %eax, -24(%rbp)
+    movl $10, %edi
+    call putchar@PLT
+    movl %eax, -28(%rbp)
+    movl $1, initialized.2(%rip)
+    movl $1, %eax
+    movq %rbp, %rsp
+    popq %rbp
+    ret
+
+    movl $0, %eax
+    movq %rbp, %rsp
+    popq %rbp
+    ret
+
+    .bss
+    .align 4
+initialized.2:
+    .zero 4
+
+    .section .note.GNU-stack, "",@progbits
+```
+
+</details>
 
 ```c
 // defined in linkage_utils.c
@@ -196,7 +413,70 @@ int main(void){
     return 0;
 }
 ```
+<details>
+  <summary>assembly output</summary>
+ 
+```asm
+    .globl main
+    .text
+main:
+    pushq %rbp
+    movq %rsp, %rbp
+    subq $48, %rsp
+    call init_sys@PLT
+    movl %eax, -4(%rbp)
+    call init_sys@PLT
+    movl %eax, -8(%rbp)
+    call init_sys@PLT
+    movl %eax, -12(%rbp)
+    movl $1, -16(%rbp)
+  start_for.0:
+    movl num_times(%rip), %r10d
+    cmpl %r10d, -16(%rbp)
+    movl $0, -20(%rbp)
+    setle -20(%rbp)
+    cmpl $0, -20(%rbp)
+    je break_for.0
+    movl -16(%rbp), %edi
+    call factorial@PLT
+    movl %eax, -24(%rbp)
+    movl -24(%rbp), %r10d
+    movl %r10d, -28(%rbp)
+    movl -16(%rbp), %edi
+    call putint@PLT
+    movl %eax, -32(%rbp)
+    movl $32, %edi
+    call putchar@PLT
+    movl %eax, -36(%rbp)
+    movl -28(%rbp), %edi
+    call putint@PLT
+    movl %eax, -40(%rbp)
+    movl $10, %edi
+    call putchar@PLT
+    movl %eax, -44(%rbp)
+  continue_for.0:
+    movl -16(%rbp), %r10d
+    movl %r10d, -48(%rbp)
+    addl $1, -48(%rbp)
+    movl -48(%rbp), %r10d
+    movl %r10d, -16(%rbp)
+    jmp start_for.0
+  break_for.0:
+    movl $0, %eax
+    movq %rbp, %rsp
+    popq %rbp
+    ret
 
+    movl $0, %eax
+    movq %rbp, %rsp
+    popq %rbp
+    ret
+
+
+    .section .note.GNU-stack, "",@progbits
+```
+
+</details>
 
 
 ```bash
