@@ -92,7 +92,7 @@ debug_echo "OBJ files: ${obj_files[*]}"
 debug_echo "C files: ${c_files[*]}"
 
 # use nanocc to compile c files into asm files
-# -o or -S or -c option, this will always part will always
+# -o or -S or -c option, this condition is always true...
 if [ $_o -eq 1 ] || [ $_c -eq 1 ] || [ $_S -eq 1 ]; then # this line was not required but for clarity
     for c_file in "${c_files[@]}"; do
         asm_file="$tmpdir/$(basename "${c_file%.*}.s")"
