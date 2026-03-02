@@ -43,6 +43,16 @@ extern "C" { // C Compiler doesn't understand extern "C" // tell C++ compiler to
 <img width="975" height="596" alt="Screenshot from 2025-12-05 22-23-20" src="https://github.com/user-attachments/assets/99d5450e-b013-47b4-8b4b-ab52b70f75be" />
 
 # Modern C++
+
+`extern "C"`
+
+<img width="766" height="1053" alt="image" src="https://github.com/user-attachments/assets/7ba1f768-27f7-4306-b6d2-2b2eb061aea1" />
+<img width="736" height="481" alt="image" src="https://github.com/user-attachments/assets/9732dfd5-1cf4-4f83-8e83-255073afa8a1" />
+
+
+<img width="753" height="469" alt="image" src="https://github.com/user-attachments/assets/53c1732c-3f24-4db2-857a-a7cead75200a" />
+
+
 [Smart Pointers Video](https://www.youtube.com/watch?v=UOB7-B2MfwA&list=PLlrATfBNZ98dudnM48yfGUldqGD0S4FFb&index=45)
 
 <!-- <img width="1244" height="309" alt="image" src="https://github.com/user-attachments/assets/c77a0927-ed04-419a-ba20-ee5c6d003038" /> -->
@@ -58,8 +68,30 @@ Weak pointers: you can ask a weak pointer, Are you there or dead... it doesn't i
 
 <img width="1333" height="582" alt="image" src="https://github.com/user-attachments/assets/a5d4cf46-0484-448b-ae70-a4a2cfecab2e" />
 
+```
+struct Parent;
+struct Child;
+
+struct Parent {
+    std::shared_ptr<Child> child;
+};
+
+struct Child {
+    std::weak_ptr<Parent> parent;
+};
+
+avoid cyclic dependency
+```
+
 # cmake
 ![sasas](cmake.png)
+
+<img width="1010" height="742" alt="image" src="https://github.com/user-attachments/assets/c2934360-7764-4eb7-9fb2-6cabb6d8fc99" />
+
+<img width="1010" height="808" alt="image" src="https://github.com/user-attachments/assets/295e9d34-0441-4aed-8501-a802250e09ca" />
+
+<img width="1013" height="720" alt="image" src="https://github.com/user-attachments/assets/e1ef91bd-b7a3-4c87-ba8e-96cf88d199a7" />
+
 
 # regex
 ![sasas](regex_func.png)

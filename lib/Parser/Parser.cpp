@@ -44,6 +44,7 @@ void expect(const std::deque<Token> &tokens, TokenType expected, size_t &pos) {
   }
   pos++;
 }
+} // namespace
 
 // method definitions
 void ProgramNode::parse(std::deque<Token> &tokens, size_t &pos) {
