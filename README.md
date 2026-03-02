@@ -58,8 +58,11 @@ include
     └── Utils.hpp
 lib
 ├── Codegen
+│   ├── CMakeLists.txt
+│   ├── IRToPseudoAsmHelper.hpp
 │   └── IRToPseudoAsmPass.cpp
 ├── IR
+│   ├── CMakeLists.txt
 │   ├── IR.cpp
 │   ├── IRDump.cpp
 │   ├── IRGen.cpp
@@ -72,28 +75,38 @@ lib
 │   │   ├── regex.c
 │   │   ├── regex.h
 │   │   └── tokens.def
+│   ├── CMakeLists.txt
 │   └── Lexer.cpp
 ├── Parser
+│   ├── CMakeLists.txt
 │   └── Parser.cpp
 ├── Sema
+│   ├── CMakeLists.txt
 │   ├── Sema.cpp
 │   ├── SemaDecl.cpp
 │   ├── SemaHelper.hpp
 │   ├── SemaLabel.cpp
 │   └── SemaType.cpp
 ├── Target
-│   └── X86
-│       ├── X86InstrFixup.cpp
-│       ├── X86PseudoLowering.cpp
-│       └── X86TargetEmitter.cpp
+│   ├── X86
+│   │   ├── CMakeLists.txt
+│   │   ├── X86InstrFixup.cpp
+│   │   ├── X86PseudoLowering.cpp
+│   │   └── X86TargetEmitter.cpp
+│   └── CMakeLists.txt
 └── CMakeLists.txt
 tools
+├── test
+│   ├── TestCommon.hpp
+│   ├── TestIR.cpp
+│   ├── TestLexer.cpp
+│   ├── TestParser.cpp
+│   ├── TestSema.cpp
+│   └── TestX86AsmGen.cpp
 ├── CMakeLists.txt
 ├── CompilerPipeline.hpp
-├── nanocc.cpp
-└── test_nanocc.cpp
+└── NanoCC.cpp
 
-asm.c
 buildcc.sh
 CMakeLists.txt
 LICENSE
