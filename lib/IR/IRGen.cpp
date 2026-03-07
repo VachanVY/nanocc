@@ -109,7 +109,7 @@ functionDeclNodeIRGen(std::unique_ptr<FunctionDeclNode> &function) {
   // handle edge case: ensure function ends with a return; always return 0 no
   // matter what if the func already ends with a return, this is redundant but
   // okay for now
-  auto ret0 = std::make_unique<IRRetNode>(std::make_shared<IRConstNode>("0"));
+  auto ret0 = std::make_unique<IRRetNode>(std::make_shared<IRConstNode>(0));
   instructions.push_back(std::move(ret0));
 
   // Use the linkage resolved by sema (which handles inherited linkage from
@@ -515,13 +515,13 @@ std::shared_ptr<IRValNode> handleShortCircuitOps(
 
   // both conditions passed: AND is true, OR is false
   instructions.push_back(std::make_unique<IRCopyNode>(
-      std::make_shared<IRConstNode>(is_and ? "1" : "0"), result));
+      std::make_shared<IRConstNode>(is_and ? 1 : 0), result));
   instructions.push_back(std::make_unique<IRJumpNode>(end_label));
 
   // short-circuit label: AND is false, OR is true
   instructions.push_back(std::make_unique<IRLabelNode>(short_label));
   instructions.push_back(std::make_unique<IRCopyNode>(
-      std::make_shared<IRConstNode>(is_and ? "0" : "1"), result));
+      std::make_shared<IRConstNode>(is_and ? 0 : 1), result));
 
   instructions.push_back(std::make_unique<IRLabelNode>(end_label));
   return result;
@@ -554,7 +554,8 @@ std::shared_ptr<IRValNode> exprFactorNodeIRGen(
 std::shared_ptr<IRValNode> constantNodeIRGen(
     std::unique_ptr<ConstantNode> &constant,
     std::vector<std::unique_ptr<IRInstructionNode>> &instructions) {
-  return std::make_shared<IRConstNode>(constant->val);
+  int val = std::stoi(constant->val);
+  return std::make_shared<IRConstNode>(val);
 }
 
 std::shared_ptr<IRValNode>

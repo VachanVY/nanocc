@@ -228,10 +228,10 @@ public:
 
 class IRConstNode : public IRValNode {
 public:
-  std::string val;
+  int IntVal;
 
   IRConstNode() = default;
-  explicit IRConstNode(std::string value) : val(std::move(value)) {}
+  explicit IRConstNode(int value) : IntVal(value) {}
 
   static bool classof(const IRValNode *v) {
     return dynamic_cast<const IRConstNode *>(v) != nullptr;

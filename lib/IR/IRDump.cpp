@@ -124,7 +124,7 @@ void functionCallNodeIRDump(IRFunctionCallNode *func_call_node, int indent) {
 
 std::string valNodeIRDump(std::shared_ptr<IRValNode> &val_node) {
   if (auto node = std::dynamic_pointer_cast<IRConstNode>(val_node)) {
-    return node->val;
+    return std::to_string(node->IntVal);
   } else if (auto var_node =
                  std::dynamic_pointer_cast<IRVariableNode>(val_node)) {
     return var_node->var_name;
