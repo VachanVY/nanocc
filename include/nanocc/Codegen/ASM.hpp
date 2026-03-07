@@ -387,10 +387,10 @@ public:
 
 class AsmImmediateNode : public AsmOperandNode {
 public:
-  std::string value;
+  int IntVal;
 
   AsmImmediateNode() = default;
-  explicit AsmImmediateNode(std::string value) : value(std::move(value)) {}
+  explicit AsmImmediateNode(int value) : IntVal(value) {}
 
   static bool classof(const AsmOperandNode *node) {
     return dynamic_cast<const AsmImmediateNode *>(node) != nullptr;

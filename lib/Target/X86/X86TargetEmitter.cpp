@@ -2,7 +2,7 @@
 #include "nanocc/Codegen/ASM.hpp"
 #include "nanocc/Sema/Sema.hpp"
 #include "nanocc/Target/X86/X86TargetInfo.hpp"
-#include "nanocc/Utils.hpp"
+#include "nanocc/Utils/Utils.hpp"
 
 void AsmProgramNode::generateAsm(std::ostream &os) {
   for (const auto &top_lvl : this->top_level) {

@@ -22,7 +22,7 @@ use shared_ptr for IRValNode (and its derived classes)
 #include "nanocc/AST/AST.hpp"
 #include "nanocc/IR/IR.hpp"
 #include "nanocc/Sema/Sema.hpp"
-#include "nanocc/Utils.hpp"
+#include "nanocc/Utils/Utils.hpp"
 
 namespace { // helper function
 void extendInstrFromVector(

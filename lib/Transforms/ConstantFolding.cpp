@@ -1,6 +1,7 @@
-#include "nanocc/Utils.hpp"
+#include "nanocc/Utils/Utils.hpp"
 #include "nanocc/Transforms/ConstantFolding.hpp"
 
+// TODO(VachanVY): convert the string comparisons to enum comparisons
 /*
 Replace with Copy:
     Unary Instruction with constant operand
@@ -126,8 +127,9 @@ static bool handleJumpIfNotZeroConstantFolding(
 }
 } // namespace
 
+namespace nanocc {
 
-bool ConstantFolding::run(IRProgramNode& IRProgram) {
+bool ConstantFoldInstructions(IRProgramNode& IRProgram) {
     bool changed = false;
     for (auto& TopLvl : IRProgram.top_level){
         if (auto* IRFunc = dyn_cast<IRFunctionNode>(TopLvl.get())) {
@@ -148,3 +150,5 @@ bool ConstantFolding::run(IRProgramNode& IRProgram) {
     }
     return changed;
 }
+} // namespace nanocc
+

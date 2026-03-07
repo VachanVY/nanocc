@@ -8,7 +8,7 @@
 #include "nanocc/Codegen/ASM.hpp"
 #include "nanocc/IR/IR.hpp"
 #include "nanocc/Target/X86/X86TargetInfo.hpp"
-#include "nanocc/Utils.hpp"
+#include "nanocc/Utils/Utils.hpp"
 
 // Emit Assembly Functions -- Start
 
@@ -125,7 +125,7 @@ instructionLowerIRToAsm(const std::unique_ptr<IRInstructionNode> &instr) {
 std::shared_ptr<AsmOperandNode>
 operandLowerIRToAsm(const std::shared_ptr<IRValNode> &val) {
   if (auto *node = dyn_cast<IRConstNode>(val.get()))
-    return std::make_shared<AsmImmediateNode>(node->val);
+    return std::make_shared<AsmImmediateNode>(node->IntVal);
   if (auto *node = dyn_cast<IRVariableNode>(val.get()))
     return std::make_shared<AsmPseudoNode>(node->var_name);
 
@@ -155,9 +155,9 @@ unaryLowerIRToAsm(IRUnaryNode &node) {
     auto dest = operandLowerIRToAsm(node.val_dest);
 
     instructions.push_back(std::make_unique<AsmCmpNode>(
-        std::make_shared<AsmImmediateNode>("0"), src));
+        std::make_shared<AsmImmediateNode>(0), src));
     instructions.push_back(std::make_unique<AsmMovNode>(
-        std::make_shared<AsmImmediateNode>("0"), dest));
+        std::make_shared<AsmImmediateNode>(0), dest));
     instructions.push_back(std::make_unique<AsmSetCCNode>("e", dest));
   } else if (node.op_type == "~" || node.op_type == "-") {
     auto dest = operandLowerIRToAsm(node.val_dest);
@@ -209,7 +209,7 @@ binaryLowerIRToAsm(IRBinaryNode &node) {
 
     instructions.push_back(std::make_unique<AsmCmpNode>(src2, src1));
     instructions.push_back(std::make_unique<AsmMovNode>(
-        std::make_shared<AsmImmediateNode>("0"), dest));
+        std::make_shared<AsmImmediateNode>(0), dest));
     instructions.push_back(
         std::make_unique<AsmSetCCNode>(getCondCode(node.op_type), dest));
   } else {
@@ -247,7 +247,7 @@ emitConditionalJump(const std::string &cc, // condition code
 
   // compare condition with 0
   instructions.push_back(std::make_unique<AsmCmpNode>(
-      std::make_shared<AsmImmediateNode>("0"), cond_asm));
+      std::make_shared<AsmImmediateNode>(0), cond_asm));
 
   // conditional jump
   instructions.push_back(std::make_unique<AsmJmpCCNode>(cc, target_label));

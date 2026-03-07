@@ -1,6 +1,6 @@
 #include "nanocc/Codegen/ASM.hpp"
 #include "nanocc/Target/X86/X86TargetInfo.hpp"
-#include <nanocc/Utils.hpp>
+#include "nanocc/Utils/Utils.hpp"
 
 // Fix Instructions -- Start
 void AsmProgramNode::fixUpInstructions(const std::vector<int> &stack_sizes) {

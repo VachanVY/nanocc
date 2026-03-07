@@ -4,7 +4,7 @@
 #include <string>
 
 #include "nanocc/IR/IR.hpp"
-#include "nanocc/Utils.hpp"
+#include "nanocc/Utils/Utils.hpp"
 
 #include "IRHelper.hpp"
 

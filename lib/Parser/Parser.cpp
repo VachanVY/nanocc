@@ -4,7 +4,7 @@
 
 #include "nanocc/AST/AST.hpp"
 #include "nanocc/Parser/Parser.hpp"
-#include "nanocc/Utils.hpp"
+#include "nanocc/Utils/Utils.hpp"
 
 namespace { // some helper vars/functions
 static const std::unordered_map<std::string, int> BINOP_PRECEDENCE = {
