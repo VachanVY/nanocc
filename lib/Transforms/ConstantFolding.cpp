@@ -117,7 +117,7 @@ handleJumpIfZeroConstantFolding(IRJumpIfZeroNode* IRJumpIfZero,
       return changed;
     }
     // condition is always false, remove the instruction
-    IRInstr.reset();
+    IRInstr.reset(); // TODO(VachanVY): DOES THIS WORK?
   }
   return changed;
 }
@@ -138,7 +138,7 @@ static bool handleJumpIfNotZeroConstantFolding(
       return changed;
     }
     // condition is always false, remove the instruction
-    IRInstr.reset();
+    IRInstr.reset(); // TODO(VachanVY): DOES THIS WORK?
   }
   return changed;
 }

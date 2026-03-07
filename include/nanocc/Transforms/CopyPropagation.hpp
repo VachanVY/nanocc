@@ -3,5 +3,5 @@
 #include "nanocc/IR/IR.hpp"
 
 namespace nanocc {
-    bool ConstantFoldInstructions(IRProgramNode& IRProgram);
+    bool CopyPropagate(IRProgramNode& IRProgram);
 } // namespace nanocc
