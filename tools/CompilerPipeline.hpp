@@ -7,7 +7,7 @@
 #include "nanocc/Parser/Parser.hpp"
 #include "nanocc/Sema/Sema.hpp"
 #include "nanocc/Target/X86/X86TargetEmitter.hpp"
-#include "nanocc/Utils.hpp"
+#include "nanocc/Utils/Utils.hpp"
 
 std::string getAsmOutputFromCFile(const std::string &c_filename,
                                   bool debug = false) {

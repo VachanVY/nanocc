@@ -1,6 +1,6 @@
 #include "nanocc/AST/AST.hpp"
 #include "nanocc/Sema/Sema.hpp"
-#include "nanocc/Utils.hpp"
+#include "nanocc/Utils/Utils.hpp"
 
 #include "SemaHelper.hpp"
 

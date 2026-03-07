@@ -2,7 +2,7 @@
 #include "nanocc/Codegen/ASM.hpp"
 #include "nanocc/Sema/Sema.hpp"
 #include "nanocc/Target/X86/X86TargetInfo.hpp"
-#include "nanocc/Utils.hpp"
+#include "nanocc/Utils/Utils.hpp"
 
 void AsmProgramNode::generateAsm(std::ostream &os) {
   for (const auto &top_lvl : this->top_level) {
@@ -180,7 +180,7 @@ void AsmRetNode::generateAsm(std::ostream &os) {
 // Instruction Nodes -- end
 
 // Operand Nodes -- Start
-void AsmImmediateNode::generateAsm(std::ostream &os) { os << "$" << value; }
+void AsmImmediateNode::generateAsm(std::ostream &os) { os << "$" << IntVal; }
 
 void AsmRegisterNode::generateAsm(std::ostream &os) { os << name; }
 

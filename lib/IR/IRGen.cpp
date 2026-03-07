@@ -22,7 +22,7 @@ use shared_ptr for IRValNode (and its derived classes)
 #include "nanocc/AST/AST.hpp"
 #include "nanocc/IR/IR.hpp"
 #include "nanocc/Sema/Sema.hpp"
-#include "nanocc/Utils.hpp"
+#include "nanocc/Utils/Utils.hpp"
 
 namespace { // helper function
 void extendInstrFromVector(
@@ -109,7 +109,7 @@ functionDeclNodeIRGen(std::unique_ptr<FunctionDeclNode> &function) {
   // handle edge case: ensure function ends with a return; always return 0 no
   // matter what if the func already ends with a return, this is redundant but
   // okay for now
-  auto ret0 = std::make_unique<IRRetNode>(std::make_shared<IRConstNode>("0"));
+  auto ret0 = std::make_unique<IRRetNode>(std::make_shared<IRConstNode>(0));
   instructions.push_back(std::move(ret0));
 
   // Use the linkage resolved by sema (which handles inherited linkage from
@@ -484,14 +484,14 @@ std::shared_ptr<IRValNode> handleOtherBinOps(
 std::shared_ptr<IRValNode> handleShortCircuitOps(
     BinaryNode *binop,
     std::vector<std::unique_ptr<IRInstructionNode>> &instructions) {
-  assert(binop->op_type == "&&" ||
-         binop->op_type == "||" && "Not a short-circuit operator");
+  assert(binop->op_type == TokenType::AND ||
+         binop->op_type == TokenType::OR && "Not a short-circuit operator");
   auto result = std::make_shared<IRVariableNode>(getUniqueName("tmp"));
 
   std::string short_label = getLabelName("short");
   std::string end_label = getLabelName("end");
 
-  bool is_and = (binop->op_type == "&&");
+  bool is_and = (binop->op_type == TokenType::AND);
 
   auto left_val = exprNodeIRGen(binop->left_expr, instructions);
   // jump to short-circuit if left determines the result
@@ -515,13 +515,13 @@ std::shared_ptr<IRValNode> handleShortCircuitOps(
 
   // both conditions passed: AND is true, OR is false
   instructions.push_back(std::make_unique<IRCopyNode>(
-      std::make_shared<IRConstNode>(is_and ? "1" : "0"), result));
+      std::make_shared<IRConstNode>(is_and ? 1 : 0), result));
   instructions.push_back(std::make_unique<IRJumpNode>(end_label));
 
   // short-circuit label: AND is false, OR is true
   instructions.push_back(std::make_unique<IRLabelNode>(short_label));
   instructions.push_back(std::make_unique<IRCopyNode>(
-      std::make_shared<IRConstNode>(is_and ? "0" : "1"), result));
+      std::make_shared<IRConstNode>(is_and ? 0 : 1), result));
 
   instructions.push_back(std::make_unique<IRLabelNode>(end_label));
   return result;
@@ -554,7 +554,8 @@ std::shared_ptr<IRValNode> exprFactorNodeIRGen(
 std::shared_ptr<IRValNode> constantNodeIRGen(
     std::unique_ptr<ConstantNode> &constant,
     std::vector<std::unique_ptr<IRInstructionNode>> &instructions) {
-  return std::make_shared<IRConstNode>(constant->val);
+  int val = std::stoi(constant->val);
+  return std::make_shared<IRConstNode>(val);
 }
 
 std::shared_ptr<IRValNode>
@@ -580,7 +581,7 @@ unaryNodeIRGen(std::unique_ptr<UnaryNode> &unary,
 std::shared_ptr<IRValNode>
 binaryNodeIRGen(BinaryNode *binop,
                 std::vector<std::unique_ptr<IRInstructionNode>> &instructions) {
-  if (binop->op_type == "&&" || binop->op_type == "||") {
+  if (binop->op_type == TokenType::AND || binop->op_type == TokenType::OR) {
     return handleShortCircuitOps(binop, instructions);
   } else {
     return handleOtherBinOps(binop, instructions);

@@ -49,7 +49,7 @@ CTokenSpec token_specs[] = {{INT, int_fsm},
                             {RBRACE, rbrace_fsm},
                             {SEMICOLON, semicolon_fsm},
                             {COMMA, comma_fsm}};
-int NUMFMA = sizeof(token_specs) / sizeof(CTokenSpec);
+const int NUMFMA = sizeof(token_specs) / sizeof(CTokenSpec);
 
 CTokenVec clexer(char *s, size_t slen, bool debug) {
   // init all members to 0/NULL
@@ -65,8 +65,8 @@ CTokenVec clexer(char *s, size_t slen, bool debug) {
       continue;
     }
 
-    match_length =
-        0; // store the longest match length // reset for each new position
+    // store the longest match length; reset for each new position
+    match_length = 0;
     class_type = INVALID;
     matched = false;
     for (int i = 0; i < NUMFMA; i++) {
