@@ -484,14 +484,14 @@ std::shared_ptr<IRValNode> handleOtherBinOps(
 std::shared_ptr<IRValNode> handleShortCircuitOps(
     BinaryNode *binop,
     std::vector<std::unique_ptr<IRInstructionNode>> &instructions) {
-  assert(binop->op_type == "&&" ||
-         binop->op_type == "||" && "Not a short-circuit operator");
+  assert(binop->op_type == TokenType::AND ||
+         binop->op_type == TokenType::OR && "Not a short-circuit operator");
   auto result = std::make_shared<IRVariableNode>(getUniqueName("tmp"));
 
   std::string short_label = getLabelName("short");
   std::string end_label = getLabelName("end");
 
-  bool is_and = (binop->op_type == "&&");
+  bool is_and = (binop->op_type == TokenType::AND);
 
   auto left_val = exprNodeIRGen(binop->left_expr, instructions);
   // jump to short-circuit if left determines the result
@@ -581,7 +581,7 @@ unaryNodeIRGen(std::unique_ptr<UnaryNode> &unary,
 std::shared_ptr<IRValNode>
 binaryNodeIRGen(BinaryNode *binop,
                 std::vector<std::unique_ptr<IRInstructionNode>> &instructions) {
-  if (binop->op_type == "&&" || binop->op_type == "||") {
+  if (binop->op_type == TokenType::AND || binop->op_type == TokenType::OR) {
     return handleShortCircuitOps(binop, instructions);
   } else {
     return handleOtherBinOps(binop, instructions);

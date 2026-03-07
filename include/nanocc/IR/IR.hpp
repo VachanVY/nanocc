@@ -103,12 +103,12 @@ public:
 
 class IRUnaryNode : public IRInstructionNode {
 public:
-  std::string op_type;
+  TokenType op_type;
   std::shared_ptr<IRValNode> val_src;
   std::shared_ptr<IRValNode> val_dest;
 
   IRUnaryNode() = default;
-  IRUnaryNode(std::string op, std::shared_ptr<IRValNode> src,
+  IRUnaryNode(TokenType op, std::shared_ptr<IRValNode> src,
               std::shared_ptr<IRValNode> dest)
       : op_type(std::move(op)), val_src(std::move(src)),
         val_dest(std::move(dest)) {}
@@ -120,13 +120,13 @@ public:
 
 class IRBinaryNode : public IRInstructionNode {
 public:
-  std::string op_type;
+  TokenType op_type;
   std::shared_ptr<IRValNode> val_src1;
   std::shared_ptr<IRValNode> val_src2;
   std::shared_ptr<IRValNode> val_dest;
 
   IRBinaryNode() = default;
-  IRBinaryNode(std::string op, std::shared_ptr<IRValNode> src1,
+  IRBinaryNode(TokenType op, std::shared_ptr<IRValNode> src1,
                std::shared_ptr<IRValNode> src2, std::shared_ptr<IRValNode> dest)
       : op_type(std::move(op)), val_src1(std::move(src1)),
         val_src2(std::move(src2)), val_dest(std::move(dest)) {}

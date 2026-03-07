@@ -180,7 +180,7 @@ void AsmRetNode::generateAsm(std::ostream &os) {
 // Instruction Nodes -- end
 
 // Operand Nodes -- Start
-void AsmImmediateNode::generateAsm(std::ostream &os) { os << "$" << value; }
+void AsmImmediateNode::generateAsm(std::ostream &os) { os << "$" << IntVal; }
 
 void AsmRegisterNode::generateAsm(std::ostream &os) { os << name; }
 

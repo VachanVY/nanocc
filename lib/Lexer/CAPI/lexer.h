@@ -9,7 +9,7 @@ extern "C" {
 
 typedef enum {
 #define X(name, str) name,
-#include "tokens.def"
+#include "nanocc/Utils/tokens.def"
 } CTokenType;
 
 typedef struct {

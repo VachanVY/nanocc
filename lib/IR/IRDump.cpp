@@ -123,10 +123,9 @@ void functionCallNodeIRDump(IRFunctionCallNode *func_call_node, int indent) {
 }
 
 std::string valNodeIRDump(std::shared_ptr<IRValNode> &val_node) {
-  if (auto node = std::dynamic_pointer_cast<IRConstNode>(val_node)) {
+  if (auto node = dyn_cast<IRConstNode>(val_node.get())) {
     return std::to_string(node->IntVal);
-  } else if (auto var_node =
-                 std::dynamic_pointer_cast<IRVariableNode>(val_node)) {
+  } else if (auto var_node = dyn_cast<IRVariableNode>(val_node.get())) {
     return var_node->var_name;
   }
   throw std::runtime_error("IR Dump Error: Unknown IRValNode type");
