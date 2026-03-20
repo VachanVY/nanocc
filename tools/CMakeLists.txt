@@ -15,7 +15,7 @@ if (BUILD_NANOCC_TEST)
     target_link_libraries(nanocc_codegen PRIVATE nanoccCodegen nanoccX86Target)
 else()
     add_executable(nanocc NanoCC.cpp)
-    target_link_libraries(nanocc PRIVATE nanoccX86Target)
+    target_link_libraries(nanocc PRIVATE nanoccX86Target nanoccTransforms)
 endif()
 
 # PUBLIC would work but is wrong
