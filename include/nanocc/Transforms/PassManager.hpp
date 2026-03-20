@@ -1,6 +1,7 @@
 #pragma once
 
 #include <functional>
+#include <unordered_set>
 #include <vector>
 
 #include "nanocc/IR/IR.hpp"
@@ -15,17 +16,21 @@ public:
 
   template <typename PassType> void AddPass(PassType Pass);
 
-  void run(IRProgramNode& IRProgram);
+  void run(IRProgramNode& IRProgram, bool debug = false);
 };
 
 namespace nanocc {
+enum class OptPass {
+  ConstantFolding,
+  UnreachableCodeElim,
+  CopyPropagation,
+  DeadStoreElim
+};
 // dev flags, no to be used by users
 struct OptFlags {
-  bool enable_constant_folding = false;
-  bool enable_unreachable_code_elimination = false;
-  bool enable_copy_propagation = false;
-  bool enable_dead_store_elimination = false;
+  std::unordered_set<OptPass> optPasses;
 };
 
-void runIROptimizationPipeline(IRProgramNode& IRProgram, const OptFlags& flags);
+void runIROptimizationPipeline(IRProgramNode& IRProgram, const OptFlags& flags,
+                               bool debug = false);
 } // namespace nanocc
