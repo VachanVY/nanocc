@@ -5,67 +5,72 @@
 
 #include "nanocc/IR/IR.hpp"
 
-template <typename T> using VecPtr = std::vector<std::unique_ptr<T>>;
-template <typename T> using UPtr = std::unique_ptr<T>;
-template <typename T> using ShPtr = std::shared_ptr<T>;
-
 namespace IRGen {
-UPtr<IRProgramNode> programNodeIRGen(UPtr<ProgramNode> &program_node);
-UPtr<IRFunctionNode> functionDeclNodeIRGen(UPtr<FunctionDeclNode> &function);
+std::unique_ptr<IRProgramNode>
+programNodeIRGen(const ProgramNode& program_node);
+std::unique_ptr<IRFunctionNode>
+functionDeclNodeIRGen(const FunctionDeclNode& function);
 
 // statement and block nodes
-VecPtr<IRInstructionNode> blockNodeIRGen(UPtr<BlockNode> &block);
-VecPtr<IRInstructionNode> blockItemNodeIRGen(UPtr<BlockItemNode> &block_item);
-VecPtr<IRInstructionNode>
-declarationNodeIRGen(UPtr<DeclarationNode> &declaration);
-VecPtr<IRInstructionNode> variableDeclNodeIRGen(UPtr<VariableDeclNode> &var);
-VecPtr<IRInstructionNode> statementNodeIRGen(UPtr<StatementNode> &statement);
-VecPtr<IRInstructionNode> returnNodeIRGen(UPtr<ReturnNode> &return_stmt);
-VecPtr<IRInstructionNode>
-expressionNodeIRGen(UPtr<ExpressionNode> &expression_stmt);
-VecPtr<IRInstructionNode> ifElseNodeIRGen(UPtr<IfElseNode> &ifelse_stmt);
-VecPtr<IRInstructionNode> compoundNodeIRGen(UPtr<CompoundNode> &compound_stmt);
-VecPtr<IRInstructionNode> breakNodeIRGen(UPtr<BreakNode> &break_stmt);
-VecPtr<IRInstructionNode> continueNodeIRGen(UPtr<ContinueNode> &continue_stmt);
-VecPtr<IRInstructionNode> whileNodeIRGen(UPtr<WhileNode> &while_stmt);
-VecPtr<IRInstructionNode> doWhileNodeIRGen(UPtr<DoWhileNode> &dowhile_stmt);
-VecPtr<IRInstructionNode> forNodeIRGen(UPtr<ForNode> &for_stmt);
-VecPtr<IRInstructionNode> nullNodeIRGen(UPtr<NullNode> &null_stmt);
-VecPtr<IRInstructionNode> forInitNodeIRGen(UPtr<ForInitNode> &init);
+std::vector<std::unique_ptr<IRInstructionNode>>
+blockNodeIRGen(const BlockNode& block);
+std::vector<std::unique_ptr<IRInstructionNode>>
+blockItemNodeIRGen(const BlockItemNode& block_item);
+std::vector<std::unique_ptr<IRInstructionNode>>
+declarationNodeIRGen(const DeclarationNode& declaration);
+std::vector<std::unique_ptr<IRInstructionNode>>
+variableDeclNodeIRGen(const VariableDeclNode& var);
+std::vector<std::unique_ptr<IRInstructionNode>>
+statementNodeIRGen(const StatementNode& statement);
+std::vector<std::unique_ptr<IRInstructionNode>>
+returnNodeIRGen(const ReturnNode& return_stmt);
+std::vector<std::unique_ptr<IRInstructionNode>>
+expressionNodeIRGen(const ExpressionNode& expression_stmt);
+std::vector<std::unique_ptr<IRInstructionNode>>
+ifElseNodeIRGen(const IfElseNode& ifelse_stmt);
+std::vector<std::unique_ptr<IRInstructionNode>>
+compoundNodeIRGen(const CompoundNode& compound_stmt);
+std::vector<std::unique_ptr<IRInstructionNode>>
+breakNodeIRGen(const BreakNode& break_stmt);
+std::vector<std::unique_ptr<IRInstructionNode>>
+continueNodeIRGen(const ContinueNode& continue_stmt);
+std::vector<std::unique_ptr<IRInstructionNode>>
+whileNodeIRGen(const WhileNode& while_stmt);
+std::vector<std::unique_ptr<IRInstructionNode>>
+doWhileNodeIRGen(const DoWhileNode& dowhile_stmt);
+std::vector<std::unique_ptr<IRInstructionNode>>
+forNodeIRGen(const ForNode& for_stmt);
+std::vector<std::unique_ptr<IRInstructionNode>>
+nullNodeIRGen(const NullNode& null_stmt);
+std::vector<std::unique_ptr<IRInstructionNode>>
+forInitNodeIRGen(const ForInitNode& init);
 
 // expr nodes
-ShPtr<IRValNode> exprNodeIRGen(UPtr<ExprNode> &expr,
-                               VecPtr<IRInstructionNode> &instructions);
-ShPtr<IRValNode> exprFactorNodeIRGen(UPtr<ExprFactorNode> &exprf,
-                                     VecPtr<IRInstructionNode> &instructions);
-ShPtr<IRValNode> constantNodeIRGen(UPtr<ConstantNode> &constant,
-                                   VecPtr<IRInstructionNode> &instructions);
-ShPtr<IRValNode> varNodeIRGen(UPtr<VarNode> &var,
-                              VecPtr<IRInstructionNode> &instructions);
-ShPtr<IRValNode> unaryNodeIRGen(UPtr<UnaryNode> &unary,
-                                VecPtr<IRInstructionNode> &instructions);
-ShPtr<IRValNode> binaryNodeIRGen(BinaryNode *binop,
-                                 VecPtr<IRInstructionNode> &instructions);
-ShPtr<IRValNode> assignmentNodeIRGen(AssignmentNode *assignop,
-                                     VecPtr<IRInstructionNode> &instructions);
-ShPtr<IRValNode> conditionalNodeIRGen(ConditionalNode *condop,
-                                      VecPtr<IRInstructionNode> &instructions);
-ShPtr<IRValNode> functionCallNodeIRGen(UPtr<FunctionCallNode> &func_call,
-                                       VecPtr<IRInstructionNode> &instructions);
-
-// dump functions
-void programNodeIRDump(UPtr<IRProgramNode> &ir_program, int indent);
-void functionNodeIRDump(IRFunctionNode *ir_function, int indent);
-void staticVarNodeIRDump(IRStaticVarNode *ir_static_var, int indent);
-void retNodeIRDump(IRRetNode *ret_node, int indent);
-void unaryNodeIRDump(IRUnaryNode *unary_node, int indent);
-void binaryNodeIRDump(IRBinaryNode *binary_node, int indent);
-void copyNodeIRDump(IRCopyNode *copy_node, int indent);
-void jumpNodeIRDump(IRJumpNode *jump_node, int indent);
-void jumpIfZeroNodeIRDump(IRJumpIfZeroNode *jump_node, int indent);
-void jumpIfNotZeroNodeIRDump(IRJumpIfNotZeroNode *jump_node, int indent);
-void labelNodeIRDump(IRLabelNode *label_node, int indent);
-void functionCallNodeIRDump(IRFunctionCallNode *func_call_node, int indent);
-std::string valNodeIRDump(ShPtr<IRValNode> &val_node);
-void instructionNodeIRDump(UPtr<IRInstructionNode> &instr_node, int indent);
+std::shared_ptr<IRValNode>
+exprNodeIRGen(const ExprNode& expr,
+              std::vector<std::unique_ptr<IRInstructionNode>>& instructions);
+std::shared_ptr<IRValNode> exprFactorNodeIRGen(
+    const ExprFactorNode& exprf,
+    std::vector<std::unique_ptr<IRInstructionNode>>& instructions);
+std::shared_ptr<IRValNode> constantNodeIRGen(
+    const ConstantNode& constant,
+    std::vector<std::unique_ptr<IRInstructionNode>>& instructions);
+std::shared_ptr<IRValNode>
+varNodeIRGen(const VarNode& var,
+             std::vector<std::unique_ptr<IRInstructionNode>>& instructions);
+std::shared_ptr<IRValNode>
+unaryNodeIRGen(const UnaryNode& unary,
+               std::vector<std::unique_ptr<IRInstructionNode>>& instructions);
+std::shared_ptr<IRValNode>
+binaryNodeIRGen(const BinaryNode* binop,
+                std::vector<std::unique_ptr<IRInstructionNode>>& instructions);
+std::shared_ptr<IRValNode> assignmentNodeIRGen(
+    const AssignmentNode* assignop,
+    std::vector<std::unique_ptr<IRInstructionNode>>& instructions);
+std::shared_ptr<IRValNode> conditionalNodeIRGen(
+    const ConditionalNode* condop,
+    std::vector<std::unique_ptr<IRInstructionNode>>& instructions);
+std::shared_ptr<IRValNode> functionCallNodeIRGen(
+    const FunctionCallNode& func_call,
+    std::vector<std::unique_ptr<IRInstructionNode>>& instructions);
 } // namespace IRGen
