@@ -11,8 +11,8 @@
 #include "nanocc/Utils/Utils.hpp"
 
 std::string getAsmOutputFromCFile(const std::string& c_filename,
-                                  bool debug = false,
-                                  const nanocc::OptFlags& optimize_flags) {
+                                  const nanocc::OptFlags& optimize_flags,
+                                  bool debug = false) {
   auto contents = nanocc::getFileContents(c_filename);
   auto tokens = nanocc::lexer(contents, debug);
   auto ast = nanocc::parse(tokens, debug);
@@ -25,4 +25,25 @@ std::string getAsmOutputFromCFile(const std::string& c_filename,
   nanocc::x86CorrectAssembly(pseudo_asm, debug);
   auto output = nanocc::x86EmitAssembly(pseudo_asm);
   return output.str();
+}
+
+nanocc::OptFlags parseDevFlags(int argc, char* argv[], bool& debug) {
+  nanocc::OptFlags optFlags;
+  for (int i = 5; i < argc; i++) {
+    std::string flag = argv[i];
+    if (flag == "-fopt-constfold") {
+      optFlags.optPasses.insert(nanocc::OptPass::ConstantFolding);
+    } else if (flag == "-fopt-unreach") {
+      optFlags.optPasses.insert(nanocc::OptPass::UnreachableCodeElim);
+    } else if (flag == "-fopt-copyprop") {
+      optFlags.optPasses.insert(nanocc::OptPass::CopyPropagation);
+    } else if (flag == "-fopt-dse") {
+      optFlags.optPasses.insert(nanocc::OptPass::DeadStoreElim);
+    } else if (flag == "-fdump") {
+      debug = true;
+    } else {
+      std::println("Warning: Unrecognized optimization flag '{}'", flag);
+    }
+  }
+  return optFlags;
 }

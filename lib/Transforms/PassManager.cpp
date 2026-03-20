@@ -1,10 +1,12 @@
 #include <print>
 
 #include "nanocc/IR/IRDump.hpp"
+
+#include "nanocc/Transforms/PassManager.hpp"
+
 #include "nanocc/Transforms/ConstantFolding.hpp" // ConstantFoldInstructions
 #include "nanocc/Transforms/CopyPropagation.hpp" // CopyPropagate
 #include "nanocc/Transforms/DeadStoreElimination.hpp" // DeadStoreElimination
-#include "nanocc/Transforms/PassManager.hpp"
 #include "nanocc/Transforms/SimplifyCFG.hpp" // UnreachableCodeElimination
 
 template <typename PassType> void PassManager::AddPass(PassType Pass) {
