@@ -117,7 +117,7 @@ handleJumpIfZeroConstantFolding(IRJumpIfZeroNode* IRJumpIfZero,
       return changed;
     }
     // condition is always false, remove the instruction
-    IRInstr.reset(); // TODO(VachanVY): DOES THIS WORK?
+    IRInstr.reset();
   }
   return changed;
 }
@@ -138,7 +138,7 @@ static bool handleJumpIfNotZeroConstantFolding(
       return changed;
     }
     // condition is always false, remove the instruction
-    IRInstr.reset(); // TODO(VachanVY): DOES THIS WORK?
+    IRInstr.reset();
   }
   return changed;
 }
@@ -163,6 +163,11 @@ bool ConstantFoldInstructions(IRProgramNode& IRProgram) {
         } else if (auto* IRJumpIfTrue =
                        dyn_cast<IRJumpIfNotZeroNode>(IRInstr.get())) {
           changed |= handleJumpIfNotZeroConstantFolding(IRJumpIfTrue, IRInstr);
+        }
+        // TODO(VachanVY): use a better data structure to avoid O(n) erases; this is a temp solution
+        if (!IRInstr) {
+          IRVecInstr.erase(IRVecInstr.begin() + i);
+          --i;
         }
       }
     }

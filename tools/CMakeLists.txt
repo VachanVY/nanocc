@@ -12,10 +12,10 @@ if (BUILD_NANOCC_TEST)
     target_link_libraries(nanocc_ir PRIVATE nanoccIR)
 
     add_executable(nanocc_codegen test/TestX86AsmGen.cpp)
-    target_link_libraries(nanocc_codegen PRIVATE nanoccCodegen nanoccX86Target)
+    target_link_libraries(nanocc_codegen PRIVATE nanoccCodegen nanoccX86Target nanoccTransforms)
 else()
     add_executable(nanocc NanoCC.cpp)
-    target_link_libraries(nanocc PRIVATE nanoccX86Target nanoccTransforms)
+    target_link_libraries(nanocc PRIVATE nanoccX86Target nanoccCodegen nanoccTransforms nanoccIR nanoccSema nanoccParser nanoccLexer)
 endif()
 
 # PUBLIC would work but is wrong

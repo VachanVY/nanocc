@@ -167,7 +167,7 @@ unaryLowerIRToAsm(IRUnaryNode& node) {
     auto src = operandLowerIRToAsm(node.val_src);
 
     instructions.push_back(std::make_unique<AsmMovNode>(src, dest));
-    instructions.push_back(std::make_unique<AsmUnaryNode>(node.op_type, dest));
+    instructions.push_back(std::make_unique<AsmUnaryNode>(std::string(tokenTypeToString(node.op_type)), dest));
   } else {
     throw std::runtime_error(
         std::format("unaryLowerIRToAsm: Unsupported op_type {}",
@@ -206,7 +206,7 @@ binaryLowerIRToAsm(IRBinaryNode& node) {
 
     auto src2 = operandLowerIRToAsm(node.val_src2);
     instructions.push_back(
-        std::make_unique<AsmBinaryNode>(node.op_type, src2, dest));
+        std::make_unique<AsmBinaryNode>(std::string(tokenTypeToString(node.op_type)), src2, dest));
   } else if (RELATIONAL_OPS.contains(node.op_type)) {
     auto src1 = operandLowerIRToAsm(node.val_src1);
     auto src2 = operandLowerIRToAsm(node.val_src2);

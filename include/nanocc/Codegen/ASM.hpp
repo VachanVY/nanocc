@@ -154,7 +154,7 @@ public:
 
 class AsmUnaryNode : public AsmInstructionNode {
 public:
-  std::string op_type;
+  std::string op_type; // TODO(VachanVY): change this to a TokenType enum
   std::shared_ptr<AsmOperandNode> operand;
 
   AsmUnaryNode() = default;
@@ -173,7 +173,7 @@ public:
 
 class AsmBinaryNode : public AsmInstructionNode {
 public:
-  std::string op_type;
+  std::string op_type; // TODO(VachanVY): change this to a TokenType enum
   std::shared_ptr<AsmOperandNode> src;
   std::shared_ptr<AsmOperandNode> dest;
 

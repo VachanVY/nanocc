@@ -4,6 +4,7 @@
 #include <string>
 
 #include "nanocc/IR/IR.hpp"
+#include "nanocc/IR/IRDump.hpp"
 #include "nanocc/Utils/Utils.hpp"
 
 #include "IRHelper.hpp"
@@ -68,7 +69,7 @@ void unaryNodeIRDump(const IRUnaryNode &unary_node, int indent) {
   printIndent(indent);
   std::string dest = valNodeIRDump(*unary_node.val_dest);
   std::string src = valNodeIRDump(*unary_node.val_src);
-  std::println("{} = {} {}", dest, unary_node.op_type, src);
+  std::println("{} = {} {}", dest, tokenTypeToString(unary_node.op_type), src);
 }
 
 void binaryNodeIRDump(const IRBinaryNode &binary_node, int indent) {
@@ -76,7 +77,7 @@ void binaryNodeIRDump(const IRBinaryNode &binary_node, int indent) {
   std::string dest = valNodeIRDump(*binary_node.val_dest);
   std::string src1 = valNodeIRDump(*binary_node.val_src1);
   std::string src2 = valNodeIRDump(*binary_node.val_src2);
-  std::println("{} = {} {} {}", dest, src1, binary_node.op_type, src2);
+  std::println("{} = {} {} {}", dest, src1, tokenTypeToString(binary_node.op_type), src2);
 }
 
 void copyNodeIRDump(const IRCopyNode &copy_node, int indent) {

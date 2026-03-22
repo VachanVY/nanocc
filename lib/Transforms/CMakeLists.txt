@@ -1,8 +1,8 @@
 add_library(nanoccTransforms
-    ConstantFolding.cpp,
-    CopyPropagation.cpp,
-    DeadStoreElimination.cpp,
-    SimplifyCFG.cpp,
+    ConstantFolding.cpp
+    CopyPropagation.cpp
+    DeadStoreElimination.cpp
+    SimplifyCFG.cpp
     PassManager.cpp
 )
 

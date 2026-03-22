@@ -17,7 +17,7 @@ std::string getAsmOutputFromCFile(const std::string& c_filename,
   auto tokens = nanocc::lexer(contents, debug);
   auto ast = nanocc::parse(tokens, debug);
   nanocc::semanticAnalysis(ast, debug);
-  auto interm_repr = nanocc::generateIntermRepr(ast, debug);
+  auto interm_repr = nanocc::generateIntermRepr(*ast, debug);
   if (!optimize_flags.optPasses.empty()) {
     nanocc::runIROptimizationPipeline(*interm_repr, optimize_flags, debug);
   }
