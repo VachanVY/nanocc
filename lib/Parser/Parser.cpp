@@ -9,8 +9,8 @@
 namespace { // some helper vars/functions
 static const std::unordered_map<TokenType, int> BINOP_PRECEDENCE = {
     {TokenType::STAR, 50},  {TokenType::SLASH, 50},  {TokenType::PERCENT, 50}, {TokenType::PLUS, 45},  {TokenType::MINUS, 45},
-    {TokenType::LESSTHAN, 35},  {TokenType::LESS_EQUAL, 35}, {TokenType::GREATER_EQUAL, 35}, {TokenType::GREATER_EQUAL, 35}, {TokenType::EQUAL, 30},
-    {TokenType::NOT_EQUAL, 30}, {TokenType::AND, 10}, {TokenType::OR, 5}, {TokenType::QUESTION, 3},   {TokenType::EQUAL, 1}};
+  {TokenType::LESSTHAN, 35},  {TokenType::LESS_EQUAL, 35}, {TokenType::GREATERTHAN, 35}, {TokenType::GREATER_EQUAL, 35}, {TokenType::EQUAL, 30},
+  {TokenType::NOT_EQUAL, 30}, {TokenType::AND, 10}, {TokenType::OR, 5}, {TokenType::QUESTION, 3},   {TokenType::ASSIGN, 1}};
 
 constexpr bool isUnary(const TokenType op) {
   return op == TokenType::TILDE || op == TokenType::MINUS || op == TokenType::NOT;
