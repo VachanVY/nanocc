@@ -12,12 +12,17 @@ Replace with Jump or remove:
 */
 
 namespace {
+enum class FoldResult {
+  NoChange,
+  Replace,
+  Erase
+};
+
 // if operand is a constant evaluate it at compile time.
 // unary ops (as of now): ~, -, !
-static bool
+static FoldResult
 handleUnaryConstantFolding(IRUnaryNode* IRUnaryOp,
                            std::unique_ptr<IRInstructionNode>& IRInstr) {
-  bool changed = false;
   if (auto* IRSrcConst = dyn_cast<IRConstNode>(IRUnaryOp->val_src.get())) {
     std::shared_ptr<IRConstNode> constEval;
     switch (IRUnaryOp->op_type) {
@@ -33,17 +38,16 @@ handleUnaryConstantFolding(IRUnaryNode* IRUnaryOp,
     }
     auto folded = std::make_unique<IRCopyNode>(constEval, IRUnaryOp->val_dest);
     IRInstr = std::move(folded);
-    changed = true;
+    return FoldResult::Replace;
   }
-  return changed;
+  return FoldResult::NoChange;
 }
 
 // if both operands are constant evaluate at compile time
 // binary ops in IR: *, /, %, +, -, <, <=, >, >=, ==, !=, &&, ||
-static bool
+static FoldResult
 handleBinaryConstantFolding(IRBinaryNode* IRBinaryOp,
                             std::unique_ptr<IRInstructionNode>& IRInstr) {
-  bool changed = false;
   if (auto* IRSrc1Const = dyn_cast<IRConstNode>(IRBinaryOp->val_src1.get()))
     if (auto* IRSrc2Const = dyn_cast<IRConstNode>(IRBinaryOp->val_src2.get())) {
       std::shared_ptr<IRConstNode> constEval;
@@ -55,12 +59,12 @@ handleBinaryConstantFolding(IRBinaryNode* IRBinaryOp,
         break;
       case TokenType::SLASH:
         if (val2 == 0)
-          return changed;
+          return FoldResult::NoChange;
         constEval = std::make_shared<IRConstNode>(val1 / val2);
         break;
       case TokenType::PERCENT:
         if (val2 == 0)
-          return changed;
+          return FoldResult::NoChange;
         constEval = std::make_shared<IRConstNode>(val1 % val2);
         break;
       case TokenType::PLUS:
@@ -97,34 +101,33 @@ handleBinaryConstantFolding(IRBinaryNode* IRBinaryOp,
       auto folded =
           std::make_unique<IRCopyNode>(constEval, IRBinaryOp->val_dest);
       IRInstr = std::move(folded);
-      changed = true;
+      return FoldResult::Replace;
     }
-  return changed;
+  return FoldResult::NoChange;
 }
 
 // if jump condition is a constant evaluate it at compile time,
 // replace it with just Jump or remove it depending on the condition
-static bool
+static FoldResult
 handleJumpIfZeroConstantFolding(IRJumpIfZeroNode* IRJumpIfZero,
                                 std::unique_ptr<IRInstructionNode>& IRInstr) {
-  bool changed = false;
   if (auto* IRSrcConst = dyn_cast<IRConstNode>(IRJumpIfZero->condition.get())) {
-    changed = true;
     if (IRSrcConst->IntVal == 0) {
       // condition is always true, replace with unconditional jump
       auto folded = std::make_unique<IRJumpNode>(IRJumpIfZero->target_label);
       IRInstr = std::move(folded);
-      return changed;
+      return FoldResult::Replace;
+    } else {
+      // condition is always false, remove the instruction
+      return FoldResult::Erase;
     }
-    // condition is always false, remove the instruction
-    IRInstr.reset();
   }
-  return changed;
+  return FoldResult::NoChange;
 }
 
 // if jump condition is a constant evaluate it at compile time,
 // replace it with just Jump or remove it depending on the condition
-static bool handleJumpIfNotZeroConstantFolding(
+static FoldResult handleJumpIfNotZeroConstantFolding(
     IRJumpIfNotZeroNode* IRJumpIfNotZero,
     std::unique_ptr<IRInstructionNode>& IRInstr) {
   bool changed = false;
@@ -135,12 +138,13 @@ static bool handleJumpIfNotZeroConstantFolding(
       // condition is always true, replace with unconditional jump
       auto folded = std::make_unique<IRJumpNode>(IRJumpIfNotZero->target_label);
       IRInstr = std::move(folded);
-      return changed;
+      return FoldResult::Replace;
+    } else {
+      // condition is always false, remove the instruction
+      return FoldResult::Erase;
     }
-    // condition is always false, remove the instruction
-    IRInstr.reset();
   }
-  return changed;
+  return FoldResult::NoChange;
 }
 } // namespace
 
@@ -148,26 +152,27 @@ namespace nanocc {
 
 bool ConstantFoldInstructions(IRProgramNode& IRProgram) {
   bool changed = false;
+  FoldResult foldResult = FoldResult::NoChange;
   for (auto& TopLvl : IRProgram.top_level) {
     if (auto* IRFunc = dyn_cast<IRFunctionNode>(TopLvl.get())) {
       auto& IRVecInstr = IRFunc->ir_instructions;
-      for (int i = 0; i < IRVecInstr.size(); i++) {
-        auto& IRInstr = IRVecInstr[i];
+      for (auto it = IRVecInstr.begin(); it != IRVecInstr.end();) {
+        auto& IRInstr = *it;
         if (auto* IRUnaryOp = dyn_cast<IRUnaryNode>(IRInstr.get())) {
-          changed |= handleUnaryConstantFolding(IRUnaryOp, IRInstr);
+          foldResult = handleUnaryConstantFolding(IRUnaryOp, IRInstr);
         } else if (auto* IRBinaryOp = dyn_cast<IRBinaryNode>(IRInstr.get())) {
-          changed |= handleBinaryConstantFolding(IRBinaryOp, IRInstr);
+          foldResult = handleBinaryConstantFolding(IRBinaryOp, IRInstr);
         } else if (auto* IRJumpIfFalse =
                        dyn_cast<IRJumpIfZeroNode>(IRInstr.get())) {
-          changed |= handleJumpIfZeroConstantFolding(IRJumpIfFalse, IRInstr);
+          foldResult = handleJumpIfZeroConstantFolding(IRJumpIfFalse, IRInstr);
         } else if (auto* IRJumpIfTrue =
                        dyn_cast<IRJumpIfNotZeroNode>(IRInstr.get())) {
-          changed |= handleJumpIfNotZeroConstantFolding(IRJumpIfTrue, IRInstr);
+          foldResult = handleJumpIfNotZeroConstantFolding(IRJumpIfTrue, IRInstr);
         }
-        // TODO(VachanVY): use a better data structure to avoid O(n) erases; this is a temp solution
-        if (!IRInstr) {
-          IRVecInstr.erase(IRVecInstr.begin() + i);
-          --i;
+        if (foldResult != FoldResult::NoChange) {
+          changed = true;
+          if (foldResult == FoldResult::Erase) it = IRVecInstr.erase(it);
+          else ++it;
         }
       }
     }

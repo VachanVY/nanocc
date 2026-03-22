@@ -1,5 +1,6 @@
 #pragma once
 
+#include <list>
 #include <memory>
 #include <string>
 #include <vector>
@@ -53,12 +54,13 @@ public:
   std::string func_name;
   bool global;
   std::vector<std::string> parameters;
-  std::vector<std::unique_ptr<IRInstructionNode>> ir_instructions;
+  std::list<std::unique_ptr<IRInstructionNode>> ir_instructions;
 
   IRFunctionNode() = default;
+  virtual ~IRFunctionNode() = default;
   IRFunctionNode(
       std::string name, bool global,
-      std::vector<std::unique_ptr<IRInstructionNode>> instruction_list)
+      std::list<std::unique_ptr<IRInstructionNode>> instruction_list)
       : func_name(std::move(name)), global(global),
         ir_instructions(std::move(instruction_list)) {}
 
@@ -74,6 +76,7 @@ public:
   std::string init;
 
   IRStaticVarNode() = default;
+  virtual ~IRStaticVarNode() = default;
   IRStaticVarNode(std::unique_ptr<IdentifierNode> name, bool global,
                   std::string init)
       : var_name(std::move(name)), global(global), init(std::move(init)) {}
