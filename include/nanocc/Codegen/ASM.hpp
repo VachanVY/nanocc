@@ -5,6 +5,8 @@
 #include <unordered_map>
 #include <vector>
 
+#include "nanocc/Utils/Operators.hpp"
+
 class AsmASTNode {
 public:
   virtual ~AsmASTNode() = default;
@@ -154,12 +156,12 @@ public:
 
 class AsmUnaryNode : public AsmInstructionNode {
 public:
-  std::string op_type; // TODO(VachanVY): change this to a TokenType enum
+  TokenType op_type;
   std::shared_ptr<AsmOperandNode> operand;
 
   AsmUnaryNode() = default;
-  AsmUnaryNode(std::string op_type, std::shared_ptr<AsmOperandNode> operand)
-      : op_type(std::move(op_type)), operand(std::move(operand)) {}
+  AsmUnaryNode(TokenType op_type, std::shared_ptr<AsmOperandNode> operand)
+      : op_type(op_type), operand(operand) {}
 
   static bool classof(const AsmInstructionNode *node) {
     return dynamic_cast<const AsmUnaryNode *>(node) != nullptr;
@@ -173,14 +175,14 @@ public:
 
 class AsmBinaryNode : public AsmInstructionNode {
 public:
-  std::string op_type; // TODO(VachanVY): change this to a TokenType enum
+  TokenType op_type;
   std::shared_ptr<AsmOperandNode> src;
   std::shared_ptr<AsmOperandNode> dest;
 
   AsmBinaryNode() = default;
-  AsmBinaryNode(std::string op_type, std::shared_ptr<AsmOperandNode> src,
+  AsmBinaryNode(TokenType op_type, std::shared_ptr<AsmOperandNode> src,
                 std::shared_ptr<AsmOperandNode> dest)
-      : op_type(std::move(op_type)), src(std::move(src)),
+      : op_type(op_type), src(std::move(src)),
         dest(std::move(dest)) {}
 
   static bool classof(const AsmInstructionNode *node) {

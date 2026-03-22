@@ -1,6 +1,7 @@
 #include "nanocc/Codegen/ASM.hpp"
 #include "nanocc/Target/X86/X86TargetInfo.hpp"
 #include "nanocc/Utils/Utils.hpp"
+#include "nanocc/Utils/Operators.hpp"
 
 // Fix Instructions -- Start
 void AsmProgramNode::fixUpInstructions(const std::vector<int> &stack_sizes) {
@@ -81,7 +82,7 @@ void AsmBinaryNode::fixUpInstructions(
   const bool dest_is_mem =
       isa<AsmStackNode>(this->dest.get()) || isa<AsmDataNode>(this->dest.get());
 
-  if ((this->op_type == "+" || this->op_type == "-") && src_is_mem &&
+  if ((this->op_type == TokenType::PLUS || this->op_type == TokenType::MINUS) && src_is_mem &&
       dest_is_mem) {
     // Eg:
     // Binary(Op, Stack(-4), Stack(-8)) ==Convert=to==>
@@ -95,7 +96,7 @@ void AsmBinaryNode::fixUpInstructions(
     auto binary_instr =
         std::make_unique<AsmBinaryNode>(this->op_type, tmp_reg, this->dest);
     instructions.push_back(std::move(binary_instr));
-  } else if (this->op_type == "*" && dest_is_mem) {
+  } else if (this->op_type == TokenType::STAR && dest_is_mem) {
     // Eg:
     // Imul(Const(3), Stack(-4)) ==Convert=to==>
     // Move(Stack(-4), TmpReg); Imul(Const(3), TmpReg); Move(TmpReg, Stack(-4));
