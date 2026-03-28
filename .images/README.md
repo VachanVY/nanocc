@@ -2,6 +2,12 @@
 # Assembly
 * [asm docs](https://github.com/VachanVY/Psython/blob/main/.images/asm.md)
 -->
+# ND pointer manipulation
+* <img width="1470" height="622" alt="image" src="https://github.com/user-attachments/assets/7361edaf-fce7-4500-8e1f-ec1e62333141" />
+* <img width="1413" height="374" alt="image" src="https://github.com/user-attachments/assets/33d7b7dd-ed49-4964-adb9-a513715f28c6" />
+* <img width="1470" height="956" alt="image" src="https://github.com/user-attachments/assets/b8351711-8b2a-4510-9a07-45ae179e2363" />
+
+
 # `const` with pointers
 <img width="534" height="757" alt="image" src="https://github.com/user-attachments/assets/47024bad-2102-409f-91ba-694dc77286f9" />
 
