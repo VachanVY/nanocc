@@ -2,6 +2,9 @@
 # Assembly
 * [asm docs](https://github.com/VachanVY/Psython/blob/main/.images/asm.md)
 -->
+# `const` with pointers
+<img width="534" height="757" alt="image" src="https://github.com/user-attachments/assets/47024bad-2102-409f-91ba-694dc77286f9" />
+
 
 # `extern "C"` in C++
 Same code in C and C++, notice the difference?
