@@ -2,6 +2,10 @@
 # Assembly
 * [asm docs](https://github.com/VachanVY/Psython/blob/main/.images/asm.md)
 -->
+
+<img width="1988" height="1440" alt="image" src="https://github.com/user-attachments/assets/0f626e3a-d258-42f8-b777-b5dfffd36831" />
+
+
 # ND pointer manipulation
 * <img width="1470" height="622" alt="image" src="https://github.com/user-attachments/assets/7361edaf-fce7-4500-8e1f-ec1e62333141" />
 * <img width="1413" height="374" alt="image" src="https://github.com/user-attachments/assets/33d7b7dd-ed49-4964-adb9-a513715f28c6" />
