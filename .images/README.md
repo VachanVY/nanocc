@@ -52,6 +52,94 @@ extern "C" { // C Compiler doesn't understand extern "C" // tell C++ compiler to
 
 ```
 
+# HashMap in C++
+
+```c++
+#include <print>
+#include <climits>
+#include <stdexcept>
+
+// take very large array
+// hash function: given a key, return an index in the array
+//     key % array_size = index
+// collision: when two keys hash to the same index; go to next index until empty
+class HashMap {
+private:
+    int size;
+    int* hmap;
+public:
+    HashMap(int size);
+    ~HashMap();
+
+    void insert(int value);
+    int getIdx(int value);
+    void print();
+};
+
+HashMap::HashMap(int size) {
+    this->size = size;
+    this->hmap = new int[this->size];
+    for (int i = 0; i < this->size; i++) {
+        this->hmap[i] = INT_MAX; // INT_MAX indicates empty slot
+    }
+}
+
+HashMap::~HashMap() {
+    delete[] this->hmap;
+}
+
+// get index
+// while index is not empty increment; 
+// if you come back to the same index as start raise error
+void HashMap::insert(int value) {
+    int init_index = value % this->size;
+    int index = init_index;
+
+    while (this->hmap[index] != INT_MAX) {
+        index = (index + 1) % this->size;
+        if (index == init_index) {
+            throw std::runtime_error("HashTable is filled");
+        }
+    }
+    this->hmap[index] = value;
+}
+
+int HashMap::getIdx(int value) {
+    int init_index = value % this->size;
+    int index = init_index;
+
+    while (this->hmap[index] != value) {
+        index = (index + 1) % this->size;
+        if (index == init_index) {
+            return -1;
+        }
+    }
+    return index;
+}
+
+void HashMap::print() {
+    for (int i = 0; i < this->size; i++) {
+        if (this->hmap[i] != INT_MAX) {
+            std::print("{}: {}\n", i, this->hmap[i]);
+        } else {
+            std::print("{}: empty\n", i);
+        }
+    }
+}
+
+int main() {
+    HashMap hashMap(5);
+    hashMap.insert(14);
+    hashMap.insert(23);
+    hashMap.insert(32);
+    hashMap.insert(42);
+    hashMap.insert(522);
+
+    hashMap.print();
+    return 0;
+}
+```
+
 # Bash
 <img width="975" height="596" alt="Screenshot from 2025-12-05 22-23-20" src="https://github.com/user-attachments/assets/99d5450e-b013-47b4-8b4b-ab52b70f75be" />
 
