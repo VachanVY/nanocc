@@ -4,26 +4,26 @@
 
 #include "nanocc/AST/AST.hpp"
 #include "nanocc/Parser/Parser.hpp"
-#include "nanocc/Utils.hpp"
+#include "nanocc/Utils/Utils.hpp"
 
 namespace { // some helper vars/functions
-static const std::unordered_map<std::string, int> BINOP_PRECEDENCE = {
-    {"*", 50},  {"/", 50},  {"%", 50}, {"+", 45},  {"-", 45},
-    {"<", 35},  {"<=", 35}, {">", 35}, {">=", 35}, {"==", 30},
-    {"!=", 30}, {"&&", 10}, {"||", 5}, {"?", 3},   {"=", 1}};
+static const std::unordered_map<TokenType, int> BINOP_PRECEDENCE = {
+    {TokenType::STAR, 50},  {TokenType::SLASH, 50},  {TokenType::PERCENT, 50}, {TokenType::PLUS, 45},  {TokenType::MINUS, 45},
+  {TokenType::LESSTHAN, 35},  {TokenType::LESS_EQUAL, 35}, {TokenType::GREATERTHAN, 35}, {TokenType::GREATER_EQUAL, 35}, {TokenType::EQUAL, 30},
+  {TokenType::NOT_EQUAL, 30}, {TokenType::AND, 10}, {TokenType::OR, 5}, {TokenType::QUESTION, 3},   {TokenType::ASSIGN, 1}};
 
-constexpr bool isUnary(const std::string &op) {
-  return op == "~" || op == "-" || op == "!";
-  /* || op == "--"; */ // decrement only for lexing now
+constexpr bool isUnary(const TokenType op) {
+  return op == TokenType::TILDE || op == TokenType::MINUS || op == TokenType::NOT;
+  /* || op == TokenType::DECREMENT; */ // decrement only for lexing now
 }
 
-constexpr int getPrecedence(const std::string &op) {
+constexpr int getPrecedence(const TokenType op) {
   auto it = BINOP_PRECEDENCE.find(op);
   if (it == BINOP_PRECEDENCE.end())
-    throw std::runtime_error("Invalid operator: " + op);
+    throw std::runtime_error(std::format("Invalid operator: {}", tokenTypeToString(op)));
   return it->second;
 }
-constexpr bool isBinop(const std::string &op) {
+constexpr bool isBinop(const TokenType op) {
   return BINOP_PRECEDENCE.contains(op);
 }
 
@@ -118,12 +118,13 @@ DeclSpec parseTypeAndStorageClassSpecifiers(std::deque<Token> &token,
 }
 } // namespace
 
+/*
+  can be a function declaration or variable declaration
+  <func_decl> := { <specifier> }+ <identifier> "(" <param_list> ")" (<block> | ";") 
+  <var_decl>  := { <specifier> }+ <identifier> OPTIONAL( "=" <expr>)";" 
+  if token after identifier is '(', then function decl else variable decl
+*/
 void DeclarationNode::parse(std::deque<Token> &tokens, size_t &pos) {
-  // can be a function declaration or variable declaration
-  // <func_decl> := { <specifier> }+ <identifier> "(" <param_list> ")" (<block>
-  // | ";") <var_decl>  := { <specifier> }+ <identifier> OPTIONAL( "=" <expr>)
-  // ";" if token after identifier is '(', then function decl else variable decl
-
   // skip { <specifier> }+ tokens
   int offset = 0;
   do {
@@ -180,7 +181,7 @@ void FunctionDeclNode::parse(std::deque<Token> &tokens, size_t &pos) {
   this->func_name = std::make_unique<IdentifierNode>();
   this->func_name->parse(tokens, pos); // parse function name
   expect(tokens, TokenType::LPAREN, pos);
-  // --parse parameters-- // can be void or multiple parameters separated by ","
+  // <parse-parameters> // can be void or multiple parameters separated by ","
   if (tokens[pos].type == TokenType::VOID) {
     expect(tokens, TokenType::VOID, pos);
   } else {
@@ -196,7 +197,7 @@ void FunctionDeclNode::parse(std::deque<Token> &tokens, size_t &pos) {
       this->parameters.push_back(std::move(param));
     }
   }
-  // --parse parameters--
+  // -<parse-parameters>
   expect(tokens, TokenType::RPAREN, pos);
 
   // if function DECLARATION then just a ";"
@@ -257,8 +258,8 @@ void BlockNode::dump(int indent) const {
 }
 
 void BlockItemNode::parse(std::deque<Token> &tokens, size_t &pos) {
-  if (isDeclSpec(tokens,
-                 pos)) { // static int <var_name>; | int extern <var_name> | ...
+  // static int <var_name>; | int extern <var_name> | ...
+  if (isDeclSpec(tokens, pos)) { 
     this->declaration = std::make_unique<DeclarationNode>();
     this->declaration->parse(tokens, pos);
   } else {
@@ -588,10 +589,10 @@ void ExprNode::parse(std::deque<Token> &tokens, size_t &pos,
   this->left_exprf = std::make_unique<ExprFactorNode>();
   this->left_exprf->parse(tokens, pos);
 
-  while (pos < tokens.size() && isBinop(tokens[pos].lexeme) &&
-         getPrecedence(tokens[pos].lexeme) >= min_precedence) {
+  while (pos < tokens.size() && isBinop(tokens[pos].type) &&
+         getPrecedence(tokens[pos].type) >= min_precedence) {
     const auto &[token_type, op] = tokens[pos];
-    int op_prec = getPrecedence(op);
+    int op_prec = getPrecedence(token_type);
 
     auto right_expr = std::make_unique<ExprNode>();
     auto left_expr = std::make_unique<ExprNode>();
@@ -633,7 +634,7 @@ void ExprNode::parse(std::deque<Token> &tokens, size_t &pos,
       // wrap `left_exprf` in an `ExprNode`
       left_expr->left_exprf = std::move(this->left_exprf);
 
-      this->left_exprf = std::make_unique<BinaryNode>(op, std::move(left_expr),
+      this->left_exprf = std::make_unique<BinaryNode>(token_type, std::move(left_expr),
                                                       std::move(right_expr));
     }
   }
@@ -658,7 +659,7 @@ void ExprFactorNode::parse(std::deque<Token> &tokens, size_t &pos) {
       this->func_call = std::make_unique<FunctionCallNode>();
       this->func_call->parse(tokens, pos);
     }
-  } else if (isUnary(lexeme)) { // <unary> <factor>
+  } else if (isUnary(token_type)) { // <unary> <factor>
     this->unary = std::make_unique<UnaryNode>();
     this->unary->parse(tokens, pos);
   } else if (token_type == TokenType::LPAREN) { // "(" <expr> ")"
@@ -735,19 +736,19 @@ void ConstantNode::dump(int indent) const {
 
 void UnaryNode::parse(std::deque<Token> &tokens, size_t &pos) {
   const auto &[token_type, actual] = tokens[pos++];
-  if (!isUnary(actual)) {
+  if (!isUnary(token_type)) {
     throw std::runtime_error(std::format(
         "Syntax Error: Expected a unary operator but got '{}':'{}' at pos:{}",
         tokenTypeToString(token_type), actual, pos));
   }
-  this->op_type = actual;
+  this->op_type = token_type;
   this->operand = std::make_unique<ExprFactorNode>();
   this->operand->parse(tokens, pos);
 }
 
 void UnaryNode::dump(int indent) const {
   printIndent(indent);
-  std::println("Unary({}", this->op_type);
+  std::println("Unary({}", tokenTypeToString(this->op_type));
   this->operand->dump(indent + 1);
   printIndent(indent);
   std::println(")");
@@ -760,7 +761,7 @@ void BinaryNode::parse(std::deque<Token> &tokens, size_t &pos) {
 
 void BinaryNode::dump(int indent) const {
   printIndent(indent);
-  std::println("Binary({},", this->op_type);
+  std::println("Binary({},", tokenTypeToString(this->op_type));
   this->left_expr->dump(indent + 1);
   this->right_expr->dump(indent + 1);
   printIndent(indent);

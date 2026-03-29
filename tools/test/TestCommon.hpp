@@ -1,6 +1,6 @@
 #pragma once
 
-#include "nanocc/Utils.hpp"
+#include "nanocc/Utils/Utils.hpp"
 #include <filesystem>
 #include <fstream>
 #include <string>

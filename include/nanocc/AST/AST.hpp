@@ -16,8 +16,8 @@ class FunctionDeclNode;
 enum class StorageClass;
 enum class DataTypes;
 
-// a BlockNode will contain multiple BlockItemNodes which are either statements
-// or declarations
+// a BlockNode will contain multiple BlockItemNodes 
+// which are either statements or declarations
 class BlockNode;
 class BlockItemNode;
 
@@ -294,7 +294,7 @@ public:
 
 class UnaryNode : public ExprFactorNode {
 public:
-  std::string op_type;
+  TokenType op_type; // unary operator type
   std::unique_ptr<ExprFactorNode> operand;
 
   void parse(std::deque<Token> &tokens, size_t &pos);
@@ -303,12 +303,12 @@ public:
 
 class BinaryNode : public ExprFactorNode {
 public:
-  std::string op_type;
+  TokenType op_type; // binary operator type
   std::unique_ptr<ExprNode> left_expr;
   std::unique_ptr<ExprNode> right_expr;
 
   BinaryNode() = default;
-  BinaryNode(std::string op, std::unique_ptr<ExprNode> left,
+  BinaryNode(TokenType op, std::unique_ptr<ExprNode> left,
              std::unique_ptr<ExprNode> right)
       : op_type(std::move(op)), left_expr(std::move(left)),
         right_expr(std::move(right)) {}

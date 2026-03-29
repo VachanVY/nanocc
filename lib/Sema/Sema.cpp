@@ -1,5 +1,5 @@
 #include "nanocc/Sema/Sema.hpp"
-#include "nanocc/Utils.hpp"
+#include "nanocc/Utils/Utils.hpp"
 
 namespace nanocc {
 TypeCheckerSymbolTable global_type_checker_map;

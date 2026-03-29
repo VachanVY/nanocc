@@ -38,7 +38,16 @@ template <typename To, typename From> To *cast(From *Val) {
   return static_cast<To *>(Val);
 }
 
+template <typename To, typename From> const To *cast(const From *Val) {
+  assert(isa<To>(Val) && "cast<T>() argument of wrong type!");
+  return static_cast<const To *>(Val);
+}
+
 template <typename To, typename From> To *dyn_cast(From *u) {
+  return isa<To>(u) ? cast<To>(u) : nullptr;
+}
+
+template <typename To, typename From> const To *dyn_cast(const From *u) {
   return isa<To>(u) ? cast<To>(u) : nullptr;
 }
 

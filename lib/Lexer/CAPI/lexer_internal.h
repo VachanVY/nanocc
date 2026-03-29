@@ -19,7 +19,7 @@ static inline char *tokenTypeToString(CTokenType type) {
 #define X(name, str)                                                           \
   case name:                                                                   \
     return str;
-#include "tokens.def"
+#include "nanocc/Utils/tokens.def"
 #undef X
   }
   return "";

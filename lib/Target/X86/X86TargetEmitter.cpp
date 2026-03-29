@@ -2,7 +2,7 @@
 #include "nanocc/Codegen/ASM.hpp"
 #include "nanocc/Sema/Sema.hpp"
 #include "nanocc/Target/X86/X86TargetInfo.hpp"
-#include "nanocc/Utils.hpp"
+#include "nanocc/Utils/Utils.hpp"
 
 void AsmProgramNode::generateAsm(std::ostream &os) {
   for (const auto &top_lvl : this->top_level) {
@@ -60,23 +60,21 @@ void AsmMovNode::generateAsm(std::ostream &os) {
 
 void AsmUnaryNode::generateAsm(std::ostream &os) {
   assert(operand && "AsmUnaryNode missing operand during emission");
-  static std::unordered_map<char, std::string> unop_map = {
-      {'-', "negl"},
-      {'~', "notl"},
+  static std::unordered_map<TokenType, std::string_view> unop_map = {
+      {TokenType::MINUS, "negl"},
+      {TokenType::TILDE, "notl"},
   };
-  // index 0 since op_type is string // returns char
-  std::string mnemonic = unop_map.at(op_type[0]);
 
-  os << TAB4 << mnemonic << " ";
+  os << TAB4 << unop_map.at(op_type) << " ";
   operand->generateAsm(os);
   os << '\n';
 }
 
 void AsmBinaryNode::generateAsm(std::ostream &os) {
-  static std::unordered_map<std::string, std::string> binops = {
-      {"+", "addl"},
-      {"-", "subl"},
-      {"*", "imull"},
+  static std::unordered_map<TokenType, std::string_view> binops = {
+      {TokenType::PLUS, "addl"},
+      {TokenType::MINUS, "subl"},
+      {TokenType::STAR, "imull"},
   };
   os << TAB4 << binops.at(this->op_type) << " ";
   this->src->generateAsm(os);
@@ -180,7 +178,7 @@ void AsmRetNode::generateAsm(std::ostream &os) {
 // Instruction Nodes -- end
 
 // Operand Nodes -- Start
-void AsmImmediateNode::generateAsm(std::ostream &os) { os << "$" << value; }
+void AsmImmediateNode::generateAsm(std::ostream &os) { os << "$" << IntVal; }
 
 void AsmRegisterNode::generateAsm(std::ostream &os) { os << name; }
 
