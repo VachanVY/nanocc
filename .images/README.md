@@ -169,7 +169,7 @@ Weak pointers: you can ask a weak pointer, Are you there or dead... it doesn't i
 
 <img width="1333" height="582" alt="image" src="https://github.com/user-attachments/assets/a5d4cf46-0484-448b-ae70-a4a2cfecab2e" />
 
-```
+```c++
 struct Parent;
 struct Child;
 
@@ -181,7 +181,43 @@ struct Child {
     std::weak_ptr<Parent> parent;
 };
 
-avoid cyclic dependency
+// avoid cyclic dependency
+```
+
+```c++
+#include <memory>
+#include <vector>
+#include <iostream>
+
+/*
+struct Node {
+    int value;
+    std::shared_ptr<Node> parent;          // ❌ WRONG (cycle)
+    std::vector<std::shared_ptr<Node>> children;
+};
+*/
+
+struct Node {
+    int value;
+    std::weak_ptr<Node> parent;            // ✅ weak_ptr
+    std::vector<std::shared_ptr<Node>> children;
+};
+
+int main() {
+    auto root = std::make_shared<Node>();
+    root->value = 1;
+
+    auto child = std::make_shared<Node>();
+    child->value = 2;
+
+    child->parent = root;
+    root->children.push_back(child);
+
+    // Access parent safely
+    if (auto p = child->parent.lock()) {
+        std::cout << p->value << "\n";
+    }
+}
 ```
 
 # cmake
