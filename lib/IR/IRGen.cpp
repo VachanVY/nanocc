@@ -638,7 +638,7 @@ std::shared_ptr<IRValNode> functionCallNodeIRGen(
     const FunctionCallNode& func_call,
     std::list<std::unique_ptr<IRInstructionNode>>& instructions) {
   auto func_name = func_call.func_identifier->name;
-  std::list<std::shared_ptr<IRValNode>> args_vals;
+  std::vector<std::shared_ptr<IRValNode>> args_vals;
   for (const auto& arg : func_call.arguments) {
     // `ExprNode::generateIR` returns the destination variable of the expression
     // we need that to pass as argument to the function call

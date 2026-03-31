@@ -17,6 +17,11 @@ std::deque<Token> lexer(std::string &s, bool debug) {
     token.lexeme =
         std::string(c_tokens.items[i].start, c_tokens.items[i].length);
     // why std::move used here? enable move assignment operator instead of copy assignment operator
+    token.location = {
+      .filename = c_tokens.items[i].location.filename,
+      .line = c_tokens.items[i].location.line,
+      .column = c_tokens.items[i].location.column
+    };
     tokens[i] = std::move(token);
   }
   freeCTokens(c_tokens);

@@ -6,7 +6,7 @@
 #include <sstream>
 #include <string>
 
-constexpr auto TAB4 = "    ";
+constexpr const char* TAB4 = "    ";
 
 inline void printIndent(int indent) {
   for (int i = 0; i < indent; i++) {
@@ -15,7 +15,7 @@ inline void printIndent(int indent) {
 }
 
 inline std::string getUniqueName(const std::string &prefix) {
-  static int counter = 0;
+  static std::size_t counter = 0;
   // is the dot (.) okay? keeps it unique...
   return prefix + "." + std::to_string(counter++);
 };
@@ -64,7 +64,7 @@ inline std::string getFileContents(const std::string &filename) {
 
   // gcc preprocessor
   std::string preprocess_cmd =
-      "gcc -E -P " + filename + " -o " + preprocessed_file;
+      "gcc -E " + filename + " -o " + preprocessed_file;
   if (std::system(preprocess_cmd.c_str()) != 0) {
     throw std::runtime_error("Error: GCC preprocessor failed for file '" +
                              filename + "'");
@@ -82,5 +82,21 @@ inline std::string getFileContents(const std::string &filename) {
   std::remove(preprocessed_file.c_str());
 
   return buffer.str();
+}
+
+/// @brief Custom error reporting function that prints the error 
+/// message along with the source location and stage of the compiler 
+/// where the error occurred, then exits the program.
+/// @param filename The name of the file where the error occurred.
+/// @param line The line number where the error occurred.
+/// @param column The column number where the error occurred.
+/// @param errorStage Lexing, Parsing, Semantic Analysis, etc
+/// @param errorMessage The error message to display.
+inline void raiseError(std::string filename, size_t line, size_t column, 
+                const char* errorStage, std::string&& errorMessage) {
+  std::print(stderr, "{}:{}:", filename, line);
+  if (column > 0) std::print(stderr, "{}:", column);
+  std::println(stderr, " {} Error:\n {}", errorStage, errorMessage);
+  std::exit(1);
 }
 } // namespace nanocc

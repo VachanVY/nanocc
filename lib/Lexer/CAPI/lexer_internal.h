@@ -26,7 +26,7 @@ static inline char *tokenTypeToString(CTokenType type) {
 }
 
 // "The dynamic array guy video": https://www.youtube.com/watch?v=95M6V3mZgrI
-#define tokenPushBack(tokens, type, start, match_length)                       \
+#define tokenPushBack(tokens, type, start, match_length, location)                       \
   do {                                                                         \
     if (tokens.count >= tokens.capacity) {                                     \
       if (tokens.capacity == 0) {                                              \
@@ -37,7 +37,7 @@ static inline char *tokenTypeToString(CTokenType type) {
       tokens.items =                                                           \
           (CToken *)realloc(tokens.items, tokens.capacity * sizeof(CToken));   \
     }                                                                          \
-    tokens.items[tokens.count++] = (CToken){type, start, match_length};        \
+    tokens.items[tokens.count++] = (CToken){type, start, match_length, location};        \
   } while (0)
 
 #define tokensPrint(tokens)                                                    \
@@ -47,7 +47,7 @@ static inline char *tokenTypeToString(CTokenType type) {
                                                                                \
     for (int i = 0; i < tokens.count; i++) {                                   \
       CToken tok = tokens.items[i];                                            \
-      printf("    %-4d %-15s %-15.*s\n", i, tokenTypeToString(tok.type),       \
-             tok.length, tok.start);                                           \
+      printf("    %-4d %-15s %-15.*s (%zu:%zu) %s\n", i, tokenTypeToString(tok.type),       \
+             tok.length, tok.start, tok.location.line, tok.location.column, tok.location.filename);                                           \
     }                                                                          \
   } while (0)

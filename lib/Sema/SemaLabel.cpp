@@ -76,7 +76,7 @@ void statementNodeLoopLabelling(std::unique_ptr<StatementNode> &statement_node,
   } else if (statement_node->null_stmt) {
     nullNodeLoopLabelling(statement_node->null_stmt, loop_label); // no-op
   } else {
-    throw std::runtime_error("Type Error: Malformed StatementNode");
+    throw std::runtime_error("Loop Labeling Error: Malformed StatementNode");
   }
 }
 
@@ -102,7 +102,11 @@ void compoundNodeLoopLabelling(std::unique_ptr<CompoundNode> &compound_node,
 void breakNodeLoopLabelling(std::unique_ptr<BreakNode> &break_node,
                             std::string &loop_label) {
   if (loop_label.empty()) {
-    throw std::runtime_error("Label Error: 'break' used outside of a loop");
+    nanocc::raiseError(
+        break_node->location.filename, break_node->location.line,
+        break_node->location.column, STAGE,
+      "Loop Labeling Error: 'break' used outside of a loop"
+    );
   }
   break_node->label = std::make_unique<IdentifierNode>();
   break_node->label->name = loop_label;
@@ -111,7 +115,11 @@ void breakNodeLoopLabelling(std::unique_ptr<BreakNode> &break_node,
 void continueNodeLoopLabelling(std::unique_ptr<ContinueNode> &continue_node,
                                std::string &loop_label) {
   if (loop_label.empty()) {
-    throw std::runtime_error("Label Error: 'continue' used outside of a loop");
+    nanocc::raiseError(
+        continue_node->location.filename, continue_node->location.line,
+        continue_node->location.column, STAGE,
+      "Loop Labeling Error: 'continue' used outside of a loop"
+    );
   }
   continue_node->label = std::make_unique<IdentifierNode>();
   continue_node->label->name = loop_label;

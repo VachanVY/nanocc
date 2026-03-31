@@ -53,6 +53,7 @@ class IdentifierNode; // Do we need this? Just a string would do?
 /// @brief parse function for every Node type derived from this class
 class ASTNode {
 public:
+  TokenLocation location; // for error reporting
   virtual ~ASTNode() = default;
   virtual void dump(int indent = 0) const = 0;
 };
@@ -86,10 +87,10 @@ public:
 
 class FunctionDeclNode : public ASTNode {
 public:
-  std::unique_ptr<IdentifierNode> func_name; // function name
+  std::unique_ptr<IdentifierNode> func_name;
   std::vector<std::unique_ptr<IdentifierNode>> parameters;
-  // OPTIONAL(body): present for function definitions; absent for function
-  // declarations;
+  // OPTIONAL(body): 
+  // present for function definitions; absent for function declarations;
   std::unique_ptr<BlockNode> body;
   StorageClass storage_class;
 

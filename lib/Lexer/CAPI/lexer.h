@@ -13,9 +13,16 @@ typedef enum {
 } CTokenType;
 
 typedef struct {
+  char* filename;
+  size_t line;
+  size_t column;
+} CTokenLocation;
+
+typedef struct {
   CTokenType type;   // token category produced by the lexer
   const char *start; // source text matched for that token
   int length;        // length matched
+  CTokenLocation location; // location of the token in the source
 } CToken;
 
 // struct with items to hold, size of it, capacity of it

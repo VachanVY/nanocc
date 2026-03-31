@@ -1,7 +1,7 @@
 #include "nanocc/Codegen/ASM.hpp"
 #include "nanocc/Target/X86/X86TargetInfo.hpp"
 #include "nanocc/Utils/Utils.hpp"
-#include "nanocc/Utils/Operators.hpp"
+#include "nanocc/Utils/Tokens.hpp"
 
 // Fix Instructions -- Start
 void AsmProgramNode::fixUpInstructions(const std::vector<int> &stack_sizes) {

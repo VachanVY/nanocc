@@ -4,6 +4,8 @@
 #include "nanocc/Sema/Sema.hpp"
 #include <memory>
 
+#define STAGE "Semantic Analysis"
+
 namespace Sema {
 // indetifier resolution -- start
 void programNodeResolveTypes(std::unique_ptr<ProgramNode> &, IdentifierMap &);

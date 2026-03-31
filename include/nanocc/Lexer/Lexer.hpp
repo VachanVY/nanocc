@@ -4,11 +4,18 @@
 #include <stdexcept>
 #include <string>
 
-#include "nanocc/Utils/Operators.hpp"
+#include "nanocc/Utils/Tokens.hpp"
+
+struct TokenLocation {
+  std::string filename;
+  size_t line;
+  size_t column;
+};
 
 struct Token {
   TokenType type;     // token category produced by the lexer
   std::string lexeme; // source text matched for that token
+  TokenLocation location; // location of the token in the source
 };
 
 namespace nanocc {
