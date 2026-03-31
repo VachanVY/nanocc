@@ -5,8 +5,8 @@
 
 <img width="1988" height="1440" alt="image" src="https://github.com/user-attachments/assets/0f626e3a-d258-42f8-b777-b5dfffd36831" />
 
-
 # ND pointer manipulation
+* <img width="362" height="231" alt="image" src="https://github.com/user-attachments/assets/158a94ec-5d59-4fe5-8489-8f82d91f1f21" />
 * <img width="1470" height="622" alt="image" src="https://github.com/user-attachments/assets/7361edaf-fce7-4500-8e1f-ec1e62333141" />
 * <img width="1413" height="374" alt="image" src="https://github.com/user-attachments/assets/33d7b7dd-ed49-4964-adb9-a513715f28c6" />
 * <img width="1470" height="956" alt="image" src="https://github.com/user-attachments/assets/b8351711-8b2a-4510-9a07-45ae179e2363" />
