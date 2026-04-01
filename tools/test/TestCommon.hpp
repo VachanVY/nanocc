@@ -24,7 +24,7 @@ struct TestArgs {
   ExitStage exit_stage = ExitStage::None;
 };
 
-inline TestArgs parseTestArgs(int argc, char *argv[]) {
+inline TestArgs parseTestArgs(int argc, char* argv[]) {
   if (argc < 2) {
     std::println(stderr, "Usage: {} [options] <source_file>", argv[0]);
     std::exit(1);
@@ -64,8 +64,8 @@ inline TestArgs parseTestArgs(int argc, char *argv[]) {
 // Write assembly string to a temp .s file and compile it to the given output
 // path. If object_only is true, produce a .o file (no linking). Returns true on
 // success.
-inline bool assembleToFile(const std::string &assembly,
-                           const std::filesystem::path &output_path,
+inline bool assembleToFile(const std::string& assembly,
+                           const std::filesystem::path& output_path,
                            bool object_only, bool debug) {
   std::filesystem::path temp_dir = std::filesystem::temp_directory_path();
   std::filesystem::path asm_file = temp_dir / "nanocc_test.s";
@@ -99,7 +99,7 @@ inline bool assembleToFile(const std::string &assembly,
 }
 
 // Legacy helper kept for compatibility – compile and run, output to /tmp
-inline bool assembleAndRunWithGcc(const std::string &assembly, bool debug) {
+inline bool assembleAndRunWithGcc(const std::string& assembly, bool debug) {
   std::filesystem::path temp_dir = std::filesystem::temp_directory_path();
   std::filesystem::path exe_file = temp_dir / "nanocc_test_bin";
 

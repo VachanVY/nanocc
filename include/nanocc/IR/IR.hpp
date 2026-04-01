@@ -58,9 +58,8 @@ public:
 
   IRFunctionNode() = default;
   virtual ~IRFunctionNode() = default;
-  IRFunctionNode(
-      std::string name, bool global,
-      std::list<std::unique_ptr<IRInstructionNode>> instruction_list)
+  IRFunctionNode(std::string name, bool global,
+                 std::list<std::unique_ptr<IRInstructionNode>> instruction_list)
       : func_name(std::move(name)), global(global),
         ir_instructions(std::move(instruction_list)) {}
 

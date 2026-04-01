@@ -5,7 +5,7 @@
 #include "nanocc/Parser/Parser.hpp"
 #include "nanocc/Sema/Sema.hpp"
 
-int main(int argc, char *argv[]) {
+int main(int argc, char* argv[]) {
   auto args = nanocc::test::parseTestArgs(argc, argv);
   auto contents = nanocc::getFileContents(args.filename);
   auto tokens = nanocc::lexer(contents, args.debug);

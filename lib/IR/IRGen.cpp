@@ -12,11 +12,11 @@ func XNode::emit_lr()
 use shared_ptr for IRValNode (and its derived classes)
 */
 
+#include <list>
 #include <memory>
 #include <print>
 #include <string>
 #include <utility>
-#include <list>
 
 #include "IRHelper.hpp"
 #include "nanocc/AST/AST.hpp"
@@ -461,9 +461,9 @@ exprNodeIRGen(const ExprNode& expr,
 
 namespace { // helper functions to handle binary short-circuiting operators
 /// @brief handle non-short-circuiting binary operations
-std::shared_ptr<IRValNode> handleOtherBinOps(
-    const BinaryNode* binop,
-    std::list<std::unique_ptr<IRInstructionNode>>& instructions) {
+std::shared_ptr<IRValNode>
+handleOtherBinOps(const BinaryNode* binop,
+                  std::list<std::unique_ptr<IRInstructionNode>>& instructions) {
   auto left_val = exprNodeIRGen(*binop->left_expr, instructions);
   auto right_val = exprNodeIRGen(*binop->right_expr, instructions);
 
@@ -550,9 +550,9 @@ std::shared_ptr<IRValNode> exprFactorNodeIRGen(
   throw std::runtime_error("IR Generation Error: Malformed Expression Factor");
 }
 
-std::shared_ptr<IRValNode> constantNodeIRGen(
-    const ConstantNode& constant,
-    std::list<std::unique_ptr<IRInstructionNode>>& instructions) {
+std::shared_ptr<IRValNode>
+constantNodeIRGen(const ConstantNode& constant,
+                  std::list<std::unique_ptr<IRInstructionNode>>& instructions) {
   int val = std::stoi(constant.val);
   return std::make_shared<IRConstNode>(val);
 }

@@ -16,7 +16,7 @@ class FunctionDeclNode;
 enum class StorageClass;
 enum class DataTypes;
 
-// a BlockNode will contain multiple BlockItemNodes 
+// a BlockNode will contain multiple BlockItemNodes
 // which are either statements or declarations
 class BlockNode;
 class BlockItemNode;
@@ -62,7 +62,7 @@ class ProgramNode : public ASTNode {
 public:
   std::vector<std::unique_ptr<DeclarationNode>> declarations;
 
-  void parse(std::deque<Token> &tokens, size_t &pos);
+  void parse(std::deque<Token>& tokens, size_t& pos);
   void dump(int indent = 0) const override;
 };
 
@@ -71,7 +71,7 @@ public:
   std::unique_ptr<FunctionDeclNode> func;
   std::unique_ptr<VariableDeclNode> var;
 
-  void parse(std::deque<Token> &tokens, size_t &pos);
+  void parse(std::deque<Token>& tokens, size_t& pos);
   void dump(int indent = 0) const override;
 };
 
@@ -81,7 +81,7 @@ public:
   std::unique_ptr<ExprNode> init_expr; // OPTIONAL
   StorageClass storage_class;
 
-  void parse(std::deque<Token> &tokens, size_t &pos);
+  void parse(std::deque<Token>& tokens, size_t& pos);
   void dump(int indent = 0) const override;
 };
 
@@ -89,12 +89,12 @@ class FunctionDeclNode : public ASTNode {
 public:
   std::unique_ptr<IdentifierNode> func_name;
   std::vector<std::unique_ptr<IdentifierNode>> parameters;
-  // OPTIONAL(body): 
+  // OPTIONAL(body):
   // present for function definitions; absent for function declarations;
   std::unique_ptr<BlockNode> body;
   StorageClass storage_class;
 
-  void parse(std::deque<Token> &tokens, size_t &pos);
+  void parse(std::deque<Token>& tokens, size_t& pos);
   void dump(int indent = 0) const override;
 };
 
@@ -110,7 +110,7 @@ class BlockNode : public ASTNode {
 public:
   std::vector<std::unique_ptr<BlockItemNode>> block_items;
 
-  void parse(std::deque<Token> &tokens, size_t &pos);
+  void parse(std::deque<Token>& tokens, size_t& pos);
   void dump(int indent = 0) const override;
 };
 
@@ -119,7 +119,7 @@ public:
   std::unique_ptr<StatementNode> statement;
   std::unique_ptr<DeclarationNode> declaration;
 
-  void parse(std::deque<Token> &tokens, size_t &pos);
+  void parse(std::deque<Token>& tokens, size_t& pos);
   void dump(int indent = 0) const override;
 };
 
@@ -136,7 +136,7 @@ public:
   std::unique_ptr<ForNode> for_stmt;
   std::unique_ptr<NullNode> null_stmt;
 
-  void parse(std::deque<Token> &tokens, size_t &pos);
+  void parse(std::deque<Token>& tokens, size_t& pos);
   void dump(int indent = 0) const override;
 };
 
@@ -144,7 +144,7 @@ class ReturnNode : public StatementNode {
 public:
   std::unique_ptr<ExprNode> ret_expr;
 
-  void parse(std::deque<Token> &tokens, size_t &pos);
+  void parse(std::deque<Token>& tokens, size_t& pos);
   void dump(int indent = 0) const override;
 };
 
@@ -153,7 +153,7 @@ class ExpressionNode : public StatementNode {
 public:
   std::unique_ptr<ExprNode> expr;
 
-  void parse(std::deque<Token> &tokens, size_t &pos);
+  void parse(std::deque<Token>& tokens, size_t& pos);
   void dump(int indent = 0) const override;
 };
 
@@ -163,7 +163,7 @@ public:
   std::unique_ptr<StatementNode> if_block;
   std::unique_ptr<StatementNode> else_block; // OPTIONAL
 
-  void parse(std::deque<Token> &tokens, size_t &pos);
+  void parse(std::deque<Token>& tokens, size_t& pos);
   void dump(int indent = 0) const override;
 };
 
@@ -171,7 +171,7 @@ class CompoundNode : public StatementNode {
 public:
   std::unique_ptr<BlockNode> block;
 
-  void parse(std::deque<Token> &tokens, size_t &pos);
+  void parse(std::deque<Token>& tokens, size_t& pos);
   void dump(int indent = 0) const override;
 };
 
@@ -183,7 +183,7 @@ class BreakNode : public StatementNode {
 public:
   std::unique_ptr<IdentifierNode> label; // ✶✶✶
 
-  void parse(std::deque<Token> &tokens, size_t &pos);
+  void parse(std::deque<Token>& tokens, size_t& pos);
   void dump(int indent = 0) const override;
 };
 
@@ -191,7 +191,7 @@ class ContinueNode : public StatementNode {
 public:
   std::unique_ptr<IdentifierNode> label; // ✶✶✶
 
-  void parse(std::deque<Token> &tokens, size_t &pos);
+  void parse(std::deque<Token>& tokens, size_t& pos);
   void dump(int indent = 0) const override;
 };
 
@@ -202,7 +202,7 @@ public:
 
   std::unique_ptr<IdentifierNode> label; // ✶✶✶
 
-  void parse(std::deque<Token> &tokens, size_t &pos);
+  void parse(std::deque<Token>& tokens, size_t& pos);
   void dump(int indent = 0) const override;
 };
 
@@ -213,7 +213,7 @@ public:
 
   std::unique_ptr<IdentifierNode> label; // ✶✶✶
 
-  void parse(std::deque<Token> &tokens, size_t &pos);
+  void parse(std::deque<Token>& tokens, size_t& pos);
   void dump(int indent = 0) const override;
 };
 
@@ -226,7 +226,7 @@ public:
 
   std::unique_ptr<IdentifierNode> label; // ✶✶✶
 
-  void parse(std::deque<Token> &tokens, size_t &pos);
+  void parse(std::deque<Token>& tokens, size_t& pos);
   void dump(int indent = 0) const override;
 };
 
@@ -235,14 +235,14 @@ public:
   std::unique_ptr<VariableDeclNode> declaration; // OPTIONAL
   std::unique_ptr<ExprNode> init_expr;           // OPTIONAL
 
-  void parse(std::deque<Token> &tokens, size_t &pos);
+  void parse(std::deque<Token>& tokens, size_t& pos);
   void dump(int indent = 0) const override;
 };
 
 // for null statements (i.e., just a semicolon)
 class NullNode : public StatementNode {
 public:
-  void parse(std::deque<Token> &tokens, size_t &pos);
+  void parse(std::deque<Token>& tokens, size_t& pos);
   void dump(int indent = 0) const override;
 };
 
@@ -252,7 +252,7 @@ public:
   // <exp> is of the form <factor> ( <binary> <expr> )*
   std::unique_ptr<ExprFactorNode> left_exprf;
 
-  void parse(std::deque<Token> &tokens, size_t &pos, int min_precedence = 0);
+  void parse(std::deque<Token>& tokens, size_t& pos, int min_precedence = 0);
   void dump(int indent = 0) const override;
 };
 
@@ -270,7 +270,7 @@ public:
   std::unique_ptr<FunctionCallNode>
       func_call; // <identifier> "(" [ <arg_list> ] ")"
 
-  void parse(std::deque<Token> &tokens, size_t &pos);
+  void parse(std::deque<Token>& tokens, size_t& pos);
   void dump(int indent = 0) const override;
 };
 
@@ -278,7 +278,7 @@ class ConstantNode : public ExprFactorNode {
 public:
   std::string val;
 
-  void parse(std::deque<Token> &tokens, size_t &pos);
+  void parse(std::deque<Token>& tokens, size_t& pos);
   void dump(int indent = 0) const override;
 };
 
@@ -286,10 +286,10 @@ class VarNode : public ExprFactorNode {
 public:
   std::unique_ptr<IdentifierNode> var_name;
 
-  void parse(std::deque<Token> &tokens, size_t &pos);
+  void parse(std::deque<Token>& tokens, size_t& pos);
   void dump(int indent = 0) const override;
-  static bool classof(const ExprFactorNode *u) {
-    return dynamic_cast<const VarNode *>(u) != nullptr;
+  static bool classof(const ExprFactorNode* u) {
+    return dynamic_cast<const VarNode*>(u) != nullptr;
   }
 };
 
@@ -298,7 +298,7 @@ public:
   TokenType op_type; // unary operator type
   std::unique_ptr<ExprFactorNode> operand;
 
-  void parse(std::deque<Token> &tokens, size_t &pos);
+  void parse(std::deque<Token>& tokens, size_t& pos);
   void dump(int indent = 0) const override;
 };
 
@@ -314,10 +314,10 @@ public:
       : op_type(std::move(op)), left_expr(std::move(left)),
         right_expr(std::move(right)) {}
 
-  void parse(std::deque<Token> &tokens, size_t &pos);
+  void parse(std::deque<Token>& tokens, size_t& pos);
   void dump(int indent = 0) const override;
-  static bool classof(const ExprFactorNode *u) {
-    return dynamic_cast<const BinaryNode *>(u) != nullptr;
+  static bool classof(const ExprFactorNode* u) {
+    return dynamic_cast<const BinaryNode*>(u) != nullptr;
   }
 };
 
@@ -331,10 +331,10 @@ public:
                  std::unique_ptr<ExprNode> right)
       : left_expr(std::move(left)), right_expr(std::move(right)) {}
 
-  void parse(std::deque<Token> &tokens, size_t &pos);
+  void parse(std::deque<Token>& tokens, size_t& pos);
   void dump(int indent = 0) const override;
-  static bool classof(const ExprFactorNode *u) {
-    return dynamic_cast<const AssignmentNode *>(u) != nullptr;
+  static bool classof(const ExprFactorNode* u) {
+    return dynamic_cast<const AssignmentNode*>(u) != nullptr;
   }
 };
 
@@ -351,10 +351,10 @@ public:
       : condition(std::move(cond)), true_expr(std::move(t_expr)),
         false_expr(std::move(f_expr)) {}
 
-  void parse(std::deque<Token> &tokens, size_t &pos);
+  void parse(std::deque<Token>& tokens, size_t& pos);
   void dump(int indent = 0) const override;
-  static bool classof(const ExprFactorNode *u) {
-    return dynamic_cast<const ConditionalNode *>(u) != nullptr;
+  static bool classof(const ExprFactorNode* u) {
+    return dynamic_cast<const ConditionalNode*>(u) != nullptr;
   }
 };
 
@@ -363,10 +363,10 @@ public:
   std::unique_ptr<IdentifierNode> func_identifier;
   std::vector<std::unique_ptr<ExprNode>> arguments;
 
-  void parse(std::deque<Token> &tokens, size_t &pos);
+  void parse(std::deque<Token>& tokens, size_t& pos);
   void dump(int indent = 0) const override;
-  static bool classof(const ExprFactorNode *u) {
-    return dynamic_cast<const FunctionCallNode *>(u) != nullptr;
+  static bool classof(const ExprFactorNode* u) {
+    return dynamic_cast<const FunctionCallNode*>(u) != nullptr;
   }
 };
 
@@ -374,7 +374,7 @@ class IdentifierNode : public ASTNode {
 public:
   std::string name;
 
-  void parse(std::deque<Token> &tokens, size_t &pos);
+  void parse(std::deque<Token>& tokens, size_t& pos);
   void dump(int indent = 0) const override { dump(indent, true); };
   void dump(int indent, bool new_line) const;
 };

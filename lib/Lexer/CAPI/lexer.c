@@ -136,7 +136,6 @@ CTokenVec clexer(char* s, size_t slen, bool debug) {
     // remove substr of the string now that it is tokenized
     pos += match_length;
     columnno++;
-
   }
   if (debug) {
     printf("----- Lexical Analysis -----\n");

@@ -7,10 +7,10 @@
 #include "SemaHelper.hpp"
 
 namespace { // helper functions
-IdentifierMap copyIdentifierMapForNewScope(const IdentifierMap &old_sym_table,
+IdentifierMap copyIdentifierMapForNewScope(const IdentifierMap& old_sym_table,
                                            bool curr_scope = false) {
   IdentifierMap new_sym_table = old_sym_table;
-  for (const auto &[var_name, var_scope] : old_sym_table) {
+  for (const auto& [var_name, var_scope] : old_sym_table) {
     new_sym_table[var_name].from_curr_scope = curr_scope;
   }
   return new_sym_table;
@@ -18,16 +18,18 @@ IdentifierMap copyIdentifierMapForNewScope(const IdentifierMap &old_sym_table,
 
 /// @brief check for variable redeclaration in the same scope.
 /// add to symbol table after giving unique name;
-void resolveVariableIdentifiers(IdentifierMap &identifier_map,
-                                std::unique_ptr<IdentifierNode> &var_name) {
+void resolveVariableIdentifiers(IdentifierMap& identifier_map,
+                                std::unique_ptr<IdentifierNode>& var_name) {
   /* error case
   {int a = 1; int a = 2;}
   */
   if (identifier_map.contains(var_name->name) &&
       identifier_map[var_name->name].from_curr_scope) {
-    nanocc::raiseError(var_name->location.filename, var_name->location.line,
-                        var_name->location.column, STAGE,
-                        std::format("Type Error: Redeclaration of parameter '{}'", var_name->name));
+    nanocc::raiseError(
+        var_name->location.filename, var_name->location.line,
+        var_name->location.column, STAGE,
+        std::format("Type Error: Redeclaration of parameter '{}'",
+                    var_name->name));
   }
   std::string unique_name = getUniqueName(var_name->name);
   /*
@@ -47,17 +49,17 @@ void resolveVariableIdentifiers(IdentifierMap &identifier_map,
 
 namespace Sema {
 // identifier resolution -- start
-void programNodeResolveTypes(std::unique_ptr<ProgramNode> &program_node,
-                             IdentifierMap &identifier_map) {
+void programNodeResolveTypes(std::unique_ptr<ProgramNode>& program_node,
+                             IdentifierMap& identifier_map) {
   // both function definitions and declarations are handled here
-  for (auto &decl : program_node->declarations) {
+  for (auto& decl : program_node->declarations) {
     declarationNodeResolveTypes(decl, identifier_map);
   }
 }
 
 void declarationNodeResolveTypes(
-    std::unique_ptr<DeclarationNode> &declaration_node,
-    IdentifierMap &identifier_map) {
+    std::unique_ptr<DeclarationNode>& declaration_node,
+    IdentifierMap& identifier_map) {
   if (declaration_node->func) {
     // file scope function defination and declarations
     functionDeclNodeResolveTypes(declaration_node->func, identifier_map);
@@ -77,9 +79,9 @@ int b;
 // so `no_renaming` is set to `true`
 ```*/
 void variableDeclNodeFileScopeResolveType(
-    std::unique_ptr<VariableDeclNode> &file_scope_variable_decl_node,
-    IdentifierMap &identifier_map) {
-  std::string &var_name = file_scope_variable_decl_node->var_identifier->name;
+    std::unique_ptr<VariableDeclNode>& file_scope_variable_decl_node,
+    IdentifierMap& identifier_map) {
+  std::string& var_name = file_scope_variable_decl_node->var_identifier->name;
   identifier_map[var_name] =
       (VariableScope){var_name, /*from_curr_scope=*/true, /*no_renaming=*/true};
 }
@@ -87,8 +89,8 @@ void variableDeclNodeFileScopeResolveType(
 /// @brief resolve variable identifiers `resolveVariableIdentifiers`;
 /// resolve the optional initializer expression
 void variableDeclNodeBlockScopeResolveTypes(
-    std::unique_ptr<VariableDeclNode> &variable_decl_node,
-    IdentifierMap &identifier_map) {
+    std::unique_ptr<VariableDeclNode>& variable_decl_node,
+    IdentifierMap& identifier_map) {
   /* error cases
   {        int x;        static int x;    }
   {        static int a;        int a;    }
@@ -98,9 +100,9 @@ void variableDeclNodeBlockScopeResolveTypes(
   {        extern int a;        extern int a;    }
   {        int a = 1;        int b = 2;    }
   */
-  auto &var_identifier = variable_decl_node->var_identifier;
+  auto& var_identifier = variable_decl_node->var_identifier;
   if (identifier_map.contains(var_identifier->name)) {
-    auto &prev_entry = identifier_map[var_identifier->name];
+    auto& prev_entry = identifier_map[var_identifier->name];
     // `no_renaming` field will be false when a identifier in block scope
     // has `StorageClass::None` or `StorageClass::Static`
     // extern variables have external linkage, used in other files too, so we
@@ -111,8 +113,9 @@ void variableDeclNodeBlockScopeResolveTypes(
       nanocc::raiseError(
           var_identifier->location.filename, var_identifier->location.line,
           var_identifier->location.column, STAGE,
-          std::format("Type Error: Redeclaration of variable '{}' in the same scope",
-                      var_identifier->name));
+          std::format(
+              "Type Error: Redeclaration of variable '{}' in the same scope",
+              var_identifier->name));
     }
   }
 
@@ -173,23 +176,24 @@ foo();
 }
 ```*/
 void functionDeclNodeResolveTypes(
-    std::unique_ptr<FunctionDeclNode> &function_decl_node,
-    IdentifierMap &identifier_map) {
+    std::unique_ptr<FunctionDeclNode>& function_decl_node,
+    IdentifierMap& identifier_map) {
   std::unique_ptr<IdentifierNode>& func_name = function_decl_node->func_name;
   if (identifier_map.contains(func_name->name)) {
-    auto &prev_entry = identifier_map[func_name->name];
+    auto& prev_entry = identifier_map[func_name->name];
     if (prev_entry.from_curr_scope && !prev_entry.no_renaming) {
-      nanocc::raiseError(
-        func_name->location.filename, func_name->location.line, func_name->location.column, STAGE,
-        std::format(
-          "Type Error: Redeclaration of function '{}' with no external linkage",
-          func_name->name));
+      nanocc::raiseError(func_name->location.filename, func_name->location.line,
+                         func_name->location.column, STAGE,
+                         std::format("Type Error: Redeclaration of function "
+                                     "'{}' with no external linkage",
+                                     func_name->name));
     }
   }
 
   // external linkage functions don't change their names
   func_name->name = func_name->name; // simulate no change
-  identifier_map[func_name->name] = (VariableScope){func_name->name, /*from_curr_scope*/ true, /*no_renaming=*/true};
+  identifier_map[func_name->name] = (VariableScope){
+      func_name->name, /*from_curr_scope*/ true, /*no_renaming=*/true};
 
   // create new scope for function params and body
   // they will share the same scope therefore below will give error
@@ -197,7 +201,7 @@ void functionDeclNodeResolveTypes(
   IdentifierMap new_sym_table =
       copyIdentifierMapForNewScope(identifier_map, /*curr_scope=*/false);
   // resolve parameter identifiers
-  for (auto &param : function_decl_node->parameters) {
+  for (auto& param : function_decl_node->parameters) {
     resolveVariableIdentifiers(new_sym_table, param);
   }
 
@@ -206,26 +210,27 @@ void functionDeclNodeResolveTypes(
   }
 }
 
-void blockNodeResolveTypes(std::unique_ptr<BlockNode> &block_node,
-                           IdentifierMap &identifier_map) {
-  for (const auto &block_item : block_node->block_items) {
+void blockNodeResolveTypes(std::unique_ptr<BlockNode>& block_node,
+                           IdentifierMap& identifier_map) {
+  for (const auto& block_item : block_node->block_items) {
     blockItemNodeResolveTypes(block_item, identifier_map);
   }
 }
 
 void blockItemNodeResolveTypes(
-    const std::unique_ptr<BlockItemNode> &block_item_node,
-    IdentifierMap &identifier_map) {
+    const std::unique_ptr<BlockItemNode>& block_item_node,
+    IdentifierMap& identifier_map) {
   if (block_item_node->declaration) {
     // Handle function declarations
     if (block_item_node->declaration->func) {
       // only function declarations (not definitions) are allowed inside
       // Blocks/BlockItems
-      const auto &func = block_item_node->declaration->func;
+      const auto& func = block_item_node->declaration->func;
       auto& func_name = func->func_name;
       if (func->body) {
         nanocc::raiseError(
-            func_name->location.filename, func_name->location.line, func_name->location.column, STAGE,
+            func_name->location.filename, func_name->location.line,
+            func_name->location.column, STAGE,
             std::format("Type Error: Defined function '{}' inside a BlockItem, "
                         "define it at top level",
                         func_name->name));
@@ -238,7 +243,8 @@ void blockItemNodeResolveTypes(
       */
       if (func->storage_class == StorageClass::Static) {
         nanocc::raiseError(
-            func_name->location.filename, func_name->location.line, func_name->location.column, STAGE,
+            func_name->location.filename, func_name->location.line,
+            func_name->location.column, STAGE,
             std::format("Type Error: Static function '{}' inside a BlockItem, "
                         "static storage "
                         "class not allowed for functions",
@@ -256,8 +262,8 @@ void blockItemNodeResolveTypes(
   }
 }
 
-void statementNodeResolveTypes(std::unique_ptr<StatementNode> &statement_node,
-                               IdentifierMap &identifier_map) {
+void statementNodeResolveTypes(std::unique_ptr<StatementNode>& statement_node,
+                               IdentifierMap& identifier_map) {
   if (statement_node->return_stmt) {
     returnNodeResolveTypes(statement_node->return_stmt, identifier_map);
   } else if (statement_node->expression_stmt) {
@@ -284,19 +290,19 @@ void statementNodeResolveTypes(std::unique_ptr<StatementNode> &statement_node,
   }
 }
 
-void returnNodeResolveTypes(std::unique_ptr<ReturnNode> &return_node,
-                            IdentifierMap &identifier_map) {
+void returnNodeResolveTypes(std::unique_ptr<ReturnNode>& return_node,
+                            IdentifierMap& identifier_map) {
   exprNodeResolveTypes(return_node->ret_expr, identifier_map);
 }
 
 void expressionNodeResolveTypes(
-    std::unique_ptr<ExpressionNode> &expression_node,
-    IdentifierMap &identifier_map) {
+    std::unique_ptr<ExpressionNode>& expression_node,
+    IdentifierMap& identifier_map) {
   exprNodeResolveTypes(expression_node->expr, identifier_map);
 }
 
-void ifElseNodeResolveTypes(std::unique_ptr<IfElseNode> &ifelse_node,
-                            IdentifierMap &identifier_map) {
+void ifElseNodeResolveTypes(std::unique_ptr<IfElseNode>& ifelse_node,
+                            IdentifierMap& identifier_map) {
   exprNodeResolveTypes(ifelse_node->condition, identifier_map);
   statementNodeResolveTypes(ifelse_node->if_block, identifier_map);
   if (ifelse_node->else_block) {
@@ -307,33 +313,33 @@ void ifElseNodeResolveTypes(std::unique_ptr<IfElseNode> &ifelse_node,
 /// @brief Create a new scope, i.e create a copy of the current symbol table and
 /// mark all variables from the parent scope as false as they are not from
 /// current block scope
-void compoundNodeResolveTypes(std::unique_ptr<CompoundNode> &compound_node,
-                              IdentifierMap &old_sym_table) {
+void compoundNodeResolveTypes(std::unique_ptr<CompoundNode>& compound_node,
+                              IdentifierMap& old_sym_table) {
   IdentifierMap new_sym_table =
       copyIdentifierMapForNewScope(old_sym_table, /*curr_scope=*/false);
   blockNodeResolveTypes(compound_node->block, new_sym_table);
 }
 
-void breakNodeResolveTypes(std::unique_ptr<BreakNode> &break_node,
-                           IdentifierMap &identifier_map){}; // no-op
+void breakNodeResolveTypes(std::unique_ptr<BreakNode>& break_node,
+                           IdentifierMap& identifier_map) {}; // no-op
 
-void continueNodeResolveTypes(std::unique_ptr<ContinueNode> &continue_node,
-                              IdentifierMap &identifier_map){}; // no-op
+void continueNodeResolveTypes(std::unique_ptr<ContinueNode>& continue_node,
+                              IdentifierMap& identifier_map) {}; // no-op
 
-void whileNodeResolveTypes(std::unique_ptr<WhileNode> &while_node,
-                           IdentifierMap &identifier_map) {
+void whileNodeResolveTypes(std::unique_ptr<WhileNode>& while_node,
+                           IdentifierMap& identifier_map) {
   exprNodeResolveTypes(while_node->condition, identifier_map);
   statementNodeResolveTypes(while_node->body, identifier_map);
 }
 
-void doWhileNodeResolveTypes(std::unique_ptr<DoWhileNode> &dowhile_node,
-                             IdentifierMap &identifier_map) {
+void doWhileNodeResolveTypes(std::unique_ptr<DoWhileNode>& dowhile_node,
+                             IdentifierMap& identifier_map) {
   statementNodeResolveTypes(dowhile_node->body, identifier_map);
   exprNodeResolveTypes(dowhile_node->condition, identifier_map);
 }
 
-void forNodeResolveTypes(std::unique_ptr<ForNode> &for_node,
-                         IdentifierMap &identifier_map) {
+void forNodeResolveTypes(std::unique_ptr<ForNode>& for_node,
+                         IdentifierMap& identifier_map) {
   // create a new scope for the for-loop
   IdentifierMap new_sym_table =
       copyIdentifierMapForNewScope(identifier_map, /*curr_scope=*/false);
@@ -350,8 +356,8 @@ void forNodeResolveTypes(std::unique_ptr<ForNode> &for_node,
   statementNodeResolveTypes(for_node->body, new_sym_table);
 }
 
-void forInitNodeResolveTypes(std::unique_ptr<ForInitNode> &for_init_node,
-                             IdentifierMap &identifier_map) {
+void forInitNodeResolveTypes(std::unique_ptr<ForInitNode>& for_init_node,
+                             IdentifierMap& identifier_map) {
   if (for_init_node->declaration) {
     variableDeclNodeBlockScopeResolveTypes(for_init_node->declaration,
                                            identifier_map);
@@ -360,17 +366,17 @@ void forInitNodeResolveTypes(std::unique_ptr<ForInitNode> &for_init_node,
   }
 }
 
-void nullNodeResolveTypes(std::unique_ptr<NullNode> &null_node,
-                          IdentifierMap &identifier_map){}; // no-op
+void nullNodeResolveTypes(std::unique_ptr<NullNode>& null_node,
+                          IdentifierMap& identifier_map) {}; // no-op
 
-void exprNodeResolveTypes(std::unique_ptr<ExprNode> &expr_node,
-                          IdentifierMap &identifier_map) {
+void exprNodeResolveTypes(std::unique_ptr<ExprNode>& expr_node,
+                          IdentifierMap& identifier_map) {
   exprFactorNodeResolveTypes(expr_node->left_exprf, identifier_map);
 }
 
 void exprFactorNodeResolveTypes(
-    std::unique_ptr<ExprFactorNode> &expr_factor_node,
-    IdentifierMap &identifier_map) {
+    std::unique_ptr<ExprFactorNode>& expr_factor_node,
+    IdentifierMap& identifier_map) {
   if (expr_factor_node->var_identifier) {
     varNodeResolveTypes(expr_factor_node->var_identifier, identifier_map);
   } else if (expr_factor_node->unary) {
@@ -384,15 +390,15 @@ void exprFactorNodeResolveTypes(
     functionCallNodeResolveTypes(expr_factor_node->func_call, identifier_map);
   } else if (isa<BinaryNode>(expr_factor_node.get())) {
     binaryNodeResolveTypes(
-        reinterpret_cast<std::unique_ptr<BinaryNode> &>(expr_factor_node),
+        reinterpret_cast<std::unique_ptr<BinaryNode>&>(expr_factor_node),
         identifier_map);
   } else if (isa<AssignmentNode>(expr_factor_node.get())) {
     assignmentNodeResolveTypes(
-        reinterpret_cast<std::unique_ptr<AssignmentNode> &>(expr_factor_node),
+        reinterpret_cast<std::unique_ptr<AssignmentNode>&>(expr_factor_node),
         identifier_map);
   } else if (isa<ConditionalNode>(expr_factor_node.get())) {
     conditionalNodeResolveTypes(
-        reinterpret_cast<std::unique_ptr<ConditionalNode> &>(expr_factor_node),
+        reinterpret_cast<std::unique_ptr<ConditionalNode>&>(expr_factor_node),
         identifier_map);
   } else {
     throw std::runtime_error("Identifier Resolution: Malformed ExprFactorNode");
@@ -401,12 +407,11 @@ void exprFactorNodeResolveTypes(
 
 /// @brief Should already be added to the symbol table by
 /// `variableDeclNodeBlockScopeResolveTypes`
-void varNodeResolveTypes(std::unique_ptr<VarNode> &var_node,
-                         IdentifierMap &identifier_map) {
+void varNodeResolveTypes(std::unique_ptr<VarNode>& var_node,
+                         IdentifierMap& identifier_map) {
   auto& var_name = var_node->var_name;
   if (identifier_map.contains(var_name->name)) {
-    var_name->name =
-        identifier_map[var_name->name].unique_name;
+    var_name->name = identifier_map[var_name->name].unique_name;
   } else {
     nanocc::raiseError(
         var_name->location.filename, var_name->location.line,
@@ -415,19 +420,19 @@ void varNodeResolveTypes(std::unique_ptr<VarNode> &var_node,
   }
 }
 
-void constantNodeResolveTypes(std::unique_ptr<ConstantNode> &constant_node,
-                              IdentifierMap &identifier_map){}; // no-op
+void constantNodeResolveTypes(std::unique_ptr<ConstantNode>& constant_node,
+                              IdentifierMap& identifier_map) {}; // no-op
 
-void binaryNodeResolveTypes(std::unique_ptr<BinaryNode> &binary_node,
-                            IdentifierMap &identifier_map) {
+void binaryNodeResolveTypes(std::unique_ptr<BinaryNode>& binary_node,
+                            IdentifierMap& identifier_map) {
   exprNodeResolveTypes(binary_node->left_expr, identifier_map);
   exprNodeResolveTypes(binary_node->right_expr, identifier_map);
 }
 
 /// @brief `AssignmentNode::left_expr` must be a `VarNode` else throw type error
 void assignmentNodeResolveTypes(
-    std::unique_ptr<AssignmentNode> &assignment_node,
-    IdentifierMap &identifier_map) {
+    std::unique_ptr<AssignmentNode>& assignment_node,
+    IdentifierMap& identifier_map) {
   assert(
       assignment_node->left_expr && assignment_node->left_expr->left_exprf &&
       "Left expression or its factor is null in `assignmentNodeResolveTypes`");
@@ -436,7 +441,8 @@ void assignmentNodeResolveTypes(
     nanocc::raiseError(
         assignment_node->left_expr->location.filename,
         assignment_node->left_expr->location.line, -1, STAGE,
-        std::format("Type Error: Left-hand side of assignment must be a variable"));
+        std::format(
+            "Type Error: Left-hand side of assignment must be a variable"));
   }
 
   exprNodeResolveTypes(assignment_node->left_expr, identifier_map);
@@ -444,32 +450,30 @@ void assignmentNodeResolveTypes(
 }
 
 void conditionalNodeResolveTypes(
-    std::unique_ptr<ConditionalNode> &conditional_node,
-    IdentifierMap &identifier_map) {
+    std::unique_ptr<ConditionalNode>& conditional_node,
+    IdentifierMap& identifier_map) {
   exprNodeResolveTypes(conditional_node->condition, identifier_map);
   exprNodeResolveTypes(conditional_node->true_expr, identifier_map);
   exprNodeResolveTypes(conditional_node->false_expr, identifier_map);
 }
 
 void functionCallNodeResolveTypes(
-    std::unique_ptr<FunctionCallNode> &function_call_node,
-    IdentifierMap &identifier_map) {
+    std::unique_ptr<FunctionCallNode>& function_call_node,
+    IdentifierMap& identifier_map) {
   // function name must be declared in symbol table by
   // `functionDeclNodeResolveTypes`
   auto& func_identifier = function_call_node->func_identifier;
   if (!identifier_map.contains(func_identifier->name)) {
     nanocc::raiseError(
-        func_identifier->location.filename,
-        func_identifier->location.line,
+        func_identifier->location.filename, func_identifier->location.line,
         func_identifier->location.column, STAGE,
         std::format("Type Error: Calling undeclared function '{}'",
                     func_identifier->name));
   }
   // functions with external linkage will have same name
   // only internal linkage functions will get new unique names
-  func_identifier->name =
-      identifier_map[func_identifier->name].unique_name;
-  for (auto &arg : function_call_node->arguments) {
+  func_identifier->name = identifier_map[func_identifier->name].unique_name;
+  for (auto& arg : function_call_node->arguments) {
     exprNodeResolveTypes(arg, identifier_map);
   }
 }
@@ -479,14 +483,14 @@ void functionCallNodeResolveTypes(
 - eg: `!a = 3` ==parsed_as=> `UnaryNode('!', AssignmentNode(VarNode('a'),
 ConstantNode('3')))`;
 */
-void unaryNodeResolveTypes(std::unique_ptr<UnaryNode> &unary_node,
-                           IdentifierMap &identifier_map) {
+void unaryNodeResolveTypes(std::unique_ptr<UnaryNode>& unary_node,
+                           IdentifierMap& identifier_map) {
   assert(unary_node->operand && "Operand is null in `unaryNodeResolveTypes`");
   if (isa<AssignmentNode>(unary_node->operand.get())) {
     nanocc::raiseError(
-        unary_node->location.filename, 
-        unary_node->location.line, -1, STAGE,
-        std::format("Type Error: Cannot assign to the result of a unary operation"));
+        unary_node->location.filename, unary_node->location.line, -1, STAGE,
+        std::format(
+            "Type Error: Cannot assign to the result of a unary operation"));
   }
   exprFactorNodeResolveTypes(unary_node->operand, identifier_map);
 }
@@ -494,7 +498,7 @@ void unaryNodeResolveTypes(std::unique_ptr<UnaryNode> &unary_node,
 } // namespace Sema
 
 namespace nanocc {
-void semaIdentifierResolution(std::unique_ptr<ProgramNode> &program_node) {
+void semaIdentifierResolution(std::unique_ptr<ProgramNode>& program_node) {
   IdentifierMap identifier_map;
   Sema::programNodeResolveTypes(program_node, identifier_map);
 }

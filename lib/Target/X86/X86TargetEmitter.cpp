@@ -4,14 +4,14 @@
 #include "nanocc/Target/X86/X86TargetInfo.hpp"
 #include "nanocc/Utils/Utils.hpp"
 
-void AsmProgramNode::generateAsm(std::ostream &os) {
-  for (const auto &top_lvl : this->top_level) {
+void AsmProgramNode::generateAsm(std::ostream& os) {
+  for (const auto& top_lvl : this->top_level) {
     top_lvl->generateAsm(os);
   }
   os << "\n" << TAB4 << ".section .note.GNU-stack, \"\",@progbits\n";
 }
 
-void AsmFunctionNode::generateAsm(std::ostream &os) {
+void AsmFunctionNode::generateAsm(std::ostream& os) {
   if (this->global) {
     os << TAB4 << ".globl " << name << "\n";
   }
@@ -23,12 +23,12 @@ void AsmFunctionNode::generateAsm(std::ostream &os) {
   // movq %rsp, %rbp
   os << TAB4 << "movq " << getRegString(Reg::rsp) << ", "
      << getRegString(Reg::rbp) << "\n";
-  for (const auto &instruction : instructions) {
+  for (const auto& instruction : instructions) {
     instruction->generateAsm(os);
   }
 }
 
-void AsmStaticVariableNode::generateAsm(std::ostream &os) {
+void AsmStaticVariableNode::generateAsm(std::ostream& os) {
   bool global = this->global;
   bool zero_init = (this->init == "0");
   if (global) {
@@ -49,7 +49,7 @@ void AsmStaticVariableNode::generateAsm(std::ostream &os) {
 }
 
 // Instruction Nodes -- Start
-void AsmMovNode::generateAsm(std::ostream &os) {
+void AsmMovNode::generateAsm(std::ostream& os) {
   assert(src && dest && "AsmMovNode missing operands during emission");
   os << TAB4 << "movl ";
   src->generateAsm(os);
@@ -58,7 +58,7 @@ void AsmMovNode::generateAsm(std::ostream &os) {
   os << '\n';
 }
 
-void AsmUnaryNode::generateAsm(std::ostream &os) {
+void AsmUnaryNode::generateAsm(std::ostream& os) {
   assert(operand && "AsmUnaryNode missing operand during emission");
   static std::unordered_map<TokenType, std::string_view> unop_map = {
       {TokenType::MINUS, "negl"},
@@ -70,7 +70,7 @@ void AsmUnaryNode::generateAsm(std::ostream &os) {
   os << '\n';
 }
 
-void AsmBinaryNode::generateAsm(std::ostream &os) {
+void AsmBinaryNode::generateAsm(std::ostream& os) {
   static std::unordered_map<TokenType, std::string_view> binops = {
       {TokenType::PLUS, "addl"},
       {TokenType::MINUS, "subl"},
@@ -83,7 +83,7 @@ void AsmBinaryNode::generateAsm(std::ostream &os) {
   os << '\n';
 }
 
-void AsmCmpNode::generateAsm(std::ostream &os) {
+void AsmCmpNode::generateAsm(std::ostream& os) {
   os << TAB4 << "cmpl ";
   this->src1->generateAsm(os);
   os << ", ";
@@ -101,7 +101,7 @@ cdq                # sign extend EAX to EDX:EAX
 idivl -4(%rbp)     # divide EDX:EAX by divisor at -4(%rbp)
 ```
 */
-void AsmIdivNode::generateAsm(std::ostream &os) {
+void AsmIdivNode::generateAsm(std::ostream& os) {
   assert(divisor != nullptr && "AsmIdivNode missing divisor during emission");
   os << TAB4 << "idivl ";
   divisor->generateAsm(os);
@@ -113,63 +113,63 @@ void AsmIdivNode::generateAsm(std::ostream &os) {
 if `%eax` is positive, all bits in edx are cleared to `0`.
 if `%eax` is negative, all bits in edx are set to `1`.
 */
-void AsmCdqNode::generateAsm(std::ostream &os) {
+void AsmCdqNode::generateAsm(std::ostream& os) {
   os << TAB4 << "cdq"
      << "\n";
 }
 
-void AsmJmpNode::generateAsm(std::ostream &os) {
+void AsmJmpNode::generateAsm(std::ostream& os) {
   os << TAB4 << "jmp " << this->label << "\n";
 }
 
-void AsmJmpCCNode::generateAsm(std::ostream &os) {
+void AsmJmpCCNode::generateAsm(std::ostream& os) {
   os << TAB4 << "j" << this->cond_code << " " << this->label << "\n";
 }
 
-void AsmSetCCNode::generateAsm(std::ostream &os) {
+void AsmSetCCNode::generateAsm(std::ostream& os) {
   os << TAB4 << "set" << this->cond_code << " ";
   this->dest->generateAsm(os);
   os << "\n";
 }
 
-void AsmLabelNode::generateAsm(std::ostream &os) {
+void AsmLabelNode::generateAsm(std::ostream& os) {
   os << "  " << this->label << ":\n"; // no `TAB4` for labels
 }
 
-void AsmAllocateStackNode::generateAsm(std::ostream &os) {
+void AsmAllocateStackNode::generateAsm(std::ostream& os) {
   // subq $stack_size, %rsp
   os << TAB4 << "subq $" << stack_size << ", " << getRegString(Reg::rsp)
      << "\n";
 }
 
-void AsmDeallocateStackNode::generateAsm(std::ostream &os) {
+void AsmDeallocateStackNode::generateAsm(std::ostream& os) {
   // addq $stack_size, %rsp
   os << TAB4 << "addq $" << stack_size << ", " << getRegString(Reg::rsp)
      << "\n";
 }
 
-void AsmPushNode::generateAsm(std::ostream &os) {
+void AsmPushNode::generateAsm(std::ostream& os) {
   assert(operand && "AsmPushNode missing operand during emission");
   os << TAB4 << "pushq ";
   operand->generateAsm(os);
   os << '\n';
 }
 
-void AsmCallNode::generateAsm(std::ostream &os) {
+void AsmCallNode::generateAsm(std::ostream& os) {
   os << TAB4 << "call " << func_name;
   // add @PLT suffix for functions without definations
-  const Type &func_info = nanocc::global_type_checker_map[func_name].type;
+  const Type& func_info = nanocc::global_type_checker_map[func_name].type;
   assert(std::holds_alternative<FuncType>(func_info) &&
          "AsmCallNode::generateAsm: func_name not found in "
          "global_type_checker_map");
-  const FuncType &func_type = std::get<FuncType>(func_info);
+  const FuncType& func_type = std::get<FuncType>(func_info);
   if (!func_type.defined) {
     os << "@PLT";
   }
   os << '\n';
 }
 
-void AsmRetNode::generateAsm(std::ostream &os) {
+void AsmRetNode::generateAsm(std::ostream& os) {
   os << TAB4 << "movq"
      << " " << getRegString(Reg::rbp) << ", " << getRegString(Reg::rsp) << "\n";
   os << TAB4 << "popq " << getRegString(Reg::rbp) << "\n";
@@ -178,25 +178,25 @@ void AsmRetNode::generateAsm(std::ostream &os) {
 // Instruction Nodes -- end
 
 // Operand Nodes -- Start
-void AsmImmediateNode::generateAsm(std::ostream &os) { os << "$" << IntVal; }
+void AsmImmediateNode::generateAsm(std::ostream& os) { os << "$" << IntVal; }
 
-void AsmRegisterNode::generateAsm(std::ostream &os) { os << name; }
+void AsmRegisterNode::generateAsm(std::ostream& os) { os << name; }
 
 // `0(%rbp)`: rbp
 // `8(%rbp)`: return address of next instruction after `call func`
 // pos `offset`: `16(%rbp)`, `24(%rbp)`, ... (stack args beyond 6th)
 // neg `offset`: `-4(%rbp)`, `-8(%rbp)`, ... (local vars)
-void AsmStackNode::generateAsm(std::ostream &os) {
+void AsmStackNode::generateAsm(std::ostream& os) {
   os << offset << "(" << getRegString(Reg::rbp) << ")";
 }
 
-void AsmDataNode::generateAsm(std::ostream &os) {
+void AsmDataNode::generateAsm(std::ostream& os) {
   os << identifier << "(%rip)";
 }
 // Operand Nodes -- end
 
 namespace nanocc {
-void x86CorrectAssembly(std::unique_ptr<AsmProgramNode> &asm_ast, bool debug) {
+void x86CorrectAssembly(std::unique_ptr<AsmProgramNode>& asm_ast, bool debug) {
   // maps from `AsmPseudoNode::identifier` to assigned `AsmStackNode::offset`
   std::unordered_map<std::string, int> pseudo_reg_map;
   // offsets grow in 4-byte (int) increments // increment by 4 then use
@@ -204,11 +204,11 @@ void x86CorrectAssembly(std::unique_ptr<AsmProgramNode> &asm_ast, bool debug) {
   asm_ast->resolvePseudoRegisters(pseudo_reg_map, stack_offsets);
   if (debug) {
     for (std::size_t i = 0; i < stack_offsets.size(); i++) {
-      if (auto *func_node =
+      if (auto* func_node =
               dyn_cast<AsmFunctionNode>(asm_ast->top_level[i].get())) {
         std::println("Function = {}: Stack Size = {}: global = {}:",
                      func_node->name, stack_offsets[i], func_node->global);
-      } else if (auto *static_node = dyn_cast<AsmStaticVariableNode>(
+      } else if (auto* static_node = dyn_cast<AsmStaticVariableNode>(
                      asm_ast->top_level[i].get())) {
         std::println("Static Variable: name = {}: init = {}:",
                      static_node->name, static_node->init);
@@ -219,7 +219,7 @@ void x86CorrectAssembly(std::unique_ptr<AsmProgramNode> &asm_ast, bool debug) {
 }
 
 std::ostringstream
-x86EmitAssembly(const std::unique_ptr<AsmProgramNode> &asm_program) {
+x86EmitAssembly(const std::unique_ptr<AsmProgramNode>& asm_program) {
   std::ostringstream os;
   asm_program->generateAsm(os);
   return os;

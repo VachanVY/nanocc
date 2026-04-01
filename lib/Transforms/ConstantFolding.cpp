@@ -12,11 +12,7 @@ Replace with Jump or remove:
 */
 
 namespace {
-enum class FoldResult {
-  NoChange,
-  Replace,
-  Erase
-};
+enum class FoldResult { NoChange, Replace, Erase };
 
 // if operand is a constant evaluate it at compile time.
 // unary ops (as of now): ~, -, !
@@ -167,12 +163,15 @@ bool ConstantFoldInstructions(IRProgramNode& IRProgram) {
           foldResult = handleJumpIfZeroConstantFolding(IRJumpIfFalse, IRInstr);
         } else if (auto* IRJumpIfTrue =
                        dyn_cast<IRJumpIfNotZeroNode>(IRInstr.get())) {
-          foldResult = handleJumpIfNotZeroConstantFolding(IRJumpIfTrue, IRInstr);
+          foldResult =
+              handleJumpIfNotZeroConstantFolding(IRJumpIfTrue, IRInstr);
         }
         if (foldResult != FoldResult::NoChange) {
           changed = true;
-          if (foldResult == FoldResult::Erase) it = IRVecInstr.erase(it);
-          else ++it;
+          if (foldResult == FoldResult::Erase)
+            it = IRVecInstr.erase(it);
+          else
+            ++it;
         }
       }
     }
