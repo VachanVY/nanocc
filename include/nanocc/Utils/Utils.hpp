@@ -52,36 +52,32 @@ template <typename To, typename From> const To *dyn_cast(const From *u) {
 }
 
 namespace nanocc {
-/// @brief Reads the contents of a file into a string after preprocessing it
-/// with GCC.
+/// @brief Reads the contents of a file into a string 
+/// after preprocessing it with GCC.
 /// @param filename The name of the file to read.
 /// @return The preprocessed contents of the file as a string.
-inline std::string getFileContents(const std::string &filename) {
-  // generate unique temp file name
-  auto hash = std::hash<std::string>{}(filename);
-  std::string preprocessed_file =
-      "/tmp/preprocessed_" + std::to_string(hash) + ".i";
+inline std::string getFileContents(const std::string& filename) {
+  std::string command = "gcc -E " + filename;
 
-  // gcc preprocessor
-  std::string preprocess_cmd =
-      "gcc -E " + filename + " -o " + preprocessed_file;
-  if (std::system(preprocess_cmd.c_str()) != 0) {
-    throw std::runtime_error("Error: GCC preprocessor failed for file '" +
-                             filename + "'");
+  FILE* pipe = popen(command.c_str(), "r");
+  if (!pipe) {
+    throw std::runtime_error("Error: Failed to run GCC preprocessor");
   }
 
-  std::ifstream file(preprocessed_file);
-  if (!file.is_open()) {
-    throw std::runtime_error("Error: Could not open preprocessed file '" +
-                             preprocessed_file + "'");
+  std::string result;
+  char buffer[4096];
+
+  while (fgets(buffer, sizeof(buffer), pipe) != nullptr) {
+    result += buffer;
   }
 
-  std::stringstream buffer;
-  buffer << file.rdbuf();
-  file.close();
-  std::remove(preprocessed_file.c_str());
+  int status = pclose(pipe);
+  if (status != 0) {
+    throw std::runtime_error(
+      std::format("Error: GCC preprocessor failed for file '{}'", filename));
+  }
 
-  return buffer.str();
+  return result;
 }
 
 /// @brief Custom error reporting function that prints the error 
