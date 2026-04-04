@@ -12,7 +12,7 @@
 namespace IRGen {
 
 void programNodeIRDump(const IRProgramNode& ir_program, int indent) {
-  for (const auto& decl : ir_program.top_level) {
+  for (const auto& decl : ir_program.topLevel) {
     if (auto func = dyn_cast<IRFunctionNode>(decl.get())) {
       functionNodeIRDump(*func, indent);
     } else if (auto static_var = dyn_cast<IRStaticVarNode>(decl.get())) {
@@ -27,7 +27,7 @@ void functionNodeIRDump(const IRFunctionNode& ir_function, int indent) {
   printIndent(indent);
   std::println("Function[");
   printIndent(indent + 1);
-  std::println("name='{}'", ir_function.func_name);
+  std::println("name='{}'", ir_function.funcName);
   printIndent(indent + 1);
   if (ir_function.parameters.empty()) {
     std::println("parameters=[]");
@@ -42,7 +42,7 @@ void functionNodeIRDump(const IRFunctionNode& ir_function, int indent) {
   }
   printIndent(indent + 1);
   std::println("instructions=[");
-  for (const auto& instr : ir_function.ir_instructions) {
+  for (const auto& instr : ir_function.IRInstructions) {
     instructionNodeIRDump(*instr, indent + 2);
   }
   printIndent(indent + 1);
@@ -54,67 +54,68 @@ void functionNodeIRDump(const IRFunctionNode& ir_function, int indent) {
 void staticVarNodeIRDump(const IRStaticVarNode& ir_static_var, int indent) {
   printIndent(indent);
   std::println("StaticVar[name='{}', global={}, init={}]",
-               ir_static_var.var_name->name, ir_static_var.global,
+               ir_static_var.varName->name, ir_static_var.global,
                ir_static_var.init);
 }
 
 void retNodeIRDump(const IRRetNode& ret_node, int indent) {
   printIndent(indent);
-  std::printf("return %s\n",
-              ret_node.ret_val ? valNodeIRDump(*ret_node.ret_val).c_str() : "");
+  std::printf("return %s\n", ret_node.retValue
+                                 ? valNodeIRDump(*ret_node.retValue).c_str()
+                                 : "");
 }
 
 void unaryNodeIRDump(const IRUnaryNode& unary_node, int indent) {
   printIndent(indent);
-  std::string dest = valNodeIRDump(*unary_node.val_dest);
-  std::string src = valNodeIRDump(*unary_node.val_src);
-  std::println("{} = {} {}", dest, tokenTypeToString(unary_node.op_type), src);
+  std::string dest = valNodeIRDump(*unary_node.valDest);
+  std::string src = valNodeIRDump(*unary_node.valSrc);
+  std::println("{} = {} {}", dest, tokenTypeToString(unary_node.opType), src);
 }
 
 void binaryNodeIRDump(const IRBinaryNode& binary_node, int indent) {
   printIndent(indent);
-  std::string dest = valNodeIRDump(*binary_node.val_dest);
-  std::string src1 = valNodeIRDump(*binary_node.val_src1);
-  std::string src2 = valNodeIRDump(*binary_node.val_src2);
+  std::string dest = valNodeIRDump(*binary_node.valDest);
+  std::string src1 = valNodeIRDump(*binary_node.valSrcL);
+  std::string src2 = valNodeIRDump(*binary_node.valSrcR);
   std::println("{} = {} {} {}", dest, src1,
-               tokenTypeToString(binary_node.op_type), src2);
+               tokenTypeToString(binary_node.opType), src2);
 }
 
 void copyNodeIRDump(const IRCopyNode& copy_node, int indent) {
   printIndent(indent);
-  std::string dest = valNodeIRDump(*copy_node.val_dest);
-  std::string src = valNodeIRDump(*copy_node.val_src);
+  std::string dest = valNodeIRDump(*copy_node.ValDest);
+  std::string src = valNodeIRDump(*copy_node.ValSrc);
   std::println("{} = {}", dest, src);
 }
 
 void jumpNodeIRDump(const IRJumpNode& jump_node, int indent) {
   printIndent(indent);
-  std::println("jump {}", jump_node.target_label);
+  std::println("jump {}", jump_node.labelName);
 }
 
 void jumpIfZeroNodeIRDump(const IRJumpIfZeroNode& jump_node, int indent) {
   printIndent(indent);
   std::string cond = valNodeIRDump(*jump_node.condition);
-  std::println("jump_if_false {}, {}", cond, jump_node.target_label);
+  std::println("jump_if_false {}, {}", cond, jump_node.labelName);
 }
 
 void jumpIfNotZeroNodeIRDump(const IRJumpIfNotZeroNode& jump_node, int indent) {
   printIndent(indent);
   std::string cond = valNodeIRDump(*jump_node.condition);
-  std::println("jump_if_true {}, {}", cond, jump_node.target_label);
+  std::println("jump_if_true {}, {}", cond, jump_node.labelName);
 }
 
 void labelNodeIRDump(const IRLabelNode& label_node, int indent) {
   assert(indent > 0);
   printIndent(indent - 1);
-  std::println("{}:", label_node.label_name);
+  std::println("{}:", label_node.labelName);
 }
 
 void functionCallNodeIRDump(const IRFunctionCallNode& func_call_node,
                             int indent) {
   printIndent(indent);
-  std::print("{} = {}(", valNodeIRDump(*func_call_node.return_dest),
-             func_call_node.func_name);
+  std::print("{} = {}(", valNodeIRDump(*func_call_node.returnDest),
+             func_call_node.funcName);
   for (size_t i = 0; i < func_call_node.arguments.size(); ++i) {
     std::print("{}", valNodeIRDump(*func_call_node.arguments[i]));
     if (i < func_call_node.arguments.size() - 1) {
@@ -128,7 +129,7 @@ std::string valNodeIRDump(const IRValNode& val_node) {
   if (auto node = dyn_cast<IRConstNode>(&val_node)) {
     return std::to_string(node->IntVal);
   } else if (auto var_node = dyn_cast<IRVariableNode>(&val_node)) {
-    return var_node->var_name;
+    return var_node->varName;
   }
   throw std::runtime_error("IR Dump Error: Unknown IRValNode type");
 }

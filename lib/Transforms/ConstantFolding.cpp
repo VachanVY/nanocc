@@ -19,9 +19,9 @@ enum class FoldResult { NoChange, Replace, Erase };
 static FoldResult
 handleUnaryConstantFolding(IRUnaryNode* IRUnaryOp,
                            std::unique_ptr<IRInstructionNode>& IRInstr) {
-  if (auto* IRSrcConst = dyn_cast<IRConstNode>(IRUnaryOp->val_src.get())) {
+  if (auto* IRSrcConst = dyn_cast<IRConstNode>(IRUnaryOp->valSrc.get())) {
     std::shared_ptr<IRConstNode> constEval;
-    switch (IRUnaryOp->op_type) {
+    switch (IRUnaryOp->opType) {
     case TokenType::TILDE: // bitwise not
       constEval = std::make_shared<IRConstNode>(~IRSrcConst->IntVal);
       break;
@@ -32,7 +32,7 @@ handleUnaryConstantFolding(IRUnaryNode* IRUnaryOp,
       constEval = std::make_shared<IRConstNode>(!IRSrcConst->IntVal);
       break;
     }
-    auto folded = std::make_unique<IRCopyNode>(constEval, IRUnaryOp->val_dest);
+    auto folded = std::make_unique<IRCopyNode>(constEval, IRUnaryOp->valDest);
     IRInstr = std::move(folded);
     return FoldResult::Replace;
   }
@@ -44,12 +44,12 @@ handleUnaryConstantFolding(IRUnaryNode* IRUnaryOp,
 static FoldResult
 handleBinaryConstantFolding(IRBinaryNode* IRBinaryOp,
                             std::unique_ptr<IRInstructionNode>& IRInstr) {
-  if (auto* IRSrc1Const = dyn_cast<IRConstNode>(IRBinaryOp->val_src1.get()))
-    if (auto* IRSrc2Const = dyn_cast<IRConstNode>(IRBinaryOp->val_src2.get())) {
+  if (auto* IRSrc1Const = dyn_cast<IRConstNode>(IRBinaryOp->valSrcL.get()))
+    if (auto* IRSrc2Const = dyn_cast<IRConstNode>(IRBinaryOp->valSrcR.get())) {
       std::shared_ptr<IRConstNode> constEval;
       int val1 = IRSrc1Const->IntVal;
       int val2 = IRSrc2Const->IntVal;
-      switch (IRBinaryOp->op_type) {
+      switch (IRBinaryOp->opType) {
       case TokenType::STAR:
         constEval = std::make_shared<IRConstNode>(val1 * val2);
         break;
@@ -95,7 +95,7 @@ handleBinaryConstantFolding(IRBinaryNode* IRBinaryOp,
         break;
       }
       auto folded =
-          std::make_unique<IRCopyNode>(constEval, IRBinaryOp->val_dest);
+          std::make_unique<IRCopyNode>(constEval, IRBinaryOp->valDest);
       IRInstr = std::move(folded);
       return FoldResult::Replace;
     }
@@ -110,7 +110,7 @@ handleJumpIfZeroConstantFolding(IRJumpIfZeroNode* IRJumpIfZero,
   if (auto* IRSrcConst = dyn_cast<IRConstNode>(IRJumpIfZero->condition.get())) {
     if (IRSrcConst->IntVal == 0) {
       // condition is always true, replace with unconditional jump
-      auto folded = std::make_unique<IRJumpNode>(IRJumpIfZero->target_label);
+      auto folded = std::make_unique<IRJumpNode>(IRJumpIfZero->labelName);
       IRInstr = std::move(folded);
       return FoldResult::Replace;
     } else {
@@ -132,7 +132,7 @@ static FoldResult handleJumpIfNotZeroConstantFolding(
     changed = true;
     if (IRSrcConst->IntVal != 0) {
       // condition is always true, replace with unconditional jump
-      auto folded = std::make_unique<IRJumpNode>(IRJumpIfNotZero->target_label);
+      auto folded = std::make_unique<IRJumpNode>(IRJumpIfNotZero->labelName);
       IRInstr = std::move(folded);
       return FoldResult::Replace;
     } else {
@@ -149,9 +149,9 @@ namespace nanocc {
 bool ConstantFoldInstructions(IRProgramNode& IRProgram) {
   bool changed = false;
   FoldResult foldResult = FoldResult::NoChange;
-  for (auto& TopLvl : IRProgram.top_level) {
+  for (auto& TopLvl : IRProgram.topLevel) {
     if (auto* IRFunc = dyn_cast<IRFunctionNode>(TopLvl.get())) {
-      auto& IRVecInstr = IRFunc->ir_instructions;
+      auto& IRVecInstr = IRFunc->IRInstructions;
       for (auto it = IRVecInstr.begin(); it != IRVecInstr.end();) {
         auto& IRInstr = *it;
         if (auto* IRUnaryOp = dyn_cast<IRUnaryNode>(IRInstr.get())) {

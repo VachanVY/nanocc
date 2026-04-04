@@ -41,7 +41,7 @@ programNodeIRGen(const ProgramNode& program_node) {
   for (const auto& decl : program_node.declarations) {
     if (decl->func && decl->func->body) {
       auto ir_function = functionDeclNodeIRGen(*decl->func);
-      ir_program->top_level.push_back(std::move(ir_function));
+      ir_program->topLevel.push_back(std::move(ir_function));
     }
   }
 
@@ -64,7 +64,7 @@ programNodeIRGen(const ProgramNode& program_node) {
         identifier->name = var_name;
         auto ir_static = std::make_unique<IRStaticVarNode>(
             std::move(identifier), static_attr->global, init_value->value);
-        ir_program->top_level.push_back(std::move(ir_static));
+        ir_program->topLevel.push_back(std::move(ir_static));
       } else if (auto* tentative_value =
                      std::get_if<Tentative>(&static_attr->init)) {
         /*
@@ -74,7 +74,7 @@ programNodeIRGen(const ProgramNode& program_node) {
         identifier->name = var_name;
         auto ir_static = std::make_unique<IRStaticVarNode>(
             std::move(identifier), static_attr->global, "0");
-        ir_program->top_level.push_back(std::move(ir_static));
+        ir_program->topLevel.push_back(std::move(ir_static));
       }
       /*
       If it's initial value is NoInitializer, we skip over it since because it's
