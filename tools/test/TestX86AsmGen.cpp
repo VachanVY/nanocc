@@ -6,9 +6,28 @@
 #include "nanocc/Parser/Parser.hpp"
 #include "nanocc/Sema/Sema.hpp"
 #include "nanocc/Target/X86/X86TargetEmitter.hpp"
+#include "nanocc/Transforms/PassManager.hpp"
 
-int main(int argc, char *argv[]) {
+static nanocc::OptFlags parseOptFlags(int argc, char* argv[]) {
+  nanocc::OptFlags opt_flags;
+  for (int i = 1; i < argc; i++) {
+    std::string flag = argv[i];
+    if (flag == "-fopt-constfold") {
+      opt_flags.optPasses.insert(nanocc::OptPass::ConstantFolding);
+    } else if (flag == "-fopt-unreach") {
+      opt_flags.optPasses.insert(nanocc::OptPass::UnreachableCodeElim);
+    } else if (flag == "-fopt-copyprop") {
+      opt_flags.optPasses.insert(nanocc::OptPass::CopyPropagation);
+    } else if (flag == "-fopt-dse") {
+      opt_flags.optPasses.insert(nanocc::OptPass::DeadStoreElim);
+    }
+  }
+  return opt_flags;
+}
+
+int main(int argc, char* argv[]) {
   auto args = nanocc::test::parseTestArgs(argc, argv);
+  auto opt_flags = parseOptFlags(argc, argv);
 
   // Derive output paths from input filename (e.g. /path/to/foo.c ->
   // /path/to/foo)
@@ -38,9 +57,13 @@ int main(int argc, char *argv[]) {
     return 0;
 
   // --- IR generation (tacky) ---
-  auto ir = nanocc::generateIntermRepr(ast, args.debug);
+  auto ir = nanocc::generateIntermRepr(*ast, args.debug);
   if (args.exit_stage == nanocc::test::ExitStage::Tacky)
     return 0;
+
+  if (!opt_flags.optPasses.empty()) {
+    nanocc::runIROptimizationPipeline(*ir, opt_flags, args.debug);
+  }
 
   // --- Code generation ---
   auto pseudo_asm = nanocc::intermReprToPseudoAsm(ir, args.debug);

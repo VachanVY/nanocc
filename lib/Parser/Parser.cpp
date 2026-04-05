@@ -4,49 +4,71 @@
 
 #include "nanocc/AST/AST.hpp"
 #include "nanocc/Parser/Parser.hpp"
-#include "nanocc/Utils.hpp"
+#include "nanocc/Utils/Utils.hpp"
+
+#define STAGE "Parsing"
 
 namespace { // some helper vars/functions
-static const std::unordered_map<std::string, int> BINOP_PRECEDENCE = {
-    {"*", 50},  {"/", 50},  {"%", 50}, {"+", 45},  {"-", 45},
-    {"<", 35},  {"<=", 35}, {">", 35}, {">=", 35}, {"==", 30},
-    {"!=", 30}, {"&&", 10}, {"||", 5}, {"?", 3},   {"=", 1}};
+static const std::unordered_map<TokenType, int> BINOP_PRECEDENCE = {
+    {TokenType::STAR, 50},
+    {TokenType::SLASH, 50},
+    {TokenType::PERCENT, 50},
+    {TokenType::PLUS, 45},
+    {TokenType::MINUS, 45},
+    {TokenType::LESSTHAN, 35},
+    {TokenType::LESS_EQUAL, 35},
+    {TokenType::GREATERTHAN, 35},
+    {TokenType::GREATER_EQUAL, 35},
+    {TokenType::EQUAL, 30},
+    {TokenType::NOT_EQUAL, 30},
+    {TokenType::AND, 10},
+    {TokenType::OR, 5},
+    {TokenType::QUESTION, 3},
+    {TokenType::ASSIGN, 1}};
 
-constexpr bool isUnary(const std::string &op) {
-  return op == "~" || op == "-" || op == "!";
-  /* || op == "--"; */ // decrement only for lexing now
+constexpr bool isUnary(const TokenType op) {
+  return op == TokenType::TILDE || op == TokenType::MINUS ||
+         op == TokenType::NOT;
+  /* || op == TokenType::DECREMENT; */ // decrement only for lexing now
 }
 
-constexpr int getPrecedence(const std::string &op) {
+constexpr int getPrecedence(const TokenType op) {
   auto it = BINOP_PRECEDENCE.find(op);
   if (it == BINOP_PRECEDENCE.end())
-    throw std::runtime_error("Invalid operator: " + op);
+    throw std::runtime_error(
+        std::format("Invalid operator: {}", tokenTypeToString(op)));
   return it->second;
 }
-constexpr bool isBinop(const std::string &op) {
+constexpr bool isBinop(const TokenType op) {
   return BINOP_PRECEDENCE.contains(op);
 }
 
-void expect(const std::deque<Token> &tokens, TokenType expected, size_t &pos) {
+void expect(const std::deque<Token>& tokens, TokenType expected, size_t& pos) {
   if (pos >= tokens.size()) {
-    throw std::runtime_error(
+    Token tok = tokens.back();
+    nanocc::raiseError(
+        tok.location.filename, tok.location.line, tok.location.column, STAGE,
         std::format("Syntax Error: Expected '{}', but reached end of input",
                     tokenTypeToString(expected)));
   }
-  const auto &[token_type, lexeme] = tokens[pos];
+  const auto& [token_type, lexeme, location] = tokens[pos];
 
   if (expected != token_type) {
-    throw std::runtime_error(std::format(
-        "Syntax Error: Expected '{}', but found '{}': '{}' at pos:{}",
-        tokenTypeToString(expected), tokenTypeToString(token_type), lexeme,
-        pos));
+    nanocc::raiseError(
+        location.filename, location.line, location.column, STAGE,
+        std::format(
+            "Syntax Error: Expected '{}', but found '{}': '{}' at pos:{}",
+            tokenTypeToString(expected), tokenTypeToString(token_type), lexeme,
+            pos));
   }
   pos++;
 }
 } // namespace
 
 // method definitions
-void ProgramNode::parse(std::deque<Token> &tokens, size_t &pos) {
+void ProgramNode::parse(std::deque<Token>& tokens, size_t& pos) {
+  this->location = tokens[pos].location;
+
   while (pos < tokens.size()) {
     auto decl = std::make_unique<DeclarationNode>();
     decl->parse(tokens, pos);
@@ -57,7 +79,7 @@ void ProgramNode::parse(std::deque<Token> &tokens, size_t &pos) {
 void ProgramNode::dump(int indent) const {
   printIndent(indent);
   std::println("Program(");
-  for (const auto &decl : this->declarations) {
+  for (const auto& decl : this->declarations) {
     decl->dump(indent + 1);
   }
   std::println(")");
@@ -69,7 +91,7 @@ struct DeclSpec {
   std::vector<StorageClass> storage_classes;
 };
 
-bool isDeclSpec(std::deque<Token> &token, size_t pos) {
+bool isDeclSpec(std::deque<Token>& token, size_t pos) {
   return (token[pos].type == TokenType::EXTERN ||
           token[pos].type == TokenType::STATIC ||
           token[pos].type == TokenType::INT);
@@ -78,8 +100,8 @@ bool isDeclSpec(std::deque<Token> &token, size_t pos) {
 // int static // static int
 // extern int // int extern
 // any order
-DeclSpec parseTypeAndStorageClassSpecifiers(std::deque<Token> &token,
-                                            size_t &pos) {
+DeclSpec parseTypeAndStorageClassSpecifiers(std::deque<Token>& token,
+                                            size_t& pos) {
   // there will be atleast one specifier, so use a do while loop
   DeclSpec spec;
   do {
@@ -91,7 +113,9 @@ DeclSpec parseTypeAndStorageClassSpecifiers(std::deque<Token> &token,
     } else if (specType == TokenType::STATIC) {
       spec.storage_classes.push_back(StorageClass::Static);
     } else {
-      throw std::runtime_error(
+      nanocc::raiseError(
+          token[pos].location.filename, token[pos].location.line,
+          token[pos].location.column, STAGE,
           std::format("Expected datatype or storage class specifier but got {}",
                       tokenTypeToString(specType)));
     }
@@ -100,13 +124,17 @@ DeclSpec parseTypeAndStorageClassSpecifiers(std::deque<Token> &token,
 
   // as of now only `int`
   if (spec.dtypes.size() != 1) {
-    throw std::runtime_error(std::format("Expected only `int` datatype, but "
-                                         "got more or less than one datatype"));
+    nanocc::raiseError(token[pos].location.filename, token[pos].location.line,
+                       token[pos].location.column, STAGE,
+                       std::format("Expected only `int` datatype, but "
+                                   "got more or less than one datatype"));
   }
   // either static or extern or nothing, can't mix extern and static or use them
   // more than once
   if (spec.storage_classes.size() > 1) {
-    throw std::runtime_error(
+    nanocc::raiseError(
+        token[pos].location.filename, token[pos].location.line,
+        token[pos].location.column, STAGE,
         std::format("Expected either `static` or `extern`, but got more than "
                     "one storage class specifier"));
   }
@@ -118,11 +146,14 @@ DeclSpec parseTypeAndStorageClassSpecifiers(std::deque<Token> &token,
 }
 } // namespace
 
-void DeclarationNode::parse(std::deque<Token> &tokens, size_t &pos) {
-  // can be a function declaration or variable declaration
-  // <func_decl> := { <specifier> }+ <identifier> "(" <param_list> ")" (<block>
-  // | ";") <var_decl>  := { <specifier> }+ <identifier> OPTIONAL( "=" <expr>)
-  // ";" if token after identifier is '(', then function decl else variable decl
+/*
+  can be a function declaration or variable declaration
+  <func_decl> := { <specifier> }+ <identifier> "(" <param_list> ")" (<block> |
+  ";") <var_decl>  := { <specifier> }+ <identifier> OPTIONAL( "=" <expr>)";" if
+  token after identifier is '(', then function decl else variable decl
+*/
+void DeclarationNode::parse(std::deque<Token>& tokens, size_t& pos) {
+  this->location = tokens[pos].location;
 
   // skip { <specifier> }+ tokens
   int offset = 0;
@@ -150,8 +181,11 @@ void DeclarationNode::dump(int indent) const {
   }
 }
 
-void VariableDeclNode::parse(std::deque<Token> &tokens, size_t &pos) {
-  auto declspec = parseTypeAndStorageClassSpecifiers(tokens, pos);
+/* `<var_decl>  := { <specifier> }+ <identifier> OPTIONAL( "=" <expr>)";"` */
+void VariableDeclNode::parse(std::deque<Token>& tokens, size_t& pos) {
+  this->location = tokens[pos].location;
+
+  DeclSpec declspec = parseTypeAndStorageClassSpecifiers(tokens, pos);
   this->storage_class = declspec.storage_classes[0];
   this->var_identifier = std::make_unique<IdentifierNode>();
   this->var_identifier->parse(tokens, pos);
@@ -174,13 +208,17 @@ void VariableDeclNode::dump(int indent) const {
   std::println(")");
 }
 
-void FunctionDeclNode::parse(std::deque<Token> &tokens, size_t &pos) {
-  auto declspec = parseTypeAndStorageClassSpecifiers(tokens, pos);
+/*`<func_decl> := { <specifier> }+ <identifier> "(" <param_list> ")" (<block> |
+ * ";")` */
+void FunctionDeclNode::parse(std::deque<Token>& tokens, size_t& pos) {
+  this->location = tokens[pos].location;
+
+  DeclSpec declspec = parseTypeAndStorageClassSpecifiers(tokens, pos);
   this->storage_class = declspec.storage_classes[0];
   this->func_name = std::make_unique<IdentifierNode>();
   this->func_name->parse(tokens, pos); // parse function name
   expect(tokens, TokenType::LPAREN, pos);
-  // --parse parameters-- // can be void or multiple parameters separated by ","
+  // <parse-parameters> // can be void or multiple parameters separated by ","
   if (tokens[pos].type == TokenType::VOID) {
     expect(tokens, TokenType::VOID, pos);
   } else {
@@ -196,7 +234,7 @@ void FunctionDeclNode::parse(std::deque<Token> &tokens, size_t &pos) {
       this->parameters.push_back(std::move(param));
     }
   }
-  // --parse parameters--
+  // -<parse-parameters>
   expect(tokens, TokenType::RPAREN, pos);
 
   // if function DECLARATION then just a ";"
@@ -219,7 +257,7 @@ void FunctionDeclNode::dump(int indent) const {
   std::printf("%s\n",
               this->parameters.empty() ? "Parameters()" : "Parameters(");
   if (!this->parameters.empty()) {
-    for (const auto &p : this->parameters)
+    for (const auto& p : this->parameters)
       p->dump(indent + 2);
     printIndent(indent + 1);
     std::println(")");
@@ -236,7 +274,9 @@ void FunctionDeclNode::dump(int indent) const {
   std::println(")"); // end of Function
 }
 
-void BlockNode::parse(std::deque<Token> &tokens, size_t &pos) {
+void BlockNode::parse(std::deque<Token>& tokens, size_t& pos) {
+  this->location = tokens[pos].location;
+
   expect(tokens, TokenType::LBRACE, pos);
   while (tokens[pos].type != TokenType::RBRACE) { // "}"
     auto block_item = std::make_unique<BlockItemNode>();
@@ -249,16 +289,18 @@ void BlockNode::parse(std::deque<Token> &tokens, size_t &pos) {
 void BlockNode::dump(int indent) const {
   printIndent(indent);
   std::println("Block(");
-  for (const auto &block_item : this->block_items) {
+  for (const auto& block_item : this->block_items) {
     block_item->dump(indent + 1);
   }
   printIndent(indent);
   std::println(")");
 }
 
-void BlockItemNode::parse(std::deque<Token> &tokens, size_t &pos) {
-  if (isDeclSpec(tokens,
-                 pos)) { // static int <var_name>; | int extern <var_name> | ...
+void BlockItemNode::parse(std::deque<Token>& tokens, size_t& pos) {
+  this->location = tokens[pos].location;
+
+  // static int <var_name>; | int extern <var_name> | ...
+  if (isDeclSpec(tokens, pos)) {
     this->declaration = std::make_unique<DeclarationNode>();
     this->declaration->parse(tokens, pos);
   } else {
@@ -275,7 +317,9 @@ void BlockItemNode::dump(int indent) const {
   }
 }
 
-void StatementNode::parse(std::deque<Token> &tokens, size_t &pos) {
+void StatementNode::parse(std::deque<Token>& tokens, size_t& pos) {
+  this->location = tokens[pos].location;
+
   if (tokens[pos].type == TokenType::RETURN) {
     this->return_stmt = std::make_unique<ReturnNode>();
     this->return_stmt->parse(tokens, pos);
@@ -333,7 +377,9 @@ void StatementNode::dump(int indent) const {
   }
 }
 
-void ReturnNode::parse(std::deque<Token> &tokens, size_t &pos) {
+void ReturnNode::parse(std::deque<Token>& tokens, size_t& pos) {
+  this->location = tokens[pos].location;
+
   expect(tokens, TokenType::RETURN, pos);
   this->ret_expr = std::make_unique<ExprNode>();
   this->ret_expr->parse(tokens, pos);
@@ -350,7 +396,9 @@ void ReturnNode::dump(int indent) const {
   std::println(")");
 }
 
-void ExpressionNode::parse(std::deque<Token> &tokens, size_t &pos) {
+void ExpressionNode::parse(std::deque<Token>& tokens, size_t& pos) {
+  this->location = tokens[pos].location;
+
   this->expr = std::make_unique<ExprNode>();
   this->expr->parse(tokens, pos);
   expect(tokens, TokenType::SEMICOLON, pos);
@@ -364,7 +412,9 @@ void ExpressionNode::dump(int indent) const {
   std::println(")");
 }
 
-void IfElseNode::parse(std::deque<Token> &tokens, size_t &pos) {
+void IfElseNode::parse(std::deque<Token>& tokens, size_t& pos) {
+  this->location = tokens[pos].location;
+
   expect(tokens, TokenType::IF, pos);
   expect(tokens, TokenType::LPAREN, pos);
   this->condition = std::make_unique<ExprNode>();
@@ -393,14 +443,18 @@ void IfElseNode::dump(int indent) const {
   std::println(")");
 }
 
-void CompoundNode::parse(std::deque<Token> &tokens, size_t &pos) {
+void CompoundNode::parse(std::deque<Token>& tokens, size_t& pos) {
+  this->location = tokens[pos].location;
+
   this->block = std::make_unique<BlockNode>();
   this->block->parse(tokens, pos);
 }
 
 void CompoundNode::dump(int indent) const { this->block->dump(indent); }
 
-void BreakNode::parse(std::deque<Token> &tokens, size_t &pos) {
+void BreakNode::parse(std::deque<Token>& tokens, size_t& pos) {
+  this->location = tokens[pos].location;
+
   expect(tokens, TokenType::BREAK, pos);
   expect(tokens, TokenType::SEMICOLON, pos);
 }
@@ -414,7 +468,9 @@ void BreakNode::dump(int indent) const {
   std::println(")");
 }
 
-void ContinueNode::parse(std::deque<Token> &tokens, size_t &pos) {
+void ContinueNode::parse(std::deque<Token>& tokens, size_t& pos) {
+  this->location = tokens[pos].location;
+
   expect(tokens, TokenType::CONTINUE, pos);
   expect(tokens, TokenType::SEMICOLON, pos);
 }
@@ -428,7 +484,9 @@ void ContinueNode::dump(int indent) const {
   std::println(")");
 }
 
-void WhileNode::parse(std::deque<Token> &tokens, size_t &pos) {
+void WhileNode::parse(std::deque<Token>& tokens, size_t& pos) {
+  this->location = tokens[pos].location;
+
   expect(tokens, TokenType::WHILE, pos);
 
   expect(tokens, TokenType::LPAREN, pos);
@@ -453,7 +511,9 @@ void WhileNode::dump(int indent) const {
   std::println(")");
 }
 
-void DoWhileNode::parse(std::deque<Token> &tokens, size_t &pos) {
+void DoWhileNode::parse(std::deque<Token>& tokens, size_t& pos) {
+  this->location = tokens[pos].location;
+
   expect(tokens, TokenType::DO, pos);
 
   this->body = std::make_unique<StatementNode>();
@@ -480,7 +540,9 @@ void DoWhileNode::dump(int indent) const {
   std::println(")");
 }
 
-void ForNode::parse(std::deque<Token> &tokens, size_t &pos) {
+void ForNode::parse(std::deque<Token>& tokens, size_t& pos) {
+  this->location = tokens[pos].location;
+
   expect(tokens, TokenType::FOR, pos);
   expect(tokens, TokenType::LPAREN, pos);
 
@@ -537,7 +599,9 @@ void ForNode::dump(int indent) const {
   std::println(")");
 }
 
-void ForInitNode::parse(std::deque<Token> &tokens, size_t &pos) {
+void ForInitNode::parse(std::deque<Token>& tokens, size_t& pos) {
+  this->location = tokens[pos].location;
+
   if (isDeclSpec(tokens, pos)) {
     this->declaration = std::make_unique<VariableDeclNode>();
     this->declaration->parse(tokens, pos);
@@ -557,7 +621,9 @@ void ForInitNode::dump(int indent) const {
   }
 }
 
-void NullNode::parse(std::deque<Token> &tokens, size_t &pos) {
+void NullNode::parse(std::deque<Token>& tokens, size_t& pos) {
+  this->location = tokens[pos].location;
+
   expect(tokens, TokenType::SEMICOLON, pos);
 }
 
@@ -583,15 +649,17 @@ parse_exp(1 * 2 + 3, min_prec=0)
     "+" ≥ 0 → continue loop, parse +3
     Result: Bin(+, Bin(*, 1, 2), 3)
 ```*/
-void ExprNode::parse(std::deque<Token> &tokens, size_t &pos,
+void ExprNode::parse(std::deque<Token>& tokens, size_t& pos,
                      int min_precedence) {
+  this->location = tokens[pos].location;
+
   this->left_exprf = std::make_unique<ExprFactorNode>();
   this->left_exprf->parse(tokens, pos);
 
-  while (pos < tokens.size() && isBinop(tokens[pos].lexeme) &&
-         getPrecedence(tokens[pos].lexeme) >= min_precedence) {
-    const auto &[token_type, op] = tokens[pos];
-    int op_prec = getPrecedence(op);
+  while (pos < tokens.size() && isBinop(tokens[pos].type) &&
+         getPrecedence(tokens[pos].type) >= min_precedence) {
+    const auto& [token_type, op, location] = tokens[pos];
+    int op_prec = getPrecedence(token_type);
 
     auto right_expr = std::make_unique<ExprNode>();
     auto left_expr = std::make_unique<ExprNode>();
@@ -633,8 +701,8 @@ void ExprNode::parse(std::deque<Token> &tokens, size_t &pos,
       // wrap `left_exprf` in an `ExprNode`
       left_expr->left_exprf = std::move(this->left_exprf);
 
-      this->left_exprf = std::make_unique<BinaryNode>(op, std::move(left_expr),
-                                                      std::move(right_expr));
+      this->left_exprf = std::make_unique<BinaryNode>(
+          token_type, std::move(left_expr), std::move(right_expr));
     }
   }
   // the final result is we need is `left_exprf`
@@ -643,8 +711,10 @@ void ExprNode::parse(std::deque<Token> &tokens, size_t &pos,
 /// @brief <exp> is of the form <factor> ( <binary> <expr> )*
 void ExprNode::dump(int indent) const { this->left_exprf->dump(indent); }
 
-void ExprFactorNode::parse(std::deque<Token> &tokens, size_t &pos) {
-  const auto &[token_type, lexeme] = tokens[pos];
+void ExprFactorNode::parse(std::deque<Token>& tokens, size_t& pos) {
+  this->location = tokens[pos].location;
+
+  const auto& [token_type, lexeme, location] = tokens[pos];
   if (token_type == TokenType::CONSTANT) { // <int>: a constant integer
     this->constant = std::make_unique<ConstantNode>();
     this->constant->parse(tokens, pos);
@@ -658,7 +728,7 @@ void ExprFactorNode::parse(std::deque<Token> &tokens, size_t &pos) {
       this->func_call = std::make_unique<FunctionCallNode>();
       this->func_call->parse(tokens, pos);
     }
-  } else if (isUnary(lexeme)) { // <unary> <factor>
+  } else if (isUnary(token_type)) { // <unary> <factor>
     this->unary = std::make_unique<UnaryNode>();
     this->unary->parse(tokens, pos);
   } else if (token_type == TokenType::LPAREN) { // "(" <expr> ")"
@@ -669,7 +739,7 @@ void ExprFactorNode::parse(std::deque<Token> &tokens, size_t &pos) {
     expect(tokens, TokenType::RPAREN, pos);
   } else {
     throw std::runtime_error(std::format(
-        "Syntax Error: Malformed Expression Factor at pos:{} got '{}':'{}'",
+        "Parsing Error: Malformed Expression Factor at pos:{} got '{}':'{}'",
         pos, tokenTypeToString(token_type), lexeme));
   }
 }
@@ -686,11 +756,14 @@ void ExprFactorNode::dump(int indent) const {
   } else if (this->func_call) {
     this->func_call->dump(indent);
   } else {
-    throw std::runtime_error("Malformed Expression Factor during dump");
+    throw std::runtime_error(
+        "Parsing Error: Malformed Expression Factor during dump");
   }
 }
 
-void VarNode::parse(std::deque<Token> &tokens, size_t &pos) {
+void VarNode::parse(std::deque<Token>& tokens, size_t& pos) {
+  this->location = tokens[pos].location;
+
   this->var_name = std::make_unique<IdentifierNode>();
   this->var_name->parse(tokens, pos);
 }
@@ -702,10 +775,13 @@ void VarNode::dump(int indent) const {
   std::println(")");
 }
 
-void IdentifierNode::parse(std::deque<Token> &tokens, size_t &pos) {
-  const auto &[token_type, actual] = tokens[pos++];
+void IdentifierNode::parse(std::deque<Token>& tokens, size_t& pos) {
+  this->location = tokens[pos].location;
+
+  const auto& [token_type, actual, location] = tokens[pos++];
   if (token_type != TokenType::IDENTIFIER) {
-    throw std::runtime_error(
+    nanocc::raiseError(
+        location.filename, location.line, location.column, STAGE,
         std::format("Syntax Error: Expected identifier but got '{}'", actual));
   }
   this->name = actual;
@@ -719,11 +795,15 @@ void IdentifierNode::dump(int indent, bool new_line) const {
   }
 }
 
-void ConstantNode::parse(std::deque<Token> &tokens, size_t &pos) {
-  const auto &[token_type, actual] = tokens[pos++];
+void ConstantNode::parse(std::deque<Token>& tokens, size_t& pos) {
+  this->location = tokens[pos].location;
+
+  const auto& [token_type, actual, location] = tokens[pos++];
   if (token_type != TokenType::CONSTANT) {
-    throw std::runtime_error(std::format(
-        "Syntax Error: Expected constant integer but got '{}'", actual));
+    nanocc::raiseError(
+        location.filename, location.line, location.column, STAGE,
+        std::format("Syntax Error: Expected constant integer but got '{}'",
+                    actual));
   }
   this->val = actual;
 }
@@ -733,43 +813,47 @@ void ConstantNode::dump(int indent) const {
   std::println("Constant({})", this->val);
 }
 
-void UnaryNode::parse(std::deque<Token> &tokens, size_t &pos) {
-  const auto &[token_type, actual] = tokens[pos++];
-  if (!isUnary(actual)) {
-    throw std::runtime_error(std::format(
-        "Syntax Error: Expected a unary operator but got '{}':'{}' at pos:{}",
-        tokenTypeToString(token_type), actual, pos));
+void UnaryNode::parse(std::deque<Token>& tokens, size_t& pos) {
+  this->location = tokens[pos].location;
+
+  const auto& [token_type, actual, location] = tokens[pos++];
+  if (!isUnary(token_type)) {
+    nanocc::raiseError(location.filename, location.line, location.column, STAGE,
+                       std::format("Syntax Error: Expected a unary operator "
+                                   "but got '{}':'{}' at pos:{}",
+                                   tokenTypeToString(token_type), actual, pos));
   }
-  this->op_type = actual;
+  this->op_type = token_type;
   this->operand = std::make_unique<ExprFactorNode>();
   this->operand->parse(tokens, pos);
 }
 
 void UnaryNode::dump(int indent) const {
   printIndent(indent);
-  std::println("Unary({}", this->op_type);
+  std::println("Unary({}", tokenTypeToString(this->op_type));
   this->operand->dump(indent + 1);
   printIndent(indent);
   std::println(")");
 }
 
-void BinaryNode::parse(std::deque<Token> &tokens, size_t &pos) {
-  throw std::runtime_error(
-      "Shouldn't reach `BinaryNode::parse`, handled in `ExprNode::parse`");
+void BinaryNode::parse(std::deque<Token>& tokens, size_t& pos) {
+  throw std::runtime_error("Parsing Error: Shouldn't reach "
+                           "`BinaryNode::parse`, handled in `ExprNode::parse`");
 }
 
 void BinaryNode::dump(int indent) const {
   printIndent(indent);
-  std::println("Binary({},", this->op_type);
+  std::println("Binary({},", tokenTypeToString(this->op_type));
   this->left_expr->dump(indent + 1);
   this->right_expr->dump(indent + 1);
   printIndent(indent);
   std::println(")");
 }
 
-void AssignmentNode::parse(std::deque<Token> &tokens, size_t &pos) {
+void AssignmentNode::parse(std::deque<Token>& tokens, size_t& pos) {
   throw std::runtime_error(
-      "Shouldn't reach `AssignmentNode::parse`, handled in `ExprNode::parse`");
+      "Parsing Error: Shouldn't reach `AssignmentNode::parse`, handled in "
+      "`ExprNode::parse`");
 }
 
 void AssignmentNode::dump(int indent) const {
@@ -781,9 +865,10 @@ void AssignmentNode::dump(int indent) const {
   std::println(")");
 }
 
-void ConditionalNode::parse(std::deque<Token> &tokens, size_t &pos) {
-  throw std::runtime_error("Shouldn't reach here: `ConditionalNode::parse`, "
-                           "handled in `ExprNode::parse`");
+void ConditionalNode::parse(std::deque<Token>& tokens, size_t& pos) {
+  throw std::runtime_error(
+      "Parsing Error: Shouldn't reach here: `ConditionalNode::parse`, "
+      "handled in `ExprNode::parse`");
 }
 
 void ConditionalNode::dump(int indent) const {
@@ -798,8 +883,8 @@ void ConditionalNode::dump(int indent) const {
 
 namespace { // helper function
 /// `<exp> zeroOrMore( "," <exp> )`
-std::vector<std::unique_ptr<ExprNode>> parseArgs(std::deque<Token> &tokens,
-                                                 size_t &pos) {
+std::vector<std::unique_ptr<ExprNode>> parseArgs(std::deque<Token>& tokens,
+                                                 size_t& pos) {
   std::vector<std::unique_ptr<ExprNode>> args;
   auto arg = std::make_unique<ExprNode>();
   arg->parse(tokens, pos);
@@ -819,7 +904,9 @@ int y = 69;
 y(5, 10); // even though y is not a function, it's parsed as a function call
 // this will be caught in semantic analysis phase
 ```*/
-void FunctionCallNode::parse(std::deque<Token> &tokens, size_t &pos) {
+void FunctionCallNode::parse(std::deque<Token>& tokens, size_t& pos) {
+  this->location = tokens[pos].location;
+
   this->func_identifier = std::make_unique<IdentifierNode>();
   this->func_identifier->parse(tokens, pos);
   expect(tokens, TokenType::LPAREN, pos);
@@ -839,7 +926,7 @@ void FunctionCallNode::dump(int indent) const {
   // println needs const strings at compile time, so using printf
   std::printf("%s\n", this->arguments.empty() ? "args(void)" : "args(");
   if (!this->arguments.empty()) {
-    for (const auto &arg : this->arguments)
+    for (const auto& arg : this->arguments)
       arg->dump(indent + 2);
     printIndent(indent + 1);
     std::println(")");
@@ -849,15 +936,17 @@ void FunctionCallNode::dump(int indent) const {
 }
 
 namespace nanocc {
-std::unique_ptr<ProgramNode> parse(std::deque<Token> &tokens, bool debug) {
+std::unique_ptr<ProgramNode> parse(std::deque<Token>& tokens, bool debug) {
   size_t pos = 0;
   auto ast = std::make_unique<ProgramNode>();
   ast->parse(tokens, pos);
   if (pos != tokens.size()) {
-    const auto &[token_type, actual] = tokens[pos];
-    throw std::runtime_error(std::format(
-        "Syntax Error: Unexpected token '{}' of class '{}' at top level",
-        actual, tokenTypeToString(token_type)));
+    const auto& [token_type, actual, location] = tokens[pos];
+    nanocc::raiseError(
+        location.filename, location.line, location.column, STAGE,
+        std::format(
+            "Syntax Error: Unexpected token '{}' of class '{}' at top level",
+            actual, tokenTypeToString(token_type)));
   }
 
   if (debug) {
@@ -867,5 +956,4 @@ std::unique_ptr<ProgramNode> parse(std::deque<Token> &tokens, bool debug) {
   }
   return ast;
 }
-
 } // namespace nanocc

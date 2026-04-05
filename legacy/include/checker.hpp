@@ -1,12 +1,12 @@
 #pragma once
 
-#include <unordered_map>
 #include <string>
+#include <unordered_map>
 
 struct VariableScope {
-    std::string unique_name;
-    bool from_curr_scope;
-    bool external_linkage;
+  std::string unique_name;
+  bool from_curr_scope;
+  bool external_linkage;
 };
 
 /// @brief maps variables names given in source code to unique identifier names
@@ -21,9 +21,10 @@ using Type = std::variant<IntType, FuncType>;
 struct IntType {};
 // FuncType:- attributes: param_types, return_type, defined,
 struct FuncType {
-    std::vector<std::unique_ptr<Type>> param_types;
-    std::unique_ptr<Type> return_type;
-    bool defined; // tracks whether we have already type-checked a defination of that function
+  std::vector<std::unique_ptr<Type>> param_types;
+  std::unique_ptr<Type> return_type;
+  bool defined; // tracks whether we have already type-checked a defination of
+                // that function
 };
 
 /// @brief type checker symbol table

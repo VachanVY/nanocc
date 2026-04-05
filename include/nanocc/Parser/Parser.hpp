@@ -11,6 +11,6 @@ namespace nanocc {
 /// @param tokens The deque of tokens to parse.
 /// @param debug Whether to print debug information during parsing.
 /// @return The root of the generated AST.
-std::unique_ptr<ProgramNode> parse(std::deque<Token> &tokens,
+std::unique_ptr<ProgramNode> parse(std::deque<Token>& tokens,
                                    bool debug = false);
 } // namespace nanocc

@@ -1,10 +1,10 @@
 #include "nanocc/Sema/Sema.hpp"
-#include "nanocc/Utils.hpp"
+#include "nanocc/Utils/Utils.hpp"
 
 namespace nanocc {
 TypeCheckerSymbolTable global_type_checker_map;
 
-void semanticAnalysis(std::unique_ptr<ProgramNode> &ast, bool debug) {
+void semanticAnalysis(std::unique_ptr<ProgramNode>& ast, bool debug) {
   nanocc::semaIdentifierResolution(ast);
   if (debug) {
     std::println("----- Identifier Resolution -----");

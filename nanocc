@@ -12,11 +12,20 @@ show_usage() {
     echo "Usage: $0 <files \`.s\` || \`.o\` || \`.c\`> -o <output file>"
     echo "       $0 <files \`.s\` || \`.o\` || \`.c\`> -S"
     echo "       $0 <files \`.s\` || \`.o\` || \`.c\`> -c"
-    echo ""
+    echo "       $0 -O <files \`.s\` || \`.o\` || \`.c\`> -o <output file>"
+    echo "Dev Only Usage:"
+    echo "       $0 -fopt-constfold -fopt-copyprop -fopt-dse -fopt-unreach -fdump <files \`.s\` || \`.o\` || \`.c\`> -S"
     echo "Options:"
     echo "  -o <output file>   Specify the name of the output executable file."
     echo "  -S                 Compile C files to assembly files only."
     echo "  -c                 Compile C files to object files only."
+    echo "  -O                 Enable optimizations."
+    echo "Dev Only Flags:"
+    echo "  -fdump             Dump everything generated in the compilation pipeline."
+    echo "  -fopt-constfold    Enable constant folding optimization pass."
+    echo "  -fopt-unreach      Enable unreachable code elimination optimization pass."
+    echo "  -fopt-copyprop     Enable copy propagation optimization pass."
+    echo "  -fopt-dse          Enable dead store elimination optimization pass."
 }
 
 print_usage() {
@@ -39,16 +48,30 @@ fi
 asm_files=()
 obj_files=()
 c_files=()
+
+# optimization and debug flags
+enable_optimization=0
+enable_constfold=0
+enable_copyprop=0
+enable_dse=0
+enable_unreach=0
+enable_fdump=0
 i=1
-for file in "$@"; do
-    case "$file" in
-        *.s) asm_files+=("$file") ;;
-        *.o) obj_files+=("$file") ;;
-        *.c) c_files+=("$file") ;;
+for flags in "$@"; do
+    case "$flags" in
+        *.s) asm_files+=("$flags") ;;
+        *.o) obj_files+=("$flags") ;;
+        *.c) c_files+=("$flags") ;;
+        -O) enable_optimization=1 ;;
+        -fopt-constfold) enable_constfold=1 ;;
+        -fopt-copyprop) enable_copyprop=1 ;;
+        -fopt-dse) enable_dse=1 ;;
+        -fopt-unreach) enable_unreach=1 ;;
+        -fdump) enable_fdump=1 ;;
         -o|-S|-c) break ;;
-        *) print_error_and_usage "Unknown file type '$file'" ;;
+        *) print_error_and_usage "Unknown file type '$flags'" ;;
     esac # end of case
-    debug_echo "file #$i: $file"
+    debug_echo "file #$i: $flags"
     i=$((i + 1))
 done
 
@@ -97,7 +120,21 @@ if [ $_o -eq 1 ] || [ $_c -eq 1 ] || [ $_S -eq 1 ]; then # this line was not req
     for c_file in "${c_files[@]}"; do
         asm_file="$tmpdir/$(basename "${c_file%.*}.s")"
         debug_echo "$c_file to $asm_file"
-        $nanocc -S "$c_file" -o "$asm_file"
+        
+        # build nanocc command with flags
+        nanocc_cmd="$nanocc -S \"$c_file\" -o \"$asm_file\""
+        # -O enables all optimization passes
+        if [ $enable_optimization -eq 1 ]; then
+            nanocc_cmd="$nanocc_cmd -fopt-constfold -fopt-copyprop -fopt-dse -fopt-unreach"
+        else
+            [ $enable_constfold -eq 1 ] && nanocc_cmd="$nanocc_cmd -fopt-constfold"
+            [ $enable_copyprop -eq 1 ] && nanocc_cmd="$nanocc_cmd -fopt-copyprop"
+            [ $enable_dse -eq 1 ] && nanocc_cmd="$nanocc_cmd -fopt-dse"
+            [ $enable_unreach -eq 1 ] && nanocc_cmd="$nanocc_cmd -fopt-unreach"
+        fi
+        [ $enable_fdump -eq 1 ] && nanocc_cmd="$nanocc_cmd -fdump"
+        
+        eval "$nanocc_cmd"
         asm_files+=("$asm_file")
         # if -S move those asm files from tmpdir to current directory
         if [ $_S -eq 1 ]; then

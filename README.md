@@ -34,7 +34,7 @@ nanocc codebase tree directory structure (LLVM style)
 ```
 setopt nullglob && tree -a -L 4 -I '.git' --noreport include lib tools --dirsfirst && echo "" && ls -1 *.cpp *.c *.sh *.md CMakeLists.txt LICENSE nanocc 2>/dev/null | sort
 ```
- 
+
 ```
 include
 └── nanocc
@@ -115,6 +115,7 @@ README.md
 ```
 
 ## nanocc progress
+
 ```c
 // examples/linkage_fact.c
 int num_times = 10;
@@ -128,6 +129,7 @@ int factorial(int n) {
     return ret;
 }
 ```
+
 <details>
   <summary>assembly output</summary>
  
@@ -174,12 +176,13 @@ factorial:
     .globl num_times
     .data
     .align 4
+
 num_times:
-    .long 10
+.long 10
 
     .section .note.GNU-stack, "",@progbits
 
-```
+````
 
 </details>
 
@@ -201,9 +204,9 @@ int putint(int x) {
 
 int hello_world(void) {
     // "Hello, World!" using only integers
-    putchar(72);    putchar(101);    putchar(108);    
+    putchar(72);    putchar(101);    putchar(108);
     putchar(108);    putchar(111);    putchar(44);
-    putchar(32);    putchar(87);    putchar(111);    
+    putchar(32);    putchar(87);    putchar(111);
     putchar(114);    putchar(108);    putchar(100);
     putchar(33);    putchar(10);
 }
@@ -225,7 +228,8 @@ int init_sys(void) {
     initialized = 1;
     return 1;
 }
-```
+````
+
 <details>
   <summary>assembly output</summary>
  
@@ -283,96 +287,98 @@ putint:
 
     .globl hello_world
     .text
+
 hello_world:
-    pushq %rbp
-    movq %rsp, %rbp
-    subq $64, %rsp
-    movl $72, %edi
-    call putchar@PLT
-    movl %eax, -4(%rbp)
-    movl $101, %edi
-    call putchar@PLT
-    movl %eax, -8(%rbp)
-    movl $108, %edi
-    call putchar@PLT
-    movl %eax, -12(%rbp)
-    movl $108, %edi
-    call putchar@PLT
-    movl %eax, -16(%rbp)
-    movl $111, %edi
-    call putchar@PLT
-    movl %eax, -20(%rbp)
-    movl $44, %edi
-    call putchar@PLT
-    movl %eax, -24(%rbp)
-    movl $32, %edi
-    call putchar@PLT
-    movl %eax, -28(%rbp)
-    movl $87, %edi
-    call putchar@PLT
-    movl %eax, -32(%rbp)
-    movl $111, %edi
-    call putchar@PLT
-    movl %eax, -36(%rbp)
-    movl $114, %edi
-    call putchar@PLT
-    movl %eax, -40(%rbp)
-    movl $108, %edi
-    call putchar@PLT
-    movl %eax, -44(%rbp)
-    movl $100, %edi
-    call putchar@PLT
-    movl %eax, -48(%rbp)
-    movl $33, %edi
-    call putchar@PLT
-    movl %eax, -52(%rbp)
-    movl $10, %edi
-    call putchar@PLT
-    movl %eax, -56(%rbp)
-    movl $0, %eax
-    movq %rbp, %rsp
-    popq %rbp
-    ret
+pushq %rbp
+movq %rsp, %rbp
+subq $64, %rsp
+movl $72, %edi
+call putchar@PLT
+movl %eax, -4(%rbp)
+movl $101, %edi
+call putchar@PLT
+movl %eax, -8(%rbp)
+movl $108, %edi
+call putchar@PLT
+movl %eax, -12(%rbp)
+movl $108, %edi
+call putchar@PLT
+movl %eax, -16(%rbp)
+movl $111, %edi
+call putchar@PLT
+movl %eax, -20(%rbp)
+movl $44, %edi
+call putchar@PLT
+movl %eax, -24(%rbp)
+movl $32, %edi
+call putchar@PLT
+movl %eax, -28(%rbp)
+movl $87, %edi
+call putchar@PLT
+movl %eax, -32(%rbp)
+movl $111, %edi
+call putchar@PLT
+movl %eax, -36(%rbp)
+movl $114, %edi
+call putchar@PLT
+movl %eax, -40(%rbp)
+movl $108, %edi
+call putchar@PLT
+movl %eax, -44(%rbp)
+movl $100, %edi
+call putchar@PLT
+movl %eax, -48(%rbp)
+movl $33, %edi
+call putchar@PLT
+movl %eax, -52(%rbp)
+movl $10, %edi
+call putchar@PLT
+movl %eax, -56(%rbp)
+movl $0, %eax
+movq %rbp, %rsp
+popq %rbp
+ret
 
     .globl init_sys
     .text
-init_sys:
-    pushq %rbp
-    movq %rsp, %rbp
-    subq $32, %rsp
-    cmpl $1, initialized.2(%rip)
-    movl $0, -4(%rbp)
-    sete -4(%rbp)
-    cmpl $0, -4(%rbp)
-    je end.2
-    movl $0, %eax
-    movq %rbp, %rsp
-    popq %rbp
-    ret
 
-  end.2:
-    call hello_world
-    movl %eax, -8(%rbp)
-    movl $73, %edi
-    call putchar@PLT
-    movl %eax, -12(%rbp)
-    movl $78, %edi
-    call putchar@PLT
-    movl %eax, -16(%rbp)
-    movl $73, %edi
-    call putchar@PLT
-    movl %eax, -20(%rbp)
-    movl $84, %edi
-    call putchar@PLT
-    movl %eax, -24(%rbp)
-    movl $10, %edi
-    call putchar@PLT
-    movl %eax, -28(%rbp)
-    movl $1, initialized.2(%rip)
-    movl $1, %eax
-    movq %rbp, %rsp
-    popq %rbp
-    ret
+init_sys:
+pushq %rbp
+movq %rsp, %rbp
+subq $32, %rsp
+cmpl $1, initialized.2(%rip)
+movl $0, -4(%rbp)
+sete -4(%rbp)
+cmpl $0, -4(%rbp)
+je end.2
+movl $0, %eax
+movq %rbp, %rsp
+popq %rbp
+ret
+
+end.2:
+call hello_world
+movl %eax, -8(%rbp)
+movl $73, %edi
+call putchar@PLT
+movl %eax, -12(%rbp)
+movl $78, %edi
+call putchar@PLT
+movl %eax, -16(%rbp)
+movl $73, %edi
+call putchar@PLT
+movl %eax, -20(%rbp)
+movl $84, %edi
+call putchar@PLT
+movl %eax, -24(%rbp)
+movl $10, %edi
+call putchar@PLT
+movl %eax, -28(%rbp)
+movl $1, initialized.2(%rip)
+movl $1, %eax
+movq %rbp, %rsp
+popq %rbp
+ret
 
     movl $0, %eax
     movq %rbp, %rsp
@@ -381,11 +387,13 @@ init_sys:
 
     .bss
     .align 4
+
 initialized.2:
-    .zero 4
+.zero 4
 
     .section .note.GNU-stack, "",@progbits
-```
+
+````
 
 </details>
 
@@ -407,12 +415,13 @@ int main(void){
 
     for (int i = 1; i <= num_times; i = i + 1) {
         int fact = factorial(i);
-        putint(i); /*space*/ putchar(32); 
+        putint(i); /*space*/ putchar(32);
         putint(fact); /*newline*/ putchar(10);
     }
     return 0;
 }
-```
+````
+
 <details>
   <summary>assembly output</summary>
  
@@ -474,7 +483,8 @@ main:
 
 
     .section .note.GNU-stack, "",@progbits
-```
+
+````
 
 </details>
 
@@ -485,9 +495,10 @@ chmod +x nanocc
 # gcc assembler asm.s => executable
 ./nanocc examples/linkage_fact.c examples/linkage_main.c examples/linkage_utils.c -o main
 ./main
-```
+````
 
 Output:
+
 ```
 Hello, World!
 INIT
@@ -503,7 +514,6 @@ INIT
 10 3628800
 ```
 
-
 <details>
   <summary>Notes/Trash</summary>
  
@@ -513,9 +523,10 @@ int foo(int a, int b, int c, int d, int e, int f, int g, int h) {
 }
 
 int caller(int arg) {
-    return arg + foo(1, 2, 3, 4, 5, 6, 7, 8);
+return arg + foo(1, 2, 3, 4, 5, 6, 7, 8);
 }
-```
+
+````
 
 ```asm
     .globl foo
@@ -560,7 +571,7 @@ caller:
     movl $5, %r8d
     movl $6, %r9d
     pushq $8       # pushq takes 64-bit values
-    pushq $7       # that's why "gap" between `7` and `8` will 8 bytes in memory 
+    pushq $7       # that's why "gap" between `7` and `8` will 8 bytes in memory
     call foo
     addq $16, %rsp
     movl %eax, -8(%rbp)
@@ -579,5 +590,6 @@ caller:
     ret
 
     .section .note.GNU-stack, "",@progbits
-```
+````
+
 </details>

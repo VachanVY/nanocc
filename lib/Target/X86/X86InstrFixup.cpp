@@ -1,21 +1,22 @@
 #include "nanocc/Codegen/ASM.hpp"
 #include "nanocc/Target/X86/X86TargetInfo.hpp"
-#include <nanocc/Utils.hpp>
+#include "nanocc/Utils/Tokens.hpp"
+#include "nanocc/Utils/Utils.hpp"
 
 // Fix Instructions -- Start
-void AsmProgramNode::fixUpInstructions(const std::vector<int> &stack_sizes) {
+void AsmProgramNode::fixUpInstructions(const std::vector<int>& stack_sizes) {
   for (std::size_t i = 0; i < this->top_level.size(); i++) {
     this->top_level[i]->fixUpInstructions(stack_sizes[i]);
   }
 }
 
-void AsmFunctionNode::fixUpInstructions(const int &stack_size) {
+void AsmFunctionNode::fixUpInstructions(const int& stack_size) {
   auto allocate_stack = std::make_unique<AsmAllocateStackNode>(stack_size);
   allocate_stack->fixUpInstructions(this->instructions);
 
   std::vector<std::unique_ptr<AsmInstructionNode>> new_instructions;
   new_instructions.push_back(std::move(allocate_stack));
-  for (auto &instr : this->instructions) {
+  for (auto& instr : this->instructions) {
     if (isa<AsmMovNode>(instr.get()) || isa<AsmBinaryNode>(instr.get()) ||
         isa<AsmIdivNode>(instr.get()) || isa<AsmCmpNode>(instr.get())) {
       instr->fixUpInstructions(new_instructions);
@@ -33,23 +34,24 @@ void AsmFunctionNode::fixUpInstructions(const int &stack_size) {
 /// misaligned, we fix that, not here tho, just telling.
 ///
 /// https://math.stackexchange.com/questions/291468/how-to-find-the-nearest-multiple-of-16-to-my-given-number-n
-/// TODO(VachanVY): WHATS THE POINT OF THIS, SINCE WE ARE ALREADY PADDING DURING FUNCTION CALLS?
-/// Func Defination:
+/// TODO(VachanVY): WHATS THE POINT OF THIS, SINCE WE ARE ALREADY PADDING DURING
+/// FUNCTION CALLS? Func Defination:
 ///     > already 16 bit alligned at start
 
-///     > before Func Call what if the stack is not 16 bit alligned? because of of odd number of stack args?
-///     > thats why we add padding of 8 bytes to make it 16 bit alligned before the call, and then remove 
-///       the padding + stack args after the call. 
+///     > before Func Call what if the stack is not 16 bit alligned? because of
+///     of odd number of stack args? > thats why we add padding of 8 bytes to
+///     make it 16 bit alligned before the call, and then remove
+///       the padding + stack args after the call.
 /// Func Call:
 /// @param instructions
 void AsmAllocateStackNode::fixUpInstructions(
-    std::vector<std::unique_ptr<AsmInstructionNode>> &instructions) {
+    std::vector<std::unique_ptr<AsmInstructionNode>>& instructions) {
   this->stack_size =
       (this->stack_size > 0) ? ((this->stack_size + 15) & ~15) : 0;
 }
 
 void AsmMovNode::fixUpInstructions(
-    std::vector<std::unique_ptr<AsmInstructionNode>> &instructions) {
+    std::vector<std::unique_ptr<AsmInstructionNode>>& instructions) {
   bool src_is_mem =
       isa<AsmStackNode>(this->src.get()) || isa<AsmDataNode>(this->src.get());
   bool dest_is_mem =
@@ -75,14 +77,14 @@ void AsmMovNode::fixUpInstructions(
 /// `imul` can't take memory address as it's destination. FIXES ALL THESE
 /// THINGS.
 void AsmBinaryNode::fixUpInstructions(
-    std::vector<std::unique_ptr<AsmInstructionNode>> &instructions) {
+    std::vector<std::unique_ptr<AsmInstructionNode>>& instructions) {
   const bool src_is_mem =
       isa<AsmStackNode>(this->src.get()) || isa<AsmDataNode>(this->src.get());
   const bool dest_is_mem =
       isa<AsmStackNode>(this->dest.get()) || isa<AsmDataNode>(this->dest.get());
 
-  if ((this->op_type == "+" || this->op_type == "-") && src_is_mem &&
-      dest_is_mem) {
+  if ((this->op_type == TokenType::PLUS || this->op_type == TokenType::MINUS) &&
+      src_is_mem && dest_is_mem) {
     // Eg:
     // Binary(Op, Stack(-4), Stack(-8)) ==Convert=to==>
     // Move(Stack(-4), TmpReg1); Binary(Op, TmpReg1, Stack(-8));
@@ -95,7 +97,7 @@ void AsmBinaryNode::fixUpInstructions(
     auto binary_instr =
         std::make_unique<AsmBinaryNode>(this->op_type, tmp_reg, this->dest);
     instructions.push_back(std::move(binary_instr));
-  } else if (this->op_type == "*" && dest_is_mem) {
+  } else if (this->op_type == TokenType::STAR && dest_is_mem) {
     // Eg:
     // Imul(Const(3), Stack(-4)) ==Convert=to==>
     // Move(Stack(-4), TmpReg); Imul(Const(3), TmpReg); Move(TmpReg, Stack(-4));
@@ -120,7 +122,7 @@ void AsmBinaryNode::fixUpInstructions(
 /// @brief handles the case when divisor of `idiv` is an immediate value.
 /// @param instructions
 void AsmIdivNode::fixUpInstructions(
-    std::vector<std::unique_ptr<AsmInstructionNode>> &instructions) {
+    std::vector<std::unique_ptr<AsmInstructionNode>>& instructions) {
   if (isa<AsmImmediateNode>(this->divisor.get())) {
     auto tmp_reg = std::make_shared<AsmRegisterNode>(getRegString(Reg::r10d));
     auto mov_instr = std::make_unique<AsmMovNode>(this->divisor, tmp_reg);
@@ -139,7 +141,7 @@ void AsmIdivNode::fixUpInstructions(
 /// Also can't take immediate value as destination.
 /// @param instructions
 void AsmCmpNode::fixUpInstructions(
-    std::vector<std::unique_ptr<AsmInstructionNode>> &instructions) {
+    std::vector<std::unique_ptr<AsmInstructionNode>>& instructions) {
   bool src1_is_mem =
       isa<AsmStackNode>(this->src1.get()) || isa<AsmDataNode>(this->src1.get());
   bool src2_is_mem =
