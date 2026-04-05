@@ -99,8 +99,9 @@ CTokenVec clexer(char* s, size_t slen, bool debug) {
     if (isspace(s[pos])) {
       if (s[pos] == '\n') {
         lineno++;
-        columnno = 1;
+        columnno = 0;
       }
+      columnno++;
       pos++;
       continue;
     }
@@ -135,7 +136,7 @@ CTokenVec clexer(char* s, size_t slen, bool debug) {
 
     // remove substr of the string now that it is tokenized
     pos += match_length;
-    columnno++;
+    columnno += match_length;
   }
   if (debug) {
     printf("----- Lexical Analysis -----\n");
