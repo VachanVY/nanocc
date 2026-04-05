@@ -17,14 +17,6 @@ public:
   std::deque<std::unique_ptr<IRInstructionNode>> IRInstructions;
   using Iter = std::list<std::shared_ptr<BasicBlock>>::iterator;
 
-  IRInstructionNode* getTerminator() {
-    if (IRInstructions.empty())
-      return nullptr;
-    if (IRInstructions.back()->isTerminator())
-      return IRInstructions.back().get();
-    return nullptr;
-  }
-
   static void printBasicBlocks(std::list<std::shared_ptr<BasicBlock>>& BBList) {
     std::println("--------- Basic Blocks --------");
     for (auto& BB : BBList) {
