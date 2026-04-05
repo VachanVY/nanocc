@@ -20,7 +20,7 @@ enum class ExitStage {
 
 struct TestArgs {
   std::string filename;
-  bool debug = false;
+  bool debug = true;
   ExitStage exit_stage = ExitStage::None;
 };
 
