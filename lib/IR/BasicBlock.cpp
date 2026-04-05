@@ -5,12 +5,6 @@
 #include "nanocc/Utils/Utils.hpp"
 
 namespace {
-/*
-1. Group the IR Instructions
-2. Convert the grouped IR Instructions into Basic Blocks
-3. Convert the Basic Blocks to a Graph Data Structure by adding edges
-*/
-
 // TODO(VachanVY): Store raw pointer instead of unique pointer...?
 // std::vector<std::deque<std::unique_ptr<IRInstructionNode>>> ==>
 // std::vector<std::deque<IRInstructionNode*>>
@@ -47,6 +41,7 @@ std::list<std::shared_ptr<BasicBlock>> BasicBlock::getBasicBlocks(
     std::list<std::unique_ptr<IRInstructionNode>>& Instructions) {
   std::list<std::shared_ptr<BasicBlock>> BBList;
   size_t blockId = 0;
+  LabelBBMap::obj().clear();
   std::vector<std::deque<std::unique_ptr<IRInstructionNode>>> Blocks =
       groupIRInstructions(Instructions);
   for (auto& IRInstrGroup : Blocks) {
@@ -55,25 +50,31 @@ std::list<std::shared_ptr<BasicBlock>> BasicBlock::getBasicBlocks(
     BB->blockId = blockId++;
     auto BBIter = BBList.emplace(BBList.end(), BB);
     auto& FirstIRInstr = BB->IRInstructions.front();
-    if (auto* IRLabelInstr = dyn_cast<IRLabelNode>(FirstIRInstr.get())) {
-      LabelBBMap::obj().insert(IRLabelInstr->labelName, BBIter);
+    if (auto* LabelIRInstr = dyn_cast<IRLabelNode>(FirstIRInstr.get())) {
+      LabelBBMap::obj().insert(LabelIRInstr->labelName, BBIter);
     }
   }
   return BBList;
 }
 
-std::vector<BasicBlockIterator>
-BasicBlock::getSuccessors(BasicBlockIterator BBIter,
+std::vector<BasicBlock::Iter>
+BasicBlock::getSuccessors(BasicBlock::Iter BBIter,
                           std::list<std::shared_ptr<BasicBlock>>& BBList) {
-  std::vector<BasicBlockIterator> successors;
+  std::vector<BasicBlock::Iter> successors;
   BasicBlock* BB = (*BBIter).get();
+
+  if (BB->IRInstructions.empty()) {
+    return successors;
+  }
 
   IRInstructionNode* BBLastIRInstr = BB->IRInstructions.back().get();
   if (!BBLastIRInstr || isa<IRRetNode>(BBLastIRInstr)) {
     return successors;
   } else if (auto* JumpIRInstr = dyn_cast<IRJumpNode>(BBLastIRInstr)) {
-    BasicBlockIterator branch = LabelBBMap::obj().at(JumpIRInstr->labelName);
-    successors.push_back(branch);
+    if (BasicBlock::Iter* branch =
+            LabelBBMap::obj().find(JumpIRInstr->labelName)) {
+      successors.push_back(*branch);
+    }
     return successors;
   }
   std::string labelName;
@@ -83,25 +84,23 @@ BasicBlock::getSuccessors(BasicBlockIterator BBIter,
                  dyn_cast<IRJumpIfNotZeroNode>(BBLastIRInstr)) {
     labelName = JumpIfNotZeroIRInstr->labelName;
   }
-  assert(labelName.size() != 0);
-
-  if (BasicBlockIterator falseBranch = std::next(BBIter);
-      falseBranch != BBList.end())
-    successors.push_back(falseBranch);
-  BasicBlockIterator trueBranch = LabelBBMap::obj().at(labelName);
-  successors.push_back(trueBranch);
+  if (BasicBlock::Iter defaultBranch = std::next(BBIter);
+      defaultBranch != BBList.end())
+    successors.push_back(defaultBranch);
+  if (labelName.size() > 0) {
+    if (BasicBlock::Iter* trueBranch = LabelBBMap::obj().find(labelName)) {
+      successors.push_back(*trueBranch);
+    }
+  }
   return successors;
 }
 
-std::vector<BasicBlockIterator> BasicBlock::getPredecessor(
-    std::list<std::shared_ptr<BasicBlock>>::iterator BBTarget,
-    std::list<std::shared_ptr<BasicBlock>>& BBList) {
-  std::vector<BasicBlockIterator> predecessors;
-
-  for (BasicBlockIterator BBIter = BBList.begin(); BBIter != BBList.end();
-       BBIter++) {
-    for (BasicBlockIterator BBChild :
-         BasicBlock::getSuccessors(BBIter, BBList)) {
+std::vector<BasicBlock::Iter>
+BasicBlock::getPredecessor(BasicBlock::Iter BBTarget,
+                           std::list<std::shared_ptr<BasicBlock>>& BBList) {
+  std::vector<BasicBlock::Iter> predecessors;
+  for (auto BBIter = BBList.begin(); BBIter != BBList.end(); BBIter++) {
+    for (BasicBlock::Iter BBChild : BasicBlock::getSuccessors(BBIter, BBList)) {
       if (BBChild == BBTarget) {
         predecessors.push_back(BBIter);
       }
@@ -109,43 +108,3 @@ std::vector<BasicBlockIterator> BasicBlock::getPredecessor(
   }
   return predecessors;
 }
-
-/*
-void addEdge(std::shared_ptr<BasicBlock> BBparent,
-             std::shared_ptr<BasicBlock> BBchild) {
-  if (!BBparent || !BBchild)
-    return;
-  BBparent->childrenBB.push_back(BBchild);
-  BBchild->parentsBB.push_back(BBparent);
-}
-
-void addEdgesToBasicBlocks(std::list<std::shared_ptr<BasicBlock>> BBList) {
-  for (auto BBIter = BBList.begin(); BBIter != BBList.end(); BBIter++) {
-    std::shared_ptr<BasicBlock>& BB = *BBIter;
-
-    std::shared_ptr<BasicBlock> BBNext = nullptr;
-    if (std::next(BBIter) != BBList.end()) {
-      BBNext = *std::next(BBIter);
-    };
-
-    IRInstructionNode* BBLastInstr = BB->getTerminator();
-    if (!BBLastInstr)
-      continue;
-    if (auto* RetInstr = dyn_cast<IRRetNode>(BBLastInstr)) {
-      continue;
-    } else if (auto* JumpInstr = dyn_cast<IRJumpNode>(BBLastInstr)) {
-      addEdge(BB, LabelToBB.at(JumpInstr->labelName));
-    } else if (auto* JumpIfZeroInstr =
-                   dyn_cast<IRJumpIfZeroNode>(BBLastInstr)) {
-      addEdge(BB, BBNext);
-      addEdge(BB, LabelToBB.at(JumpIfZeroInstr->labelName));
-    } else if (auto* JumpIfNotZeroInstr =
-                   dyn_cast<IRJumpIfNotZeroNode>(BBLastInstr)) {
-      addEdge(BB, BBNext);
-      addEdge(BB, LabelToBB.at(JumpIfNotZeroInstr->labelName));
-    } else {
-      addEdge(BB, BBNext);
-    }
-  }
-}
-*/

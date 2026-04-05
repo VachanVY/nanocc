@@ -19,14 +19,16 @@ void PassManager::run(IRProgramNode& IRProgram, bool debug) {
     bool changed = false;
     for (auto& Pass : Passes) {
       changed |= Pass(IRProgram);
+      if (debug) {
+        std::println("---- IR Optimization Iteration {} ----", iteration);
+        IRGen::programNodeIRDump(IRProgram, 0);
+        std::println("--------------------------------------");
+      }
     }
     // stop if no changes were made by any pass
     if (!changed)
       break;
-    if (debug) {
-      std::println("Optimization Iteration: {}", iteration++);
-      IRGen::programNodeIRDump(IRProgram, 0);
-    }
+    iteration++;
   } while (true);
 }
 

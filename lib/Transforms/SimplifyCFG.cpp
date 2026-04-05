@@ -10,16 +10,20 @@
 
 namespace {
 bool removeUnreachableBlocks(std::list<std::shared_ptr<BasicBlock>>& BBList) {
+  if (BBList.empty()) {
+    return false;
+  }
+
   // perform BFS and mark reachable blocks as visited
   std::unordered_set<size_t> visited;
 
-  std::queue<BasicBlockIterator> que;
-  BasicBlockIterator EntryBlock = BBList.begin();
+  std::queue<BasicBlock::Iter> que;
+  BasicBlock::Iter EntryBlock = BBList.begin();
   que.push(EntryBlock);
   visited.insert((*EntryBlock)->blockId);
 
   while (!que.empty()) {
-    BasicBlockIterator BBIter = que.front();
+    BasicBlock::Iter BBIter = que.front();
     que.pop();
 
     // go to adjacent nodes and add to que if they are not yet visited
@@ -37,9 +41,11 @@ bool removeUnreachableBlocks(std::list<std::shared_ptr<BasicBlock>>& BBList) {
     if (!visited.contains((*BBIter)->blockId)) {
       changed = true;
       // if first IR Instruction is Label, remove that from `LabelToBBMap`
-      auto& FirstIRInstr = (*BBIter)->IRInstructions.front();
-      if (auto* IRLabelInstr = dyn_cast<IRLabelNode>(FirstIRInstr.get())) {
-        LabelBBMap::obj().erase(IRLabelInstr->labelName);
+      if (!(*BBIter)->IRInstructions.empty()) {
+        auto& FirstIRInstr = (*BBIter)->IRInstructions.front();
+        if (auto* IRLabelInstr = dyn_cast<IRLabelNode>(FirstIRInstr.get())) {
+          LabelBBMap::obj().erase(IRLabelInstr->labelName);
+        }
       }
       BBIter = BBList.erase(BBIter);
     } else {
@@ -52,19 +58,32 @@ bool removeUnreachableBlocks(std::list<std::shared_ptr<BasicBlock>>& BBList) {
 bool removeRedundantJumpsLabelsEmptyBlocks(
     std::list<std::shared_ptr<BasicBlock>>& BBList) {
   bool changed = false;
-  for (auto BBIter = BBList.begin(); std::next(BBIter) != BBList.end();) {
+  
+  // returns true if BB was erased, due to being empty else false
+  auto eraseBBIfEmpty = [&](BasicBlock::Iter& BBIter) -> bool {
+    if ((*BBIter)->IRInstructions.empty()) {
+      BBIter = BBList.erase(BBIter);
+      changed = true;
+      return true;
+    }
+    return false;
+  };
+
+  for (auto BBIter = BBList.begin(); BBIter != BBList.end();) {
     BasicBlock* BB = (*BBIter).get();
+
+    if (eraseBBIfEmpty(BBIter)) continue;
 
     // remove redundant Jumps:
     // If the default next block is the only child, then
     // remove the Jump instruction, it's not useful
-    IRInstructionNode* BBLastIRInstr = BB->getTerminator();
-    if (isa<IRJumpNode>(BBLastIRInstr) ||
+    IRInstructionNode* BBLastIRInstr = BB->IRInstructions.back().get();
+    if (std::next(BBIter) != BBList.end() && (isa<IRJumpNode>(BBLastIRInstr) ||
         isa<IRJumpIfZeroNode>(BBLastIRInstr) ||
-        isa<IRJumpIfNotZeroNode>(BBLastIRInstr)) {
+        isa<IRJumpIfNotZeroNode>(BBLastIRInstr))) {
       bool keepJump = false;
       auto BBDefaultNextIter = std::next(BBIter);
-      // if BBDefaultNext is the only child, then remove that Instruction
+      // if BBDefaultNextIter is the only child, then remove that Instruction
       for (auto BBChildIter : BasicBlock::getSuccessors(BBIter, BBList)) {
         if (BBChildIter != BBDefaultNextIter) {
           keepJump = true;
@@ -74,6 +93,7 @@ bool removeRedundantJumpsLabelsEmptyBlocks(
       if (!keepJump) {
         BB->IRInstructions.pop_back();
         changed = true;
+        if (eraseBBIfEmpty(BBIter)) continue;
       }
     }
 
@@ -83,27 +103,31 @@ bool removeRedundantJumpsLabelsEmptyBlocks(
     // reach the BasicBlock BB without the label
     auto& BBFirstIRInstr = BB->IRInstructions.front();
     if (auto* IRLabelInstr = dyn_cast<IRLabelNode>(BBFirstIRInstr.get());
-        BBIter != BBList.begin()) {
+        IRLabelInstr) {
       bool keepLabel = false;
-      auto BBDefaultPrevIter = std::prev(BBIter);
-      for (auto BBParentIter : BasicBlock::getPredecessor(BBIter, BBList)) {
-        if (BBParentIter != BBDefaultPrevIter) {
-          keepLabel = true;
-          break;
+      if (BBIter == BBList.begin()) {
+        // entry block, but has predecessors => keep label
+        //            , has no predecessors  => remove label
+        keepLabel = !BasicBlock::getPredecessor(BBIter, BBList).empty();
+      } else {
+        auto BBDefaultPrevIter = std::prev(BBIter);
+        for (auto BBParentIter : BasicBlock::getPredecessor(BBIter, BBList)) {
+          if (BBParentIter != BBDefaultPrevIter) {
+            keepLabel = true;
+            break;
+          }
         }
       }
       if (!keepLabel) {
         LabelBBMap::obj().erase(IRLabelInstr->labelName);
         BB->IRInstructions.pop_front();
-        changed = true;
+        if (eraseBBIfEmpty(BBIter)) continue;
       }
     }
 
     // remove BasicBlock if it has no Instructions left
-    if (BB->IRInstructions.empty()) {
-      BBIter = BBList.erase(BBIter);
-    } else {
-      BBIter++;
+    if (!eraseBBIfEmpty(BBIter)) {
+      ++BBIter;
     }
   }
   return changed;
@@ -122,6 +146,13 @@ bool SimplifyCFG(IRProgramNode& IRProgram) {
       auto BBList = BasicBlock::getBasicBlocks(IRInstructions);
       changed |= removeUnreachableBlocks(BBList);
       changed |= removeRedundantJumpsLabelsEmptyBlocks(BBList);
+
+      IRInstructions.clear();
+      for (auto& BB : BBList) {
+        for (auto& IRInstr : BB->IRInstructions) {
+          IRInstructions.push_back(std::move(IRInstr));
+        }
+      }
     }
   }
   return changed;

@@ -148,12 +148,12 @@ namespace nanocc {
 
 bool ConstantFoldInstructions(IRProgramNode& IRProgram) {
   bool changed = false;
-  FoldResult foldResult = FoldResult::NoChange;
   for (auto& TopLvl : IRProgram.topLevel) {
     if (auto* IRFunc = dyn_cast<IRFunctionNode>(TopLvl.get())) {
       auto& IRVecInstr = IRFunc->IRInstructions;
       for (auto it = IRVecInstr.begin(); it != IRVecInstr.end();) {
         auto& IRInstr = *it;
+        FoldResult foldResult = FoldResult::NoChange;
         if (auto* IRUnaryOp = dyn_cast<IRUnaryNode>(IRInstr.get())) {
           foldResult = handleUnaryConstantFolding(IRUnaryOp, IRInstr);
         } else if (auto* IRBinaryOp = dyn_cast<IRBinaryNode>(IRInstr.get())) {
@@ -166,12 +166,13 @@ bool ConstantFoldInstructions(IRProgramNode& IRProgram) {
           foldResult =
               handleJumpIfNotZeroConstantFolding(IRJumpIfTrue, IRInstr);
         }
-        if (foldResult != FoldResult::NoChange) {
+        if (foldResult == FoldResult::Erase) {
           changed = true;
-          if (foldResult == FoldResult::Erase)
-            it = IRVecInstr.erase(it);
-          else
-            ++it;
+          it = IRVecInstr.erase(it);
+        } else {
+          if (foldResult == FoldResult::Replace)
+            changed = true;
+          ++it;
         }
       }
     }

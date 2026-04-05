@@ -2,6 +2,7 @@ add_library(nanoccIR
     IR.cpp
     IRGen.cpp
     IRDump.cpp
+    BasicBlock.cpp
 )
 
 target_include_directories(nanoccIR PUBLIC
