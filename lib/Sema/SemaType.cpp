@@ -69,8 +69,7 @@ void variableDeclNodeFileScopeCheckTypes(
       nanocc::raiseError(
           var_name->location.filename, var_name->location.line,
           var_name->location.column, STAGE,
-          std::format("Conflicting types for variable '{}'",
-                      var_name->name));
+          std::format("Conflicting types for variable '{}'", var_name->name));
     }
     if (variable_decl_node.storage_class == StorageClass::Extern) {
       /*
@@ -90,8 +89,7 @@ void variableDeclNodeFileScopeCheckTypes(
       nanocc::raiseError(
           var_name->location.filename, var_name->location.line,
           var_name->location.column, STAGE,
-          std::format("Conflicting linkage for variable '{}'",
-                      var_name->name));
+          std::format("Conflicting linkage for variable '{}'", var_name->name));
     }
 
     Initial* curr_init = std::get_if<Initial>(&init_value);
@@ -103,8 +101,7 @@ void variableDeclNodeFileScopeCheckTypes(
         nanocc::raiseError(
             var_name->location.filename, var_name->location.line,
             var_name->location.column, STAGE,
-            std::format("Redefinition of variable '{}'",
-                        var_name->name));
+            std::format("Redefinition of variable '{}'", var_name->name));
       } else {
         /*
         int x = 5;          int x;
@@ -136,12 +133,11 @@ void variableDeclNodeBlockScopeCheckTypes(
   if (variable_decl_node.storage_class == StorageClass::Extern) {
     if (variable_decl_node.init_expr) {
       // extern int x = 5; // error, extern variables cannot have initializers
-      nanocc::raiseError(
-          var_name->location.filename, var_name->location.line,
-          var_name->location.column, STAGE,
-          std::format("Block scope variable '{}' declared "
-                      "as extern cannot have an initializer",
-                      var_name->name));
+      nanocc::raiseError(var_name->location.filename, var_name->location.line,
+                         var_name->location.column, STAGE,
+                         std::format("Block scope variable '{}' declared "
+                                     "as extern cannot have an initializer",
+                                     var_name->name));
     }
     if (type_checker_map.contains(var_name->name)) {
       auto& existing_entry = type_checker_map[var_name->name];
@@ -149,8 +145,7 @@ void variableDeclNodeBlockScopeCheckTypes(
         nanocc::raiseError(
             var_name->location.filename, var_name->location.line,
             var_name->location.column, STAGE,
-            std::format("Conflicting types for variable '{}'",
-                        var_name->name));
+            std::format("Conflicting types for variable '{}'", var_name->name));
       }
     } else {
       // if not previously declared, add to symbol table with type IntType and
@@ -176,13 +171,12 @@ void variableDeclNodeBlockScopeCheckTypes(
       */
       init_value = Initial{.value = "0"};
     } else {
-      nanocc::raiseError(
-          var_name->location.filename, var_name->location.line,
-          var_name->location.column, STAGE,
-          std::format("Block scope variable '{}' declared as "
-                      "static must have a "
-                      "constant initializer or no initializer",
-                      var_name->name));
+      nanocc::raiseError(var_name->location.filename, var_name->location.line,
+                         var_name->location.column, STAGE,
+                         std::format("Block scope variable '{}' declared as "
+                                     "static must have a "
+                                     "constant initializer or no initializer",
+                                     var_name->name));
     }
     type_checker_map[var_name->name] = {.type = IntType{},
                                         .attrs = StaticAttr{
@@ -215,17 +209,16 @@ void functionDeclNodeCheckTypes(FunctionDeclNode& function_decl_node,
         nanocc::raiseError(
             func_name->location.filename, func_name->location.line,
             func_name->location.column, STAGE,
-            std::format("Redefinition of function '{}'",
-                        func_name->name));
+            std::format("Redefinition of function '{}'", func_name->name));
       }
       if (func_type->param_types.size() !=
           function_decl_node.parameters.size()) {
-        nanocc::raiseError(
-            func_name->location.filename, func_name->location.line,
-            func_name->location.column, STAGE,
-            std::format("Conflicting number of parameters "
-                        "in declarations for function '{}'",
-                        func_name->name));
+        nanocc::raiseError(func_name->location.filename,
+                           func_name->location.line, func_name->location.column,
+                           STAGE,
+                           std::format("Conflicting number of parameters "
+                                       "in declarations for function '{}'",
+                                       func_name->name));
       }
       /* functions can never change linkage.
       ```
@@ -262,8 +255,7 @@ void functionDeclNodeCheckTypes(FunctionDeclNode& function_decl_node,
       nanocc::raiseError(
           func_name->location.filename, func_name->location.line,
           func_name->location.column, STAGE,
-          std::format("Conflicting types for function '{}'",
-                      func_name->name));
+          std::format("Conflicting types for function '{}'", func_name->name));
     }
   }
   auto param_types = std::vector<std::unique_ptr<Type>>{};
@@ -406,12 +398,11 @@ void forInitNodeCheckTypes(ForInitNode& for_init_node,
     */
     if (variable_decl_node.storage_class != StorageClass::None) {
       auto& var_name = variable_decl_node.var_identifier;
-      nanocc::raiseError(
-          var_name->location.filename, var_name->location.line,
-          var_name->location.column, STAGE,
-          std::format("For loop initializer variable '{}' "
-                      "cannot have storage class specifier",
-                      var_name->name));
+      nanocc::raiseError(var_name->location.filename, var_name->location.line,
+                         var_name->location.column, STAGE,
+                         std::format("For loop initializer variable '{}' "
+                                     "cannot have storage class specifier",
+                                     var_name->name));
     }
     variableDeclNodeBlockScopeCheckTypes(variable_decl_node, type_checker_map);
   } else if (for_init_node.init_expr) {
@@ -461,8 +452,7 @@ void varNodeCheckTypes(VarNode& var_node,
     nanocc::raiseError(
         var_name->location.filename, var_name->location.line,
         var_name->location.column, STAGE,
-        std::format("Variable '{}' is not of type 'int'",
-                    var_name->name));
+        std::format("Variable '{}' is not of type 'int'", var_name->name));
   }
 }
 
@@ -496,9 +486,8 @@ void functionCallNodeCheckTypes(FunctionCallNode& function_call_node,
     nanocc::raiseError(
         func_name->location.filename, func_name->location.line,
         func_name->location.column, STAGE,
-        std::format(
-            "Attempting to call non-function of type 'int' '{}'",
-            function_call_node.func_identifier->name));
+        std::format("Attempting to call non-function of type 'int' '{}'",
+                    function_call_node.func_identifier->name));
   } else if (FuncType* func_type = std::get_if<FuncType>(&caller_type)) {
     if (func_type->param_types.size() != function_call_node.arguments.size()) {
       nanocc::raiseError(func_name->location.filename, func_name->location.line,

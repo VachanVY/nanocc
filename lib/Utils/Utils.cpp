@@ -74,8 +74,8 @@ void raiseError(const std::string& filename, size_t line, size_t column,
                  line, column, RESET, BOLD, RED, errorStage, RESET,
                  errorMessage);
   } else {
-    std::println(stderr, "{}{}:{}:{} {}{}{} Error:{} {}", BOLD, filename,
-                 line, RESET, BOLD, RED, errorStage, RESET, errorMessage);
+    std::println(stderr, "{}{}:{}:{} {}{}{} Error:{} {}", BOLD, filename, line,
+                 RESET, BOLD, RED, errorStage, RESET, errorMessage);
   }
 
   std::string src = getLine(filename, line);

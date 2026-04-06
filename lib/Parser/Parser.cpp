@@ -46,20 +46,19 @@ constexpr bool isBinop(const TokenType op) {
 void expect(const std::deque<Token>& tokens, TokenType expected, size_t& pos) {
   if (pos >= tokens.size()) {
     Token tok = tokens.back();
-    nanocc::raiseError(
-        tok.location.filename, tok.location.line, tok.location.column, STAGE,
-        std::format("Expected '{}', but reached end of input",
-                    tokenTypeToString(expected)));
+    nanocc::raiseError(tok.location.filename, tok.location.line,
+                       tok.location.column, STAGE,
+                       std::format("Expected '{}', but reached end of input",
+                                   tokenTypeToString(expected)));
   }
   const auto& [token_type, lexeme, location] = tokens[pos];
 
   if (expected != token_type) {
     nanocc::raiseError(
         location.filename, location.line, location.column, STAGE,
-        std::format(
-            "Expected '{}', but found '{}': '{}' at pos:{}",
-            tokenTypeToString(expected), tokenTypeToString(token_type), lexeme,
-            pos));
+        std::format("Expected '{}', but found '{}': '{}' at pos:{}",
+                    tokenTypeToString(expected), tokenTypeToString(token_type),
+                    lexeme, pos));
   }
   pos++;
 }
@@ -237,9 +236,8 @@ void FunctionDeclNode::parse(std::deque<Token>& tokens, size_t& pos) {
     nanocc::raiseError(
         tokens[pos].location.filename, tokens[pos].location.line,
         tokens[pos].location.column, STAGE,
-        std::format(
-            "Expected parameter list or 'void', but found '{}'",
-            tokenTypeToString(tokens[pos].type)));
+        std::format("Expected parameter list or 'void', but found '{}'",
+                    tokenTypeToString(tokens[pos].type)));
   }
   // -<parse-parameters>
   expect(tokens, TokenType::RPAREN, pos);
@@ -787,9 +785,8 @@ void IdentifierNode::parse(std::deque<Token>& tokens, size_t& pos) {
 
   const auto& [token_type, actual, location] = tokens[pos++];
   if (token_type != TokenType::IDENTIFIER) {
-    nanocc::raiseError(
-        location.filename, location.line, location.column, STAGE,
-        std::format("Expected identifier but got '{}'", actual));
+    nanocc::raiseError(location.filename, location.line, location.column, STAGE,
+                       std::format("Expected identifier but got '{}'", actual));
   }
   this->name = actual;
 }
@@ -950,9 +947,8 @@ std::unique_ptr<ProgramNode> parse(std::deque<Token>& tokens, bool debug) {
     const auto& [token_type, actual, location] = tokens[pos];
     nanocc::raiseError(
         location.filename, location.line, location.column, STAGE,
-        std::format(
-            "Unexpected token '{}' of class '{}' at top level",
-            actual, tokenTypeToString(token_type)));
+        std::format("Unexpected token '{}' of class '{}' at top level", actual,
+                    tokenTypeToString(token_type)));
   }
 
   if (debug) {

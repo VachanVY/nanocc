@@ -28,8 +28,7 @@ void resolveVariableIdentifiers(IdentifierMap& identifier_map,
     nanocc::raiseError(
         var_name.location.filename, var_name.location.line,
         var_name.location.column, STAGE,
-        std::format("Redeclaration of parameter '{}'",
-                    var_name.name));
+        std::format("Redeclaration of parameter '{}'", var_name.name));
   }
   std::string unique_name = getUniqueName(var_name.name);
   /*
@@ -179,12 +178,11 @@ void functionDeclNodeResolveTypes(FunctionDeclNode& function_decl_node,
   if (identifier_map.contains(func_name->name)) {
     auto& prev_entry = identifier_map[func_name->name];
     if (prev_entry.from_curr_scope && !prev_entry.no_renaming) {
-      nanocc::raiseError(
-          func_name->location.filename, func_name->location.line,
-          func_name->location.column, STAGE,
-          std::format("Redeclaration of function "
-                      "'{}' with no external linkage",
-                      func_name->name));
+      nanocc::raiseError(func_name->location.filename, func_name->location.line,
+                         func_name->location.column, STAGE,
+                         std::format("Redeclaration of function "
+                                     "'{}' with no external linkage",
+                                     func_name->name));
     }
   }
 
@@ -404,11 +402,9 @@ void varNodeResolveTypes(VarNode& var_node, IdentifierMap& identifier_map) {
   if (identifier_map.contains(var_name->name)) {
     var_name->name = identifier_map[var_name->name].unique_name;
   } else {
-    nanocc::raiseError(
-        var_name->location.filename, var_name->location.line,
-        var_name->location.column, STAGE,
-        std::format("Undeclared variable '{}'",
-                    var_name->name));
+    nanocc::raiseError(var_name->location.filename, var_name->location.line,
+                       var_name->location.column, STAGE,
+                       std::format("Undeclared variable '{}'", var_name->name));
   }
 }
 
@@ -455,9 +451,7 @@ void functionCallNodeResolveTypes(FunctionCallNode& function_call_node,
     nanocc::raiseError(
         func_identifier->location.filename, func_identifier->location.line,
         func_identifier->location.column, STAGE,
-        std::format(
-            "Calling undeclared function '{}'",
-            func_identifier->name));
+        std::format("Calling undeclared function '{}'", func_identifier->name));
   }
   // functions with external linkage will have same name
   // only internal linkage functions will get new unique names
