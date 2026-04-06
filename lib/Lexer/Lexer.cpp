@@ -4,7 +4,7 @@
 #include "nanocc/Lexer/Lexer.hpp"
 
 namespace nanocc {
-std::deque<Token> lexer(std::string& s, bool debug) {
+std::deque<Token> lexer(const std::string& s, bool debug) {
   CTokenVec c_tokens = clexer(const_cast<char*>(s.c_str()), s.size(), debug);
 
   std::deque<Token> tokens;

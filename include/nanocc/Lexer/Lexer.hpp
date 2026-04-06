@@ -23,5 +23,5 @@ namespace nanocc {
 /// @param s The source code string to analyze.
 /// @param debug Whether to print debug information during lexing.
 /// @return A deque of tokens generated from the source code.
-std::deque<Token> lexer(std::string& s, bool debug = false);
+std::deque<Token> lexer(const std::string& s, bool debug = false);
 } // namespace nanocc

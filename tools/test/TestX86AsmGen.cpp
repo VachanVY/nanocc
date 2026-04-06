@@ -52,7 +52,7 @@ int main(int argc, char* argv[]) {
     return 0;
 
   // --- Semantic analysis (validate) ---
-  nanocc::semanticAnalysis(ast, args.debug);
+  nanocc::semanticAnalysis(*ast, args.debug);
   if (args.exit_stage == nanocc::test::ExitStage::Validate)
     return 0;
 

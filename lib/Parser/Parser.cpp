@@ -221,7 +221,7 @@ void FunctionDeclNode::parse(std::deque<Token>& tokens, size_t& pos) {
   // <parse-parameters> // can be void or multiple parameters separated by ","
   if (tokens[pos].type == TokenType::VOID) {
     expect(tokens, TokenType::VOID, pos);
-  } else {
+  } else if (tokens[pos].type == TokenType::INT) {
     expect(tokens, TokenType::INT, pos);
     auto param = std::make_unique<IdentifierNode>();
     param->parse(tokens, pos);
@@ -233,6 +233,13 @@ void FunctionDeclNode::parse(std::deque<Token>& tokens, size_t& pos) {
       param->parse(tokens, pos);
       this->parameters.push_back(std::move(param));
     }
+  } else {
+    nanocc::raiseError(
+        tokens[pos].location.filename, tokens[pos].location.line,
+        tokens[pos].location.column, STAGE,
+        std::format(
+            "Syntax Error: Expected parameter list or 'void', but found '{}'",
+            tokenTypeToString(tokens[pos].type)));
   }
   // -<parse-parameters>
   expect(tokens, TokenType::RPAREN, pos);

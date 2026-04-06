@@ -1,11 +1,14 @@
 #!/bin/bash
 set -e
 
+CC=${CC:-gcc} 
+CXX=${CXX:-g++}
+
 mode="$1"
 BUILD_TYPE="${2:-Release}"   # default = Release
 
 if [ "$mode" = "compiler" ]; then
-    cmake -S . -B build \
+    CC=$CC CXX=$CXX cmake -S . -B build \
         -DCMAKE_BUILD_TYPE=$BUILD_TYPE \
         -DBUILD_NANOCC_TEST=OFF
     cmake --build build
@@ -23,7 +26,7 @@ elif [ "$mode" = "test" ]; then
         exit 1
     fi
 
-    cmake -S . -B build \
+    CC=$CC CXX=$CXX cmake -S . -B build \
         -DCMAKE_BUILD_TYPE=$BUILD_TYPE \
         -DBUILD_NANOCC_TEST=ON
     cmake --build build --target "$test_component"

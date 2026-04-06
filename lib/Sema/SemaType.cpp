@@ -6,20 +6,19 @@
 
 namespace Sema {
 // check types -- start
-void programNodeCheckTypes(std::unique_ptr<ProgramNode>& program_node,
+void programNodeCheckTypes(ProgramNode& program_node,
                            TypeCheckerSymbolTable& type_checker_map) {
-  for (auto& decl : program_node->declarations) {
-    declarationNodeCheckTypes(decl, type_checker_map);
+  for (auto& decl : program_node.declarations) {
+    declarationNodeCheckTypes(*decl, type_checker_map);
   }
 }
 
-void declarationNodeCheckTypes(
-    std::unique_ptr<DeclarationNode>& declaration_node,
-    TypeCheckerSymbolTable& type_checker_map) {
-  if (declaration_node->func) {
-    functionDeclNodeCheckTypes(declaration_node->func, type_checker_map);
-  } else if (declaration_node->var) {
-    variableDeclNodeFileScopeCheckTypes(declaration_node->var,
+void declarationNodeCheckTypes(DeclarationNode& declaration_node,
+                               TypeCheckerSymbolTable& type_checker_map) {
+  if (declaration_node.func) {
+    functionDeclNodeCheckTypes(*declaration_node.func, type_checker_map);
+  } else if (declaration_node.var) {
+    variableDeclNodeFileScopeCheckTypes(*declaration_node.var,
                                         type_checker_map);
   }
 }
@@ -34,17 +33,17 @@ static std::string isConstInitExpr(const VariableDeclNode& node) {
 } // namespace
 
 void variableDeclNodeFileScopeCheckTypes(
-    std::unique_ptr<VariableDeclNode>& variable_decl_node,
+    VariableDeclNode& variable_decl_node,
     TypeCheckerSymbolTable& type_checker_map) {
-  auto& var_name = variable_decl_node->var_identifier;
+  auto& var_name = variable_decl_node.var_identifier;
 
   InitValue init_value;
-  auto const_val = isConstInitExpr(*variable_decl_node);
+  auto const_val = isConstInitExpr(variable_decl_node);
   if (!const_val.empty()) {
     // int b = 2;
     init_value = Initial{.value = const_val};
-  } else if (!variable_decl_node->init_expr) {
-    if (variable_decl_node->storage_class == StorageClass::Extern) {
+  } else if (!variable_decl_node.init_expr) {
+    if (variable_decl_node.storage_class == StorageClass::Extern) {
       // extern int x;
       init_value = NoIntializer{};
     } else {
@@ -61,7 +60,7 @@ void variableDeclNodeFileScopeCheckTypes(
                     var_name->name));
   }
 
-  bool global = variable_decl_node->storage_class != StorageClass::Static;
+  bool global = variable_decl_node.storage_class != StorageClass::Static;
 
   if (type_checker_map.contains(var_name->name)) {
     auto& prev_decl_entry = type_checker_map[var_name->name];
@@ -73,7 +72,7 @@ void variableDeclNodeFileScopeCheckTypes(
           std::format("Type Error: Conflicting types for variable '{}'",
                       var_name->name));
     }
-    if (variable_decl_node->storage_class == StorageClass::Extern) {
+    if (variable_decl_node.storage_class == StorageClass::Extern) {
       /*
       static int x;            extern int x;
       // previous linkage (i.e of `static int x`) is assigned to this
@@ -130,12 +129,12 @@ void variableDeclNodeFileScopeCheckTypes(
 }
 
 void variableDeclNodeBlockScopeCheckTypes(
-    std::unique_ptr<VariableDeclNode>& variable_decl_node,
+    VariableDeclNode& variable_decl_node,
     TypeCheckerSymbolTable& type_checker_map) {
   //
-  auto& var_name = variable_decl_node->var_identifier;
-  if (variable_decl_node->storage_class == StorageClass::Extern) {
-    if (variable_decl_node->init_expr) {
+  auto& var_name = variable_decl_node.var_identifier;
+  if (variable_decl_node.storage_class == StorageClass::Extern) {
+    if (variable_decl_node.init_expr) {
       // extern int x = 5; // error, extern variables cannot have initializers
       nanocc::raiseError(
           var_name->location.filename, var_name->location.line,
@@ -162,15 +161,15 @@ void variableDeclNodeBlockScopeCheckTypes(
                                               .global = true,
                                           }};
     }
-  } else if (variable_decl_node->storage_class == StorageClass::Static) {
-    auto const_val = isConstInitExpr(*variable_decl_node);
+  } else if (variable_decl_node.storage_class == StorageClass::Static) {
+    auto const_val = isConstInitExpr(variable_decl_node);
     Initial init_value;
     if (!const_val.empty()) {
       /*
       { static int x = 5; }
       */
       init_value = Initial{.value = const_val};
-    } else if (!variable_decl_node->init_expr) {
+    } else if (!variable_decl_node.init_expr) {
       /*
       { static int x; } // block scope static variables initialized to 0 by
       default
@@ -192,20 +191,19 @@ void variableDeclNodeBlockScopeCheckTypes(
                                         }};
   } else {
     type_checker_map[var_name->name].type = IntType{};
-    if (variable_decl_node->init_expr) {
-      exprNodeCheckTypes(variable_decl_node->init_expr, type_checker_map);
+    if (variable_decl_node.init_expr) {
+      exprNodeCheckTypes(*variable_decl_node.init_expr, type_checker_map);
     }
   }
 }
 
-void functionDeclNodeCheckTypes(
-    std::unique_ptr<FunctionDeclNode>& function_decl_node,
-    TypeCheckerSymbolTable& type_checker_map) {
-  bool has_body = (function_decl_node->body != nullptr);
+void functionDeclNodeCheckTypes(FunctionDeclNode& function_decl_node,
+                                TypeCheckerSymbolTable& type_checker_map) {
+  bool has_body = (function_decl_node.body != nullptr);
   bool already_defined = false;
-  bool global = function_decl_node->storage_class != StorageClass::Static;
+  bool global = function_decl_node.storage_class != StorageClass::Static;
 
-  auto& func_name = function_decl_node->func_name;
+  auto& func_name = function_decl_node.func_name;
 
   // has been declared/defined before
   if (type_checker_map.contains(func_name->name)) {
@@ -221,7 +219,7 @@ void functionDeclNodeCheckTypes(
                         func_name->name));
       }
       if (func_type->param_types.size() !=
-          function_decl_node->parameters.size()) {
+          function_decl_node.parameters.size()) {
         nanocc::raiseError(
             func_name->location.filename, func_name->location.line,
             func_name->location.column, STAGE,
@@ -246,7 +244,7 @@ void functionDeclNodeCheckTypes(
       */
       bool existing_global = std::get<FuncAttr>(existing_entry.attrs).global;
 
-      if (function_decl_node->storage_class == StorageClass::Static) {
+      if (function_decl_node.storage_class == StorageClass::Static) {
         if (existing_global) {
           // trying to change from external to internal - error
           nanocc::raiseError(
@@ -269,7 +267,7 @@ void functionDeclNodeCheckTypes(
     }
   }
   auto param_types = std::vector<std::unique_ptr<Type>>{};
-  for (auto& param : function_decl_node->parameters) {
+  for (auto& param : function_decl_node.parameters) {
     // for now, only IntType parameters are supported
     param_types.push_back(std::make_unique<Type>(IntType{}));
   }
@@ -287,128 +285,127 @@ void functionDeclNodeCheckTypes(
       }};
 
   if (has_body) {
-    for (const auto& param : function_decl_node->parameters) {
+    for (const auto& param : function_decl_node.parameters) {
       type_checker_map[param->name].type = IntType{};
     }
-    blockNodeCheckTypes(function_decl_node->body, type_checker_map);
+    blockNodeCheckTypes(*function_decl_node.body, type_checker_map);
   }
 }
 
-void blockNodeCheckTypes(std::unique_ptr<BlockNode>& block_node,
+void blockNodeCheckTypes(BlockNode& block_node,
                          TypeCheckerSymbolTable& type_checker_map) {
-  for (const auto& block_item : block_node->block_items) {
-    blockItemNodeCheckTypes(block_item, type_checker_map);
+  for (const auto& block_item : block_node.block_items) {
+    blockItemNodeCheckTypes(*block_item, type_checker_map);
   }
 }
 
-void blockItemNodeCheckTypes(
-    const std::unique_ptr<BlockItemNode>& block_item_node,
-    TypeCheckerSymbolTable& type_checker_map) {
-  if (block_item_node->declaration) {
-    if (block_item_node->declaration->func) {
-      functionDeclNodeCheckTypes(block_item_node->declaration->func,
+void blockItemNodeCheckTypes(const BlockItemNode& block_item_node,
+                             TypeCheckerSymbolTable& type_checker_map) {
+  if (block_item_node.declaration) {
+    if (block_item_node.declaration->func) {
+      functionDeclNodeCheckTypes(*block_item_node.declaration->func,
                                  type_checker_map);
-    } else if (block_item_node->declaration->var) {
-      variableDeclNodeBlockScopeCheckTypes(block_item_node->declaration->var,
+    } else if (block_item_node.declaration->var) {
+      variableDeclNodeBlockScopeCheckTypes(*block_item_node.declaration->var,
                                            type_checker_map);
     }
-  } else if (block_item_node->statement) {
-    statementNodeCheckTypes(block_item_node->statement, type_checker_map);
+  } else if (block_item_node.statement) {
+    statementNodeCheckTypes(*block_item_node.statement, type_checker_map);
   }
 }
 
-void statementNodeCheckTypes(std::unique_ptr<StatementNode>& statement_node,
+void statementNodeCheckTypes(StatementNode& statement_node,
                              TypeCheckerSymbolTable& type_checker_map) {
-  if (statement_node->return_stmt) {
-    returnNodeCheckTypes(statement_node->return_stmt, type_checker_map);
-  } else if (statement_node->expression_stmt) {
-    expressionNodeCheckTypes(statement_node->expression_stmt, type_checker_map);
-  } else if (statement_node->ifelse_stmt) {
-    ifElseNodeCheckTypes(statement_node->ifelse_stmt, type_checker_map);
-  } else if (statement_node->compound_stmt) {
-    compoundNodeCheckTypes(statement_node->compound_stmt, type_checker_map);
-  } else if (statement_node->break_stmt) {
-    breakNodeCheckTypes(statement_node->break_stmt, type_checker_map); // no-op
-  } else if (statement_node->continue_stmt) {
-    continueNodeCheckTypes(statement_node->continue_stmt,
+  if (statement_node.return_stmt) {
+    returnNodeCheckTypes(*statement_node.return_stmt, type_checker_map);
+  } else if (statement_node.expression_stmt) {
+    expressionNodeCheckTypes(*statement_node.expression_stmt, type_checker_map);
+  } else if (statement_node.ifelse_stmt) {
+    ifElseNodeCheckTypes(*statement_node.ifelse_stmt, type_checker_map);
+  } else if (statement_node.compound_stmt) {
+    compoundNodeCheckTypes(*statement_node.compound_stmt, type_checker_map);
+  } else if (statement_node.break_stmt) {
+    breakNodeCheckTypes(*statement_node.break_stmt, type_checker_map); // no-op
+  } else if (statement_node.continue_stmt) {
+    continueNodeCheckTypes(*statement_node.continue_stmt,
                            type_checker_map); // no-op
-  } else if (statement_node->while_stmt) {
-    whileNodeCheckTypes(statement_node->while_stmt, type_checker_map);
-  } else if (statement_node->dowhile_stmt) {
-    doWhileNodeCheckTypes(statement_node->dowhile_stmt, type_checker_map);
-  } else if (statement_node->for_stmt) {
-    forNodeCheckTypes(statement_node->for_stmt, type_checker_map);
-  } else if (statement_node->null_stmt) {
-    nullNodeCheckTypes(statement_node->null_stmt, type_checker_map); // no-op
+  } else if (statement_node.while_stmt) {
+    whileNodeCheckTypes(*statement_node.while_stmt, type_checker_map);
+  } else if (statement_node.dowhile_stmt) {
+    doWhileNodeCheckTypes(*statement_node.dowhile_stmt, type_checker_map);
+  } else if (statement_node.for_stmt) {
+    forNodeCheckTypes(*statement_node.for_stmt, type_checker_map);
+  } else if (statement_node.null_stmt) {
+    nullNodeCheckTypes(*statement_node.null_stmt, type_checker_map); // no-op
   } else {
     throw std::runtime_error("Type Error: Malformed StatementNode");
   }
 }
 
-void returnNodeCheckTypes(std::unique_ptr<ReturnNode>& return_node,
+void returnNodeCheckTypes(ReturnNode& return_node,
                           TypeCheckerSymbolTable& type_checker_map) {
-  exprNodeCheckTypes(return_node->ret_expr, type_checker_map);
+  exprNodeCheckTypes(*return_node.ret_expr, type_checker_map);
 }
 
-void expressionNodeCheckTypes(std::unique_ptr<ExpressionNode>& expression_node,
+void expressionNodeCheckTypes(ExpressionNode& expression_node,
                               TypeCheckerSymbolTable& type_checker_map) {
-  exprNodeCheckTypes(expression_node->expr, type_checker_map);
+  exprNodeCheckTypes(*expression_node.expr, type_checker_map);
 }
 
-void ifElseNodeCheckTypes(std::unique_ptr<IfElseNode>& ifelse_node,
+void ifElseNodeCheckTypes(IfElseNode& ifelse_node,
                           TypeCheckerSymbolTable& type_checker_map) {
-  exprNodeCheckTypes(ifelse_node->condition, type_checker_map);
-  statementNodeCheckTypes(ifelse_node->if_block, type_checker_map);
-  if (ifelse_node->else_block) {
-    statementNodeCheckTypes(ifelse_node->else_block, type_checker_map);
+  exprNodeCheckTypes(*ifelse_node.condition, type_checker_map);
+  statementNodeCheckTypes(*ifelse_node.if_block, type_checker_map);
+  if (ifelse_node.else_block) {
+    statementNodeCheckTypes(*ifelse_node.else_block, type_checker_map);
   }
 }
 
-void compoundNodeCheckTypes(std::unique_ptr<CompoundNode>& compound_node,
+void compoundNodeCheckTypes(CompoundNode& compound_node,
                             TypeCheckerSymbolTable& type_checker_map) {
-  blockNodeCheckTypes(compound_node->block, type_checker_map);
+  blockNodeCheckTypes(*compound_node.block, type_checker_map);
 }
 
-void breakNodeCheckTypes(std::unique_ptr<BreakNode>& break_node,
+void breakNodeCheckTypes(BreakNode& break_node,
                          TypeCheckerSymbolTable& type_checker_map) {}; // no-op
-void continueNodeCheckTypes(std::unique_ptr<ContinueNode>& continue_node,
+void continueNodeCheckTypes(ContinueNode& continue_node,
                             TypeCheckerSymbolTable& type_checker_map) {
 }; // no-op
 
-void whileNodeCheckTypes(std::unique_ptr<WhileNode>& while_node,
+void whileNodeCheckTypes(WhileNode& while_node,
                          TypeCheckerSymbolTable& type_checker_map) {
-  exprNodeCheckTypes(while_node->condition, type_checker_map);
-  statementNodeCheckTypes(while_node->body, type_checker_map);
+  exprNodeCheckTypes(*while_node.condition, type_checker_map);
+  statementNodeCheckTypes(*while_node.body, type_checker_map);
 }
 
-void doWhileNodeCheckTypes(std::unique_ptr<DoWhileNode>& dowhile_node,
+void doWhileNodeCheckTypes(DoWhileNode& dowhile_node,
                            TypeCheckerSymbolTable& type_checker_map) {
-  statementNodeCheckTypes(dowhile_node->body, type_checker_map);
-  exprNodeCheckTypes(dowhile_node->condition, type_checker_map);
+  statementNodeCheckTypes(*dowhile_node.body, type_checker_map);
+  exprNodeCheckTypes(*dowhile_node.condition, type_checker_map);
 }
 
-void forNodeCheckTypes(std::unique_ptr<ForNode>& for_node,
+void forNodeCheckTypes(ForNode& for_node,
                        TypeCheckerSymbolTable& type_checker_map) {
-  forInitNodeCheckTypes(for_node->init, type_checker_map);
-  if (for_node->condition) {
-    exprNodeCheckTypes(for_node->condition, type_checker_map);
+  forInitNodeCheckTypes(*for_node.init, type_checker_map);
+  if (for_node.condition) {
+    exprNodeCheckTypes(*for_node.condition, type_checker_map);
   }
-  if (for_node->post) {
-    exprNodeCheckTypes(for_node->post, type_checker_map);
+  if (for_node.post) {
+    exprNodeCheckTypes(*for_node.post, type_checker_map);
   }
-  statementNodeCheckTypes(for_node->body, type_checker_map);
+  statementNodeCheckTypes(*for_node.body, type_checker_map);
 }
 
-void forInitNodeCheckTypes(std::unique_ptr<ForInitNode>& for_init_node,
+void forInitNodeCheckTypes(ForInitNode& for_init_node,
                            TypeCheckerSymbolTable& type_checker_map) {
-  if (for_init_node->declaration) {
-    auto& variable_decl_node = for_init_node->declaration;
+  if (for_init_node.declaration) {
+    auto& variable_decl_node = *for_init_node.declaration;
     /* ERROR cases:
     for (extern int x; i < 10; i++) { ... }
     for (static int x = 5; i < 10; i++) { ... }
     */
-    if (variable_decl_node->storage_class != StorageClass::None) {
-      auto& var_name = variable_decl_node->var_identifier;
+    if (variable_decl_node.storage_class != StorageClass::None) {
+      auto& var_name = variable_decl_node.var_identifier;
       nanocc::raiseError(
           var_name->location.filename, var_name->location.line,
           var_name->location.column, STAGE,
@@ -417,54 +414,49 @@ void forInitNodeCheckTypes(std::unique_ptr<ForInitNode>& for_init_node,
                       var_name->name));
     }
     variableDeclNodeBlockScopeCheckTypes(variable_decl_node, type_checker_map);
-  } else if (for_init_node->init_expr) {
-    exprNodeCheckTypes(for_init_node->init_expr, type_checker_map);
+  } else if (for_init_node.init_expr) {
+    exprNodeCheckTypes(*for_init_node.init_expr, type_checker_map);
   }
 }
 
-void nullNodeCheckTypes(std::unique_ptr<NullNode>& null_node,
+void nullNodeCheckTypes(NullNode& null_node,
                         TypeCheckerSymbolTable& type_checker_map) {}; // no-op
 
-void exprNodeCheckTypes(std::unique_ptr<ExprNode>& expr_node,
+void exprNodeCheckTypes(ExprNode& expr_node,
                         TypeCheckerSymbolTable& type_checker_map) {
-  exprFactorNodeCheckTypes(expr_node->left_exprf, type_checker_map);
+  exprFactorNodeCheckTypes(*expr_node.left_exprf, type_checker_map);
 }
 
-void exprFactorNodeCheckTypes(std::unique_ptr<ExprFactorNode>& expr_factor_node,
+void exprFactorNodeCheckTypes(ExprFactorNode& expr_factor_node,
                               TypeCheckerSymbolTable& type_checker_map) {
-  if (expr_factor_node->var_identifier) {
-    varNodeCheckTypes(expr_factor_node->var_identifier, type_checker_map);
-  } else if (expr_factor_node->unary) {
-    unaryNodeCheckTypes(expr_factor_node->unary, type_checker_map);
-  } else if (expr_factor_node->expr) {
-    exprNodeCheckTypes(expr_factor_node->expr, type_checker_map);
-  } else if (expr_factor_node->constant) {
-    constantNodeCheckTypes(expr_factor_node->constant,
+  if (expr_factor_node.var_identifier) {
+    varNodeCheckTypes(*expr_factor_node.var_identifier, type_checker_map);
+  } else if (expr_factor_node.unary) {
+    unaryNodeCheckTypes(*expr_factor_node.unary, type_checker_map);
+  } else if (expr_factor_node.expr) {
+    exprNodeCheckTypes(*expr_factor_node.expr, type_checker_map);
+  } else if (expr_factor_node.constant) {
+    constantNodeCheckTypes(*expr_factor_node.constant,
                            type_checker_map); // no-op for now??
-  } else if (expr_factor_node->func_call) {
-    functionCallNodeCheckTypes(expr_factor_node->func_call, type_checker_map);
-  } else if (auto* binary = dyn_cast<BinaryNode>(expr_factor_node.get())) {
-    binaryNodeCheckTypes(
-        reinterpret_cast<std::unique_ptr<BinaryNode>&>(expr_factor_node),
-        type_checker_map);
-  } else if (auto* assignment =
-                 dyn_cast<AssignmentNode>(expr_factor_node.get())) {
-    assignmentNodeCheckTypes(
-        reinterpret_cast<std::unique_ptr<AssignmentNode>&>(expr_factor_node),
-        type_checker_map);
-  } else if (auto* conditional =
-                 dyn_cast<ConditionalNode>(expr_factor_node.get())) {
-    conditionalNodeCheckTypes(
-        reinterpret_cast<std::unique_ptr<ConditionalNode>&>(expr_factor_node),
-        type_checker_map);
+  } else if (expr_factor_node.func_call) {
+    functionCallNodeCheckTypes(*expr_factor_node.func_call, type_checker_map);
+  } else if (auto* binary = dyn_cast<BinaryNode>(&expr_factor_node)) {
+    binaryNodeCheckTypes(static_cast<BinaryNode&>(expr_factor_node),
+                         type_checker_map);
+  } else if (auto* assignment = dyn_cast<AssignmentNode>(&expr_factor_node)) {
+    assignmentNodeCheckTypes(static_cast<AssignmentNode&>(expr_factor_node),
+                             type_checker_map);
+  } else if (auto* conditional = dyn_cast<ConditionalNode>(&expr_factor_node)) {
+    conditionalNodeCheckTypes(static_cast<ConditionalNode&>(expr_factor_node),
+                              type_checker_map);
   } else {
     throw std::runtime_error("Type Error: Malformed ExprFactorNode");
   }
 }
 
-void varNodeCheckTypes(std::unique_ptr<VarNode>& var_node,
+void varNodeCheckTypes(VarNode& var_node,
                        TypeCheckerSymbolTable& type_checker_map) {
-  auto& var_name = var_node->var_name;
+  auto& var_name = var_node.var_name;
   if (!std::holds_alternative<IntType>(type_checker_map[var_name->name].type)) {
     nanocc::raiseError(
         var_name->location.filename, var_name->location.line,
@@ -474,32 +466,31 @@ void varNodeCheckTypes(std::unique_ptr<VarNode>& var_node,
   }
 }
 
-void constantNodeCheckTypes(std::unique_ptr<ConstantNode>& constant_node,
+void constantNodeCheckTypes(ConstantNode& constant_node,
                             TypeCheckerSymbolTable& type_checker_map) {
   // constants are always of type int for now
 }
 
-void unaryNodeCheckTypes(std::unique_ptr<UnaryNode>& unary_node,
+void unaryNodeCheckTypes(UnaryNode& unary_node,
                          TypeCheckerSymbolTable& type_checker_map) {
-  exprFactorNodeCheckTypes(unary_node->operand, type_checker_map);
+  exprFactorNodeCheckTypes(*unary_node.operand, type_checker_map);
 }
 
-void binaryNodeCheckTypes(std::unique_ptr<BinaryNode>& binary_node,
+void binaryNodeCheckTypes(BinaryNode& binary_node,
                           TypeCheckerSymbolTable& type_checker_map) {
-  exprNodeCheckTypes(binary_node->left_expr, type_checker_map);
-  exprNodeCheckTypes(binary_node->right_expr, type_checker_map);
+  exprNodeCheckTypes(*binary_node.left_expr, type_checker_map);
+  exprNodeCheckTypes(*binary_node.right_expr, type_checker_map);
 }
 
-void assignmentNodeCheckTypes(std::unique_ptr<AssignmentNode>& assignment_node,
+void assignmentNodeCheckTypes(AssignmentNode& assignment_node,
                               TypeCheckerSymbolTable& type_checker_map) {
-  exprNodeCheckTypes(assignment_node->left_expr, type_checker_map);
-  exprNodeCheckTypes(assignment_node->right_expr, type_checker_map);
+  exprNodeCheckTypes(*assignment_node.left_expr, type_checker_map);
+  exprNodeCheckTypes(*assignment_node.right_expr, type_checker_map);
 }
 
-void functionCallNodeCheckTypes(
-    std::unique_ptr<FunctionCallNode>& function_call_node,
-    TypeCheckerSymbolTable& type_checker_map) {
-  auto& func_name = function_call_node->func_identifier;
+void functionCallNodeCheckTypes(FunctionCallNode& function_call_node,
+                                TypeCheckerSymbolTable& type_checker_map) {
+  auto& func_name = function_call_node.func_identifier;
   Type& caller_type = type_checker_map[func_name->name].type;
   if (std::holds_alternative<IntType>(caller_type)) {
     nanocc::raiseError(
@@ -507,41 +498,40 @@ void functionCallNodeCheckTypes(
         func_name->location.column, STAGE,
         std::format(
             "Type Error: Attempting to call non-function of type 'int' '{}'",
-            function_call_node->func_identifier->name));
+            function_call_node.func_identifier->name));
   } else if (FuncType* func_type = std::get_if<FuncType>(&caller_type)) {
-    if (func_type->param_types.size() != function_call_node->arguments.size()) {
+    if (func_type->param_types.size() != function_call_node.arguments.size()) {
       nanocc::raiseError(func_name->location.filename, func_name->location.line,
                          func_name->location.column, STAGE,
                          std::format("Type Error: Function '{}' expects {} "
                                      "arguments but {} were provided",
-                                     function_call_node->func_identifier->name,
+                                     function_call_node.func_identifier->name,
                                      func_type->param_types.size(),
-                                     function_call_node->arguments.size()));
+                                     function_call_node.arguments.size()));
     }
     // for now, only IntType parameters are supported
-    for (auto& arg : function_call_node->arguments) {
-      exprNodeCheckTypes(arg, type_checker_map);
+    for (auto& arg : function_call_node.arguments) {
+      exprNodeCheckTypes(*arg, type_checker_map);
     }
   } else {
     nanocc::raiseError(func_name->location.filename, func_name->location.line,
                        func_name->location.column, STAGE,
                        std::format("Type Error: Unknown type for function '{}'",
-                                   function_call_node->func_identifier->name));
+                                   function_call_node.func_identifier->name));
   }
 }
 
-void conditionalNodeCheckTypes(
-    std::unique_ptr<ConditionalNode>& conditional_node,
-    TypeCheckerSymbolTable& type_checker_map) {
-  exprNodeCheckTypes(conditional_node->condition, type_checker_map);
-  exprNodeCheckTypes(conditional_node->true_expr, type_checker_map);
-  exprNodeCheckTypes(conditional_node->false_expr, type_checker_map);
+void conditionalNodeCheckTypes(ConditionalNode& conditional_node,
+                               TypeCheckerSymbolTable& type_checker_map) {
+  exprNodeCheckTypes(*conditional_node.condition, type_checker_map);
+  exprNodeCheckTypes(*conditional_node.true_expr, type_checker_map);
+  exprNodeCheckTypes(*conditional_node.false_expr, type_checker_map);
 }
 // check types -- end
 } // namespace Sema
 
 namespace nanocc {
-void semaCheckTypes(std::unique_ptr<ProgramNode>& ast,
+void semaCheckTypes(ProgramNode& ast,
                     TypeCheckerSymbolTable& global_type_checker_map) {
   Sema::programNodeCheckTypes(ast, global_type_checker_map);
 }

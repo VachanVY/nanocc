@@ -93,7 +93,7 @@ inline void raiseError(std::string filename, size_t line, size_t column,
   std::print(stderr, "{}:{}:", filename, line);
   if (column > 0)
     std::print(stderr, "{}:", column);
-  std::println(stderr, " {} Error:\n {}", errorStage, errorMessage);
+  std::println(stderr, " {} Error:\n{}", errorStage, errorMessage);
   std::exit(1);
 }
 } // namespace nanocc

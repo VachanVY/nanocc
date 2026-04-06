@@ -9,7 +9,7 @@ int main(int argc, char* argv[]) {
   auto contents = nanocc::getFileContents(args.filename);
   auto tokens = nanocc::lexer(contents, args.debug);
   auto ast = nanocc::parse(tokens, args.debug);
-  nanocc::semanticAnalysis(ast, args.debug);
+  nanocc::semanticAnalysis(*ast, args.debug);
 
   return 0;
 }

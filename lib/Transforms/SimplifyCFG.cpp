@@ -58,7 +58,7 @@ bool removeUnreachableBlocks(std::list<std::shared_ptr<BasicBlock>>& BBList) {
 bool removeRedundantJumpsLabelsEmptyBlocks(
     std::list<std::shared_ptr<BasicBlock>>& BBList) {
   bool changed = false;
-  
+
   // returns true if BB was erased, due to being empty else false
   auto eraseBBIfEmpty = [&](BasicBlock::Iter& BBIter) -> bool {
     if ((*BBIter)->IRInstructions.empty()) {
@@ -72,15 +72,17 @@ bool removeRedundantJumpsLabelsEmptyBlocks(
   for (auto BBIter = BBList.begin(); BBIter != BBList.end();) {
     BasicBlock* BB = (*BBIter).get();
 
-    if (eraseBBIfEmpty(BBIter)) continue;
+    if (eraseBBIfEmpty(BBIter))
+      continue;
 
     // remove redundant Jumps:
     // If the default next block is the only child, then
     // remove the Jump instruction, it's not useful
     IRInstructionNode* BBLastIRInstr = BB->IRInstructions.back().get();
-    if (std::next(BBIter) != BBList.end() && (isa<IRJumpNode>(BBLastIRInstr) ||
-        isa<IRJumpIfZeroNode>(BBLastIRInstr) ||
-        isa<IRJumpIfNotZeroNode>(BBLastIRInstr))) {
+    if (std::next(BBIter) != BBList.end() &&
+        (isa<IRJumpNode>(BBLastIRInstr) ||
+         isa<IRJumpIfZeroNode>(BBLastIRInstr) ||
+         isa<IRJumpIfNotZeroNode>(BBLastIRInstr))) {
       bool keepJump = false;
       auto BBDefaultNextIter = std::next(BBIter);
       // if BBDefaultNextIter is the only child, then remove that Instruction
@@ -93,7 +95,8 @@ bool removeRedundantJumpsLabelsEmptyBlocks(
       if (!keepJump) {
         BB->IRInstructions.pop_back();
         changed = true;
-        if (eraseBBIfEmpty(BBIter)) continue;
+        if (eraseBBIfEmpty(BBIter))
+          continue;
       }
     }
 
@@ -121,7 +124,8 @@ bool removeRedundantJumpsLabelsEmptyBlocks(
       if (!keepLabel) {
         LabelBBMap::obj().erase(IRLabelInstr->labelName);
         BB->IRInstructions.pop_front();
-        if (eraseBBIfEmpty(BBIter)) continue;
+        if (eraseBBIfEmpty(BBIter))
+          continue;
       }
     }
 
