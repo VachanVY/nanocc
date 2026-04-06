@@ -48,7 +48,7 @@ void expect(const std::deque<Token>& tokens, TokenType expected, size_t& pos) {
     Token tok = tokens.back();
     nanocc::raiseError(
         tok.location.filename, tok.location.line, tok.location.column, STAGE,
-        std::format("Syntax Error: Expected '{}', but reached end of input",
+        std::format("Expected '{}', but reached end of input",
                     tokenTypeToString(expected)));
   }
   const auto& [token_type, lexeme, location] = tokens[pos];
@@ -57,7 +57,7 @@ void expect(const std::deque<Token>& tokens, TokenType expected, size_t& pos) {
     nanocc::raiseError(
         location.filename, location.line, location.column, STAGE,
         std::format(
-            "Syntax Error: Expected '{}', but found '{}': '{}' at pos:{}",
+            "Expected '{}', but found '{}': '{}' at pos:{}",
             tokenTypeToString(expected), tokenTypeToString(token_type), lexeme,
             pos));
   }
@@ -238,7 +238,7 @@ void FunctionDeclNode::parse(std::deque<Token>& tokens, size_t& pos) {
         tokens[pos].location.filename, tokens[pos].location.line,
         tokens[pos].location.column, STAGE,
         std::format(
-            "Syntax Error: Expected parameter list or 'void', but found '{}'",
+            "Expected parameter list or 'void', but found '{}'",
             tokenTypeToString(tokens[pos].type)));
   }
   // -<parse-parameters>
@@ -789,7 +789,7 @@ void IdentifierNode::parse(std::deque<Token>& tokens, size_t& pos) {
   if (token_type != TokenType::IDENTIFIER) {
     nanocc::raiseError(
         location.filename, location.line, location.column, STAGE,
-        std::format("Syntax Error: Expected identifier but got '{}'", actual));
+        std::format("Expected identifier but got '{}'", actual));
   }
   this->name = actual;
 }
@@ -809,8 +809,7 @@ void ConstantNode::parse(std::deque<Token>& tokens, size_t& pos) {
   if (token_type != TokenType::CONSTANT) {
     nanocc::raiseError(
         location.filename, location.line, location.column, STAGE,
-        std::format("Syntax Error: Expected constant integer but got '{}'",
-                    actual));
+        std::format("Expected constant integer but got '{}'", actual));
   }
   this->val = actual;
 }
@@ -826,7 +825,7 @@ void UnaryNode::parse(std::deque<Token>& tokens, size_t& pos) {
   const auto& [token_type, actual, location] = tokens[pos++];
   if (!isUnary(token_type)) {
     nanocc::raiseError(location.filename, location.line, location.column, STAGE,
-                       std::format("Syntax Error: Expected a unary operator "
+                       std::format("Expected a unary operator "
                                    "but got '{}':'{}' at pos:{}",
                                    tokenTypeToString(token_type), actual, pos));
   }
@@ -952,7 +951,7 @@ std::unique_ptr<ProgramNode> parse(std::deque<Token>& tokens, bool debug) {
     nanocc::raiseError(
         location.filename, location.line, location.column, STAGE,
         std::format(
-            "Syntax Error: Unexpected token '{}' of class '{}' at top level",
+            "Unexpected token '{}' of class '{}' at top level",
             actual, tokenTypeToString(token_type)));
   }
 

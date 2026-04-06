@@ -28,7 +28,7 @@ void resolveVariableIdentifiers(IdentifierMap& identifier_map,
     nanocc::raiseError(
         var_name.location.filename, var_name.location.line,
         var_name.location.column, STAGE,
-        std::format("Type Error: Redeclaration of parameter '{}'",
+        std::format("Redeclaration of parameter '{}'",
                     var_name.name));
   }
   std::string unique_name = getUniqueName(var_name.name);
@@ -108,12 +108,12 @@ void variableDeclNodeBlockScopeResolveTypes(
     if (prev_entry.from_curr_scope &&
         (!prev_entry.no_renaming ||
          variable_decl_node.storage_class != StorageClass::Extern)) {
-      nanocc::raiseError(
-          var_identifier->location.filename, var_identifier->location.line,
-          var_identifier->location.column, STAGE,
-          std::format(
-              "Type Error: Redeclaration of variable '{}' in the same scope",
-              var_identifier->name));
+      nanocc::raiseError(var_identifier->location.filename,
+                         var_identifier->location.line,
+                         var_identifier->location.column, STAGE,
+                         std::format("Redeclaration of "
+                                     "variable '{}' in the same scope",
+                                     var_identifier->name));
     }
   }
 
@@ -179,11 +179,12 @@ void functionDeclNodeResolveTypes(FunctionDeclNode& function_decl_node,
   if (identifier_map.contains(func_name->name)) {
     auto& prev_entry = identifier_map[func_name->name];
     if (prev_entry.from_curr_scope && !prev_entry.no_renaming) {
-      nanocc::raiseError(func_name->location.filename, func_name->location.line,
-                         func_name->location.column, STAGE,
-                         std::format("Type Error: Redeclaration of function "
-                                     "'{}' with no external linkage",
-                                     func_name->name));
+      nanocc::raiseError(
+          func_name->location.filename, func_name->location.line,
+          func_name->location.column, STAGE,
+          std::format("Redeclaration of function "
+                      "'{}' with no external linkage",
+                      func_name->name));
     }
   }
 
@@ -224,12 +225,13 @@ void blockItemNodeResolveTypes(const BlockItemNode& block_item_node,
       const auto& func = block_item_node.declaration->func;
       auto& func_name = func->func_name;
       if (func->body) {
-        nanocc::raiseError(
-            func_name->location.filename, func_name->location.line,
-            func_name->location.column, STAGE,
-            std::format("Type Error: Defined function '{}' inside a BlockItem, "
-                        "define it at top level",
-                        func_name->name));
+        nanocc::raiseError(func_name->location.filename,
+                           func_name->location.line, func_name->location.column,
+                           STAGE,
+                           std::format("Defined "
+                                       "function '{}' inside a BlockItem, "
+                                       "define it at top level",
+                                       func_name->name));
       }
       /* error case
       { static int foo(void); }
@@ -238,13 +240,14 @@ void blockItemNodeResolveTypes(const BlockItemNode& block_item_node,
       // not allowed for functions, so error
       */
       if (func->storage_class == StorageClass::Static) {
-        nanocc::raiseError(
-            func_name->location.filename, func_name->location.line,
-            func_name->location.column, STAGE,
-            std::format("Type Error: Static function '{}' inside a BlockItem, "
-                        "static storage "
-                        "class not allowed for functions",
-                        func_name->name));
+        nanocc::raiseError(func_name->location.filename,
+                           func_name->location.line, func_name->location.column,
+                           STAGE,
+                           std::format("Static "
+                                       "function '{}' inside a BlockItem, "
+                                       "static storage "
+                                       "class not allowed for functions",
+                                       func_name->name));
       }
       declarationNodeResolveTypes(*block_item_node.declaration, identifier_map);
     }
@@ -404,7 +407,8 @@ void varNodeResolveTypes(VarNode& var_node, IdentifierMap& identifier_map) {
     nanocc::raiseError(
         var_name->location.filename, var_name->location.line,
         var_name->location.column, STAGE,
-        std::format("Type Error: Undeclared variable '{}'", var_name->name));
+        std::format("Undeclared variable '{}'",
+                    var_name->name));
   }
 }
 
@@ -425,11 +429,10 @@ void assignmentNodeResolveTypes(AssignmentNode& assignment_node,
       "Left expression or its factor is null in `assignmentNodeResolveTypes`");
   auto left_factor = assignment_node.left_expr->left_exprf.get();
   if (!left_factor->var_identifier) {
-    nanocc::raiseError(
-        assignment_node.left_expr->location.filename,
-        assignment_node.left_expr->location.line, -1, STAGE,
-        std::format(
-            "Type Error: Left-hand side of assignment must be a variable"));
+    nanocc::raiseError(assignment_node.left_expr->location.filename,
+                       assignment_node.left_expr->location.line, -1, STAGE,
+                       std::format("Left-hand side of "
+                                   "assignment must be a variable"));
   }
 
   exprNodeResolveTypes(*assignment_node.left_expr, identifier_map);
@@ -452,8 +455,9 @@ void functionCallNodeResolveTypes(FunctionCallNode& function_call_node,
     nanocc::raiseError(
         func_identifier->location.filename, func_identifier->location.line,
         func_identifier->location.column, STAGE,
-        std::format("Type Error: Calling undeclared function '{}'",
-                    func_identifier->name));
+        std::format(
+            "Calling undeclared function '{}'",
+            func_identifier->name));
   }
   // functions with external linkage will have same name
   // only internal linkage functions will get new unique names
@@ -472,10 +476,10 @@ void unaryNodeResolveTypes(UnaryNode& unary_node,
                            IdentifierMap& identifier_map) {
   assert(unary_node.operand && "Operand is null in `unaryNodeResolveTypes`");
   if (isa<AssignmentNode>(unary_node.operand.get())) {
-    nanocc::raiseError(
-        unary_node.location.filename, unary_node.location.line, -1, STAGE,
-        std::format(
-            "Type Error: Cannot assign to the result of a unary operation"));
+    nanocc::raiseError(unary_node.location.filename, unary_node.location.line,
+                       -1, STAGE,
+                       std::format("Cannot assign to the "
+                                   "result of a unary operation"));
   }
   exprFactorNodeResolveTypes(*unary_node.operand, identifier_map);
 }

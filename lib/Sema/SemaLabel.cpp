@@ -96,7 +96,7 @@ void breakNodeLoopLabelling(BreakNode& break_node, std::string& loop_label) {
   if (loop_label.empty()) {
     nanocc::raiseError(break_node.location.filename, break_node.location.line,
                        break_node.location.column, STAGE,
-                       "Loop Labeling Error: 'break' used outside of a loop");
+                       "'break' used outside of a loop");
   }
   break_node.label = std::make_unique<IdentifierNode>();
   break_node.label->name = loop_label;
@@ -108,7 +108,7 @@ void continueNodeLoopLabelling(ContinueNode& continue_node,
     nanocc::raiseError(
         continue_node.location.filename, continue_node.location.line,
         continue_node.location.column, STAGE,
-        "Loop Labeling Error: 'continue' used outside of a loop");
+        "'continue' used outside of a loop");
   }
   continue_node.label = std::make_unique<IdentifierNode>();
   continue_node.label->name = loop_label;

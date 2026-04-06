@@ -1,5 +1,6 @@
 add_subdirectory(Lexer)
 add_subdirectory(Parser)
+add_subdirectory(Utils)
 add_subdirectory(Sema)
 add_subdirectory(IR)
 add_subdirectory(Codegen)
