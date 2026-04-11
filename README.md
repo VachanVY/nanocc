@@ -16,7 +16,7 @@ chmod +x buildcc.sh
 ## or to rebuild codebase
 ./buildcc.sh rebuild
 
-# build tools/test_nanocc.cpp for the testing
+# build tools/TestX86AsmGen.cpp for the testing
 ./buildcc.sh test nanocc_codegen
 ## or rebuild it
 ./buildcc.sh rebuild_test nanocc_codegen
@@ -151,7 +151,11 @@ int main(void) {
 <details>
   <summary>IR Optimization</summary>
 
-```bash
+```python
+# Constant Folding
+# Unreachable Code Elimination
+# Copy Propagation (TODO)
+# Dead Store Elimination (TODO)
 ...
 ----------- IR Generation -----------
 Function[
