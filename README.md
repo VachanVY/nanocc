@@ -39,72 +39,93 @@ setopt nullglob && tree -a -L 4 -I '.git' --noreport include lib tools --dirsfir
 include
 └── nanocc
     ├── AST
-    │   └── AST.hpp
+    │   └── AST.hpp
     ├── Codegen
-    │   ├── ASM.hpp
-    │   └── IRToPseudoAsmPass.hpp
+    │   ├── ASM.hpp
+    │   └── IRToPseudoAsmPass.hpp
     ├── IR
-    │   └── IR.hpp
+    │   ├── BasicBlock.hpp
+    │   ├── IRDump.hpp
+    │   └── IR.hpp
     ├── Lexer
-    │   └── Lexer.hpp
+    │   └── Lexer.hpp
     ├── Parser
-    │   └── Parser.hpp
+    │   └── Parser.hpp
     ├── Sema
-    │   └── Sema.hpp
+    │   └── Sema.hpp
     ├── Target
-    │   └── X86
-    │       ├── X86TargetEmitter.hpp
-    │       └── X86TargetInfo.hpp
-    └── Utils.hpp
+    │   └── X86
+    │       ├── X86TargetEmitter.hpp
+    │       └── X86TargetInfo.hpp
+    ├── Transforms
+    │   ├── ConstantFolding.hpp
+    │   ├── CopyPropagation.hpp
+    │   ├── DeadStoreElimination.hpp
+    │   ├── PassManager.hpp
+    │   └── SimplifyCFG.hpp
+    └── Utils
+        ├── tokens.def
+        ├── Tokens.hpp
+        └── Utils.hpp
 lib
 ├── Codegen
-│   ├── CMakeLists.txt
-│   ├── IRToPseudoAsmHelper.hpp
-│   └── IRToPseudoAsmPass.cpp
+│   ├── CMakeLists.txt
+│   ├── IRToPseudoAsmHelper.hpp
+│   └── IRToPseudoAsmPass.cpp
 ├── IR
-│   ├── CMakeLists.txt
-│   ├── IR.cpp
-│   ├── IRDump.cpp
-│   ├── IRGen.cpp
-│   └── IRHelper.hpp
+│   ├── BasicBlock.cpp
+│   ├── CMakeLists.txt
+│   ├── IR.cpp
+│   ├── IRDump.cpp
+│   ├── IRGen.cpp
+│   └── IRHelper.hpp
 ├── Lexer
-│   ├── CAPI
-│   │   ├── lexer.c
-│   │   ├── lexer.h
-│   │   ├── lexer_internal.h
-│   │   ├── regex.c
-│   │   ├── regex.h
-│   │   └── tokens.def
-│   ├── CMakeLists.txt
-│   └── Lexer.cpp
+│   ├── CAPI
+│   │   ├── lexer.c
+│   │   ├── lexer.h
+│   │   ├── lexer_internal.h
+│   │   ├── regex.c
+│   │   └── regex.h
+│   ├── CMakeLists.txt
+│   └── Lexer.cpp
 ├── Parser
-│   ├── CMakeLists.txt
-│   └── Parser.cpp
+│   ├── CMakeLists.txt
+│   └── Parser.cpp
 ├── Sema
-│   ├── CMakeLists.txt
-│   ├── Sema.cpp
-│   ├── SemaDecl.cpp
-│   ├── SemaHelper.hpp
-│   ├── SemaLabel.cpp
-│   └── SemaType.cpp
+│   ├── CMakeLists.txt
+│   ├── Sema.cpp
+│   ├── SemaDecl.cpp
+│   ├── SemaHelper.hpp
+│   ├── SemaLabel.cpp
+│   └── SemaType.cpp
 ├── Target
-│   ├── X86
-│   │   ├── CMakeLists.txt
-│   │   ├── X86InstrFixup.cpp
-│   │   ├── X86PseudoLowering.cpp
-│   │   └── X86TargetEmitter.cpp
-│   └── CMakeLists.txt
+│   ├── X86
+│   │   ├── CMakeLists.txt
+│   │   ├── X86InstrFixup.cpp
+│   │   ├── X86PseudoLowering.cpp
+│   │   └── X86TargetEmitter.cpp
+│   └── CMakeLists.txt
+├── Transforms
+│   ├── CMakeLists.txt
+│   ├── ConstantFolding.cpp
+│   ├── CopyPropagation.cpp
+│   ├── DeadStoreElimination.cpp
+│   ├── PassManager.cpp
+│   └── SimplifyCFG.cpp
+├── Utils
+│   ├── CMakeLists.txt
+│   └── Utils.cpp
 └── CMakeLists.txt
 tools
 ├── test
-│   ├── TestCommon.hpp
-│   ├── TestIR.cpp
-│   ├── TestLexer.cpp
-│   ├── TestParser.cpp
-│   ├── TestSema.cpp
-│   └── TestX86AsmGen.cpp
+│   ├── README.txt
+│   ├── TestCommon.hpp
+│   ├── TestIR.cpp
+│   ├── TestLexer.cpp
+│   ├── TestParser.cpp
+│   ├── TestSema.cpp
+│   └── TestX86AsmGen.cpp
 ├── CMakeLists.txt
-├── CompilerPipeline.hpp
 └── NanoCC.cpp
 
 buildcc.sh
