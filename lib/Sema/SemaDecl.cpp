@@ -317,10 +317,10 @@ void compoundNodeResolveTypes(CompoundNode& compound_node,
 }
 
 void breakNodeResolveTypes(BreakNode& break_node,
-                           IdentifierMap& identifier_map){}; // no-op
+                           IdentifierMap& identifier_map) {}; // no-op
 
 void continueNodeResolveTypes(ContinueNode& continue_node,
-                              IdentifierMap& identifier_map){}; // no-op
+                              IdentifierMap& identifier_map) {}; // no-op
 
 void whileNodeResolveTypes(WhileNode& while_node,
                            IdentifierMap& identifier_map) {
@@ -361,8 +361,8 @@ void forInitNodeResolveTypes(ForInitNode& for_init_node,
   }
 }
 
-void nullNodeResolveTypes(NullNode& null_node,
-                          IdentifierMap& identifier_map){}; // no-op
+void nullNodeResolveTypes(NullNode& null_node, IdentifierMap& identifier_map) {
+}; // no-op
 
 void exprNodeResolveTypes(ExprNode& expr_node, IdentifierMap& identifier_map) {
   exprFactorNodeResolveTypes(*expr_node.left_exprf, identifier_map);
@@ -409,7 +409,7 @@ void varNodeResolveTypes(VarNode& var_node, IdentifierMap& identifier_map) {
 }
 
 void constantNodeResolveTypes(ConstantNode& constant_node,
-                              IdentifierMap& identifier_map){}; // no-op
+                              IdentifierMap& identifier_map) {}; // no-op
 
 void binaryNodeResolveTypes(BinaryNode& binary_node,
                             IdentifierMap& identifier_map) {

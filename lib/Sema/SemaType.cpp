@@ -359,10 +359,10 @@ void compoundNodeCheckTypes(CompoundNode& compound_node,
 }
 
 void breakNodeCheckTypes(BreakNode& break_node,
-                         TypeCheckerSymbolTable& type_checker_map){}; // no-op
-void continueNodeCheckTypes(
-    ContinueNode& continue_node,
-    TypeCheckerSymbolTable& type_checker_map){}; // no-op
+                         TypeCheckerSymbolTable& type_checker_map) {}; // no-op
+void continueNodeCheckTypes(ContinueNode& continue_node,
+                            TypeCheckerSymbolTable& type_checker_map) {
+}; // no-op
 
 void whileNodeCheckTypes(WhileNode& while_node,
                          TypeCheckerSymbolTable& type_checker_map) {
@@ -411,7 +411,7 @@ void forInitNodeCheckTypes(ForInitNode& for_init_node,
 }
 
 void nullNodeCheckTypes(NullNode& null_node,
-                        TypeCheckerSymbolTable& type_checker_map){}; // no-op
+                        TypeCheckerSymbolTable& type_checker_map) {}; // no-op
 
 void exprNodeCheckTypes(ExprNode& expr_node,
                         TypeCheckerSymbolTable& type_checker_map) {
