@@ -87,9 +87,9 @@ jobs:
               }
             }
 
-            // For automatic runs (push/PR) test_compiler needs a chapter.
+            // Only run if a command or chapter was explicitly requested via comments.
             if (!runCmd && !chapter) {
-              chapter = defaultChapter;
+              enabled = false;
             }
 
             core.setOutput('enabled', String(enabled));
