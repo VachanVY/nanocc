@@ -22,7 +22,7 @@ void declarationNodeLoopLabelling(DeclarationNode& declaration_node,
 }
 
 void variableDeclNodeLoopLabelling(VariableDeclNode& variable_decl_node,
-                                   std::string& loop_label) {}; // no-op
+                                   std::string& loop_label){}; // no-op
 
 void functionDeclNodeLoopLabelling(FunctionDeclNode& function_decl_node,
                                    std::string& loop_label) {
@@ -75,10 +75,10 @@ void statementNodeLoopLabelling(StatementNode& statement_node,
   }
 }
 
-void returnNodeLoopLabelling(ReturnNode& return_node, std::string& loop_label) {
-}; // no-op
+void returnNodeLoopLabelling(ReturnNode& return_node,
+                             std::string& loop_label){}; // no-op
 void expressionNodeLoopLabelling(ExpressionNode& expression_node,
-                                 std::string& loop_label) {}; // no-op
+                                 std::string& loop_label){}; // no-op
 
 void ifElseNodeLoopLabelling(IfElseNode& ifelse_node, std::string& loop_label) {
   statementNodeLoopLabelling(*ifelse_node.if_block, loop_label);
@@ -136,8 +136,8 @@ void forNodeLoopLabelling(ForNode& for_node, std::string& loop_label) {
   statementNodeLoopLabelling(*for_node.body, new_label);
 }
 
-void nullNodeLoopLabelling(NullNode& null_node, std::string& loop_label) {
-}; // no-op
+void nullNodeLoopLabelling(NullNode& null_node,
+                           std::string& loop_label){}; // no-op
 // loop labelling -- end
 } // namespace Sema
 

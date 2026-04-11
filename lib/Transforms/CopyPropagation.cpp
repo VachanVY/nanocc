@@ -3,7 +3,7 @@
 
 namespace nanocc {
 /// @brief Yet to be implemented
-/// @param IRProgram 
-/// @return 
+/// @param IRProgram
+/// @return
 bool CopyPropagate(IRProgramNode& IRProgram) { return false; }
 } // namespace nanocc
