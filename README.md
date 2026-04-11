@@ -25,14 +25,14 @@ chmod +x buildcc.sh
 ./nanocc_tests/test_compiler ./build/tools/nanocc_codegen --chapter 10 -v
 
 # clang format
-find . -type f \( -name "*.cpp" -o -name "*.cc" -o -name "*.c" -o -name "*.hpp" -o -name "*.hh" -o -name "*.h" \) -exec clang-format -i {} +
+find lib include tools -type f \( -name "*.cpp" -o -name "*.cc" -o -name "*.c" -o -name "*.hpp" -o -name "*.hh" -o -name "*.h" \) -exec clang-format -i {} +
 ```
 
 ## nanocc codebase
 
 nanocc codebase tree directory structure (LLVM style)
 
-```
+```bash
 setopt nullglob && tree -a -L 4 -I '.git' --noreport include lib tools --dirsfirst && echo "" && ls -1 *.cpp *.c *.sh *.md CMakeLists.txt LICENSE nanocc 2>/dev/null | sort
 ```
 
@@ -137,7 +137,131 @@ README.md
 ```
 
 ## nanocc progress
+### IR Optimizations
+```c
+int main(void) { 
+    return (1 || 0) && 0; 
+}
+```
 
+```bash
+./nanocc -fopt-constfold -fopt-unreach -fdump examples/opt_constfold_unreach.c -S && mv opt_constfold_unreach.s examples
+```
+
+<details>
+  <summary>IR Optimization</summary>
+
+```bash
+...
+----------- IR Generation -----------
+Function[
+  name='main'
+  parameters=[]
+  instructions=[
+    jump_if_true 1, short.2
+    jump_if_true 0, short.2
+    tmp.1 = 0
+    jump end.3
+  short.2:
+    tmp.1 = 1
+  end.3:
+    jump_if_false tmp.1, short.0
+    jump_if_false 0, short.0
+    tmp.0 = 1
+    jump end.1
+  short.0:
+    tmp.0 = 0
+  end.1:
+    return tmp.0
+    return 0
+  ]
+]
+-------------------------------------
+---- IR Optimization Iteration 1 ----
+Function[
+  name='main'
+  parameters=[]
+  instructions=[
+    jump short.2
+    tmp.1 = 0
+    jump end.3
+  short.2:
+    tmp.1 = 1
+  end.3:
+    jump_if_false tmp.1, short.0
+    jump short.0
+    tmp.0 = 1
+    jump end.1
+  short.0:
+    tmp.0 = 0
+  end.1:
+    return tmp.0
+    return 0
+  ]
+]
+--------------------------------------
+---- IR Optimization Iteration 1 ----
+Function[
+  name='main'
+  parameters=[]
+  instructions=[
+    tmp.1 = 1
+    jump_if_false tmp.1, short.0
+    tmp.0 = 0
+    return tmp.0
+  ]
+]
+--------------------------------------
+---- IR Optimization Iteration 2 ----
+Function[
+  name='main'
+  parameters=[]
+  instructions=[
+    tmp.1 = 1
+    jump_if_false tmp.1, short.0
+    tmp.0 = 0
+    return tmp.0
+  ]
+]
+--------------------------------------
+---- IR Optimization Iteration 2 ----
+Function[
+  name='main'
+  parameters=[]
+  instructions=[
+    tmp.1 = 1
+    tmp.0 = 0
+    return tmp.0
+  ]
+]
+--------------------------------------
+---- IR Optimization Iteration 3 ----
+Function[
+  name='main'
+  parameters=[]
+  instructions=[
+    tmp.1 = 1
+    tmp.0 = 0
+    return tmp.0
+  ]
+]
+--------------------------------------
+---- IR Optimization Iteration 3 ----
+Function[
+  name='main'
+  parameters=[]
+  instructions=[
+    tmp.1 = 1
+    tmp.0 = 0
+    return tmp.0
+  ]
+]
+--------------------------------------
+```
+
+</details>
+
+### `extern` and `static`
 ```c
 // examples/linkage_fact.c
 int num_times = 10;
@@ -512,7 +636,6 @@ main:
 
 
 ```bash
-chmod +x nanocc
 # our compiler compiles to assembly: asm.s
 # gcc assembler asm.s => executable
 ./nanocc examples/linkage_fact.c examples/linkage_main.c examples/linkage_utils.c -o main
