@@ -7,6 +7,8 @@
 ## Build nanocc
 
 ```python
+git clone --recurse-submodules https://github.com/VachanVY/nanocc.git
+
 chmod +x buildcc.sh
 
 # build the compiler
@@ -15,13 +17,12 @@ chmod +x buildcc.sh
 ./buildcc.sh rebuild
 
 # build tools/test_nanocc.cpp for the testing
-./buildcc.sh test
+./buildcc.sh test nanocc_codegen
 ## or rebuild it
-./buildcc.sh rebuild_test
+./buildcc.sh rebuild_test nanocc_codegen
 
 # run tests
-git clone https://github.com/VachanVY/writing-a-c-compiler-tests.git
-writing-a-c-compiler-tests/test_compiler ./build/tools/nanocc_test --chapter 9 -v
+./nanocc_tests/test_compiler ./build/tools/nanocc_codegen --chapter 10 -v
 
 # clang format
 find . -type f \( -name "*.cpp" -o -name "*.cc" -o -name "*.c" -o -name "*.hpp" -o -name "*.hh" -o -name "*.h" \) -exec clang-format -i {} +
