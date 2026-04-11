@@ -1,3 +1,4 @@
 [submodule "nanocc_tests"]
 	path = nanocc_tests
 	url = https://github.com/VachanVY/nanocc_tests.git
+	branch = main

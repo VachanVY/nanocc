@@ -124,9 +124,12 @@ jobs:
         run: |
           set -euo pipefail
 
-          if [ ! -x "./nanocc_tests/test_compiler" ]; then
+          if [ -d "./nanocc_tests/.git" ]; then
+            git -C ./nanocc_tests fetch --depth 1 origin main
+            git -C ./nanocc_tests checkout -B main origin/main
+          else
             rm -rf ./nanocc_tests
-            git clone --depth 1 https://github.com/VachanVY/writing-a-c-compiler-tests.git nanocc_tests
+            git clone --depth 1 --branch main https://github.com/VachanVY/nanocc_tests.git nanocc_tests
           fi
 
           chmod +x ./nanocc_tests/test_compiler
