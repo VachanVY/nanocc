@@ -10,6 +10,7 @@
 git clone --recurse-submodules https://github.com/VachanVY/nanocc.git
 
 chmod +x buildcc.sh
+chmod +x nanocc
 
 # build the compiler
 ./buildcc.sh compiler
