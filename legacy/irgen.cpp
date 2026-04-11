@@ -16,237 +16,242 @@ use shared_ptr for IRValNode (and its derived classes)
 #include <string>
 #include <utility>
 
+#include "asmgen.hpp"
 #include "irgen.hpp"
 #include "parser.hpp"
-#include "asmgen.hpp"
 #include "utils.hpp"
 
 namespace { // helper function
-void extendInstrFromVector(std::vector<std::unique_ptr<IRInstructionNode>>&& src,
-                           std::vector<std::unique_ptr<IRInstructionNode>>& dest) {
-    for (auto& instr : src) {
-        dest.push_back(std::move(instr));
-    }
+void extendInstrFromVector(
+    std::vector<std::unique_ptr<IRInstructionNode>>&& src,
+    std::vector<std::unique_ptr<IRInstructionNode>>& dest) {
+  for (auto& instr : src) {
+    dest.push_back(std::move(instr));
+  }
 }
 } // namespace
 
 std::unique_ptr<IRProgramNode> ProgramNode::generateIR() {
-    auto ir_program = std::make_unique<IRProgramNode>();
-    for (auto& function : this->functions) {
-        if (function->body) {
-            auto ir_function = function->generateIR();
-            ir_program->functions.push_back(std::move(ir_function));
-        }
+  auto ir_program = std::make_unique<IRProgramNode>();
+  for (auto& function : this->functions) {
+    if (function->body) {
+      auto ir_function = function->generateIR();
+      ir_program->functions.push_back(std::move(ir_function));
     }
-    return ir_program;
+  }
+  return ir_program;
 }
 
 void IRProgramNode::dump(int indent) const {
-    for (const auto& functions : this->functions) {
-        functions->dump(indent);
-    }
+  for (const auto& functions : this->functions) {
+    functions->dump(indent);
+  }
 }
 
 std::vector<std::unique_ptr<IRInstructionNode>> DeclarationNode::generateIR() {
-    if (func) {
-        // ignore function's with no body, functions with
-        // definitions are handled in ProgramNode
-        return {};
-    } else if (var) {
-        return var->generateIR();
-    } else {
-        throw std::runtime_error("IR Generation Error: Empty DeclarationNode");
-    }
+  if (func) {
+    // ignore function's with no body, functions with
+    // definitions are handled in ProgramNode
+    return {};
+  } else if (var) {
+    return var->generateIR();
+  } else {
+    throw std::runtime_error("IR Generation Error: Empty DeclarationNode");
+  }
 }
 
 std::unique_ptr<IRFunctionNode> FunctionDeclNode::generateIR() {
-    // a function has many blocks => many instructions
-    std::vector<std::unique_ptr<IRInstructionNode>> instructions;
-    extendInstrFromVector(body->generateIR(), instructions);
-    // handle edge case: ensure function ends with a return; always return 0 no matter what
-    // if the func already ends with a return, this is redundant but okay for now
-    auto ret0 = std::make_unique<IRRetNode>(std::make_shared<IRConstNode>("0"));
-    instructions.push_back(std::move(ret0));
+  // a function has many blocks => many instructions
+  std::vector<std::unique_ptr<IRInstructionNode>> instructions;
+  extendInstrFromVector(body->generateIR(), instructions);
+  // handle edge case: ensure function ends with a return; always return 0 no
+  // matter what if the func already ends with a return, this is redundant but
+  // okay for now
+  auto ret0 = std::make_unique<IRRetNode>(std::make_shared<IRConstNode>("0"));
+  instructions.push_back(std::move(ret0));
 
-    auto ir_function = std::make_unique<IRFunctionNode>(func_name->name, std::move(instructions));
+  auto ir_function = std::make_unique<IRFunctionNode>(func_name->name,
+                                                      std::move(instructions));
 
-    for (const auto& param : this->parameters) {
-        ir_function->parameters.push_back(param->name);
-    }
+  for (const auto& param : this->parameters) {
+    ir_function->parameters.push_back(param->name);
+  }
 
-    return ir_function;
+  return ir_function;
 }
 
 void IRFunctionNode::dump(int indent) const {
-    printIndent(indent);
-    std::println("Function[");
-    printIndent(indent + 1);
-    std::println("name='{}'", func_name);
-    printIndent(indent + 1);
-    if (parameters.empty()) {
-        std::println("parameters=[]");
-    } else {
-        std::println("parameters=[");
-        for (const auto& param : parameters) {
-            printIndent(indent + 2);
-            std::println("'{}'", param);
-        }
-        printIndent(indent + 1);
-        std::println("]");
+  printIndent(indent);
+  std::println("Function[");
+  printIndent(indent + 1);
+  std::println("name='{}'", func_name);
+  printIndent(indent + 1);
+  if (parameters.empty()) {
+    std::println("parameters=[]");
+  } else {
+    std::println("parameters=[");
+    for (const auto& param : parameters) {
+      printIndent(indent + 2);
+      std::println("'{}'", param);
     }
     printIndent(indent + 1);
-    std::println("instructions=[");
-    for (const auto& instr : ir_instructions) {
-        instr->dump(indent + 2);
-    }
-    printIndent(indent + 1);
-    std::println("]"); // end instructions
-    printIndent(indent);
-    std::println("]"); // end function
+    std::println("]");
+  }
+  printIndent(indent + 1);
+  std::println("instructions=[");
+  for (const auto& instr : ir_instructions) {
+    instr->dump(indent + 2);
+  }
+  printIndent(indent + 1);
+  std::println("]"); // end instructions
+  printIndent(indent);
+  std::println("]"); // end function
 }
 
 std::vector<std::unique_ptr<IRInstructionNode>> BlockNode::generateIR() {
-    std::vector<std::unique_ptr<IRInstructionNode>> ir_instructions;
-    for (const auto& block_item : this->block_items) {
-        extendInstrFromVector(block_item->generateIR(), ir_instructions);
-    }
-    return ir_instructions;
+  std::vector<std::unique_ptr<IRInstructionNode>> ir_instructions;
+  for (const auto& block_item : this->block_items) {
+    extendInstrFromVector(block_item->generateIR(), ir_instructions);
+  }
+  return ir_instructions;
 }
 
 std::vector<std::unique_ptr<IRInstructionNode>> BlockItemNode::generateIR() {
-    std::vector<std::unique_ptr<IRInstructionNode>> ir_instructions;
-    if (declaration) {
-        extendInstrFromVector(declaration->generateIR(), ir_instructions);
-    } else if (statement) {
-        extendInstrFromVector(statement->generateIR(), ir_instructions);
-    } else {
-        throw std::runtime_error("IR Generation Error: Empty BlockItemNode");
-    }
-    return ir_instructions;
+  std::vector<std::unique_ptr<IRInstructionNode>> ir_instructions;
+  if (declaration) {
+    extendInstrFromVector(declaration->generateIR(), ir_instructions);
+  } else if (statement) {
+    extendInstrFromVector(statement->generateIR(), ir_instructions);
+  } else {
+    throw std::runtime_error("IR Generation Error: Empty BlockItemNode");
+  }
+  return ir_instructions;
 }
 
 std::vector<std::unique_ptr<IRInstructionNode>> VariableDeclNode::generateIR() {
-    std::vector<std::unique_ptr<IRInstructionNode>> ir_instructions;
-    if (init_expr) {
-        // get the value of the initialization expression
-        auto dest_var = init_expr->generateIR(ir_instructions);
-        // emit copy instruction to assign the value to the variable
-        auto ir_var = std::make_shared<IRVariableNode>(var_identifier->name);
-        auto ir_copy = std::make_unique<IRCopyNode>(std::move(dest_var), std::move(ir_var));
-        ir_instructions.push_back(std::move(ir_copy));
-    }
-    // else, no initialization => no IR needed (default to 0)
-    return ir_instructions;
+  std::vector<std::unique_ptr<IRInstructionNode>> ir_instructions;
+  if (init_expr) {
+    // get the value of the initialization expression
+    auto dest_var = init_expr->generateIR(ir_instructions);
+    // emit copy instruction to assign the value to the variable
+    auto ir_var = std::make_shared<IRVariableNode>(var_identifier->name);
+    auto ir_copy =
+        std::make_unique<IRCopyNode>(std::move(dest_var), std::move(ir_var));
+    ir_instructions.push_back(std::move(ir_copy));
+  }
+  // else, no initialization => no IR needed (default to 0)
+  return ir_instructions;
 }
 
 std::vector<std::unique_ptr<IRInstructionNode>> StatementNode::generateIR() {
-    std::vector<std::unique_ptr<IRInstructionNode>> ir_instructions;
+  std::vector<std::unique_ptr<IRInstructionNode>> ir_instructions;
 
-    // get ir from `ExprNode`; `emit_tacky` func from the book;
-    // returns the destination register of prev operation i.e source register
-    // for this iter
-    if (return_stmt) {
-        extendInstrFromVector(return_stmt->generateIR(), ir_instructions);
-    } else if (expression_stmt) {
-        extendInstrFromVector(expression_stmt->generateIR(), ir_instructions);
-    } else if (ifelse_stmt) {
-        extendInstrFromVector(ifelse_stmt->generateIR(), ir_instructions);
-    } else if (compound_stmt) {
-        extendInstrFromVector(compound_stmt->generateIR(), ir_instructions);
-    } else if (break_stmt) {
-        extendInstrFromVector(break_stmt->generateIR(), ir_instructions);
-    } else if (continue_stmt) {
-        extendInstrFromVector(continue_stmt->generateIR(), ir_instructions);
-    } else if (while_stmt) {
-        extendInstrFromVector(while_stmt->generateIR(), ir_instructions);
-    } else if (dowhile_stmt) {
-        extendInstrFromVector(dowhile_stmt->generateIR(), ir_instructions);
-    } else if (for_stmt) {
-        extendInstrFromVector(for_stmt->generateIR(), ir_instructions);
-    } else {
-        if (!null_stmt) { // do nothing for null statement
-            throw std::runtime_error("IR Generation Error: Malformed StatementNode");
-        }
+  // get ir from `ExprNode`; `emit_tacky` func from the book;
+  // returns the destination register of prev operation i.e source register
+  // for this iter
+  if (return_stmt) {
+    extendInstrFromVector(return_stmt->generateIR(), ir_instructions);
+  } else if (expression_stmt) {
+    extendInstrFromVector(expression_stmt->generateIR(), ir_instructions);
+  } else if (ifelse_stmt) {
+    extendInstrFromVector(ifelse_stmt->generateIR(), ir_instructions);
+  } else if (compound_stmt) {
+    extendInstrFromVector(compound_stmt->generateIR(), ir_instructions);
+  } else if (break_stmt) {
+    extendInstrFromVector(break_stmt->generateIR(), ir_instructions);
+  } else if (continue_stmt) {
+    extendInstrFromVector(continue_stmt->generateIR(), ir_instructions);
+  } else if (while_stmt) {
+    extendInstrFromVector(while_stmt->generateIR(), ir_instructions);
+  } else if (dowhile_stmt) {
+    extendInstrFromVector(dowhile_stmt->generateIR(), ir_instructions);
+  } else if (for_stmt) {
+    extendInstrFromVector(for_stmt->generateIR(), ir_instructions);
+  } else {
+    if (!null_stmt) { // do nothing for null statement
+      throw std::runtime_error("IR Generation Error: Malformed StatementNode");
     }
-    return ir_instructions;
+  }
+  return ir_instructions;
 }
 
 std::vector<std::unique_ptr<IRInstructionNode>> ReturnNode::generateIR() {
-    std::vector<std::unique_ptr<IRInstructionNode>> ir_instructions;
-    auto dest_var = ret_expr->generateIR(ir_instructions);
-    // emit return of the computed value
-    auto ret_instruction = std::make_unique<IRRetNode>(std::move(dest_var));
-    ir_instructions.push_back(std::move(ret_instruction));
-    return ir_instructions;
+  std::vector<std::unique_ptr<IRInstructionNode>> ir_instructions;
+  auto dest_var = ret_expr->generateIR(ir_instructions);
+  // emit return of the computed value
+  auto ret_instruction = std::make_unique<IRRetNode>(std::move(dest_var));
+  ir_instructions.push_back(std::move(ret_instruction));
+  return ir_instructions;
 }
 
 void IRRetNode::dump(int indent) const {
-    printIndent(indent);
-    std::printf("return %s\n", ret_val ? ret_val->dump().c_str() : "");
+  printIndent(indent);
+  std::printf("return %s\n", ret_val ? ret_val->dump().c_str() : "");
 }
 
 std::vector<std::unique_ptr<IRInstructionNode>> ExpressionNode::generateIR() {
-    std::vector<std::unique_ptr<IRInstructionNode>> ir_instructions;
-    // this will return a new temporary variable holding the expression result
-    // but we won't use it that again in the IR Generation
-    auto dest_var = expr->generateIR(ir_instructions);
-    return ir_instructions;
+  std::vector<std::unique_ptr<IRInstructionNode>> ir_instructions;
+  // this will return a new temporary variable holding the expression result
+  // but we won't use it that again in the IR Generation
+  auto dest_var = expr->generateIR(ir_instructions);
+  return ir_instructions;
 }
 
 std::vector<std::unique_ptr<IRInstructionNode>> IfElseNode::generateIR() {
-    std::vector<std::unique_ptr<IRInstructionNode>> ir_instructions;
+  std::vector<std::unique_ptr<IRInstructionNode>> ir_instructions;
 
-    // no else block => `end` label
-    // else block present => `else` label
-    std::string end_else_label = getLabelName(!else_block ? "end" : "else");
+  // no else block => `end` label
+  // else block present => `else` label
+  std::string end_else_label = getLabelName(!else_block ? "end" : "else");
 
-    auto cond_var = condition->generateIR(ir_instructions);
-    // if condition is false, jump to else / end
-    auto jumpifzero = std::make_unique<IRJumpIfZeroNode>(cond_var, end_else_label);
-    ir_instructions.push_back(std::move(jumpifzero));
+  auto cond_var = condition->generateIR(ir_instructions);
+  // if condition is false, jump to else / end
+  auto jumpifzero =
+      std::make_unique<IRJumpIfZeroNode>(cond_var, end_else_label);
+  ir_instructions.push_back(std::move(jumpifzero));
 
-    // emit if block instructions
-    extendInstrFromVector(if_block->generateIR(), ir_instructions);
+  // emit if block instructions
+  extendInstrFromVector(if_block->generateIR(), ir_instructions);
 
-    if (!else_block) { // if condition only; else is absent
-        // no else block; just place end label
-        auto end_label = std::make_unique<IRLabelNode>(end_else_label);
-        ir_instructions.push_back(std::move(end_label));
-    } else { // if-else condition
-        std::string end_label_str = getLabelName("end");
-        ir_instructions.push_back(std::make_unique<IRJumpNode>(end_label_str));
+  if (!else_block) { // if condition only; else is absent
+    // no else block; just place end label
+    auto end_label = std::make_unique<IRLabelNode>(end_else_label);
+    ir_instructions.push_back(std::move(end_label));
+  } else { // if-else condition
+    std::string end_label_str = getLabelName("end");
+    ir_instructions.push_back(std::make_unique<IRJumpNode>(end_label_str));
 
-        ir_instructions.push_back(std::make_unique<IRLabelNode>(end_else_label));
+    ir_instructions.push_back(std::make_unique<IRLabelNode>(end_else_label));
 
-        extendInstrFromVector(else_block->generateIR(), ir_instructions);
+    extendInstrFromVector(else_block->generateIR(), ir_instructions);
 
-        ir_instructions.push_back(std::make_unique<IRLabelNode>(end_label_str));
-    }
-    return ir_instructions;
+    ir_instructions.push_back(std::make_unique<IRLabelNode>(end_label_str));
+  }
+  return ir_instructions;
 }
 
 std::vector<std::unique_ptr<IRInstructionNode>> CompoundNode::generateIR() {
-    return block->generateIR();
+  return block->generateIR();
 }
 
 std::vector<std::unique_ptr<IRInstructionNode>> BreakNode::generateIR() {
-    std::vector<std::unique_ptr<IRInstructionNode>> ir_instructions;
+  std::vector<std::unique_ptr<IRInstructionNode>> ir_instructions;
 
-    std::string break_str = "break_" + label->name;
-    auto jump_to_break = std::make_unique<IRJumpNode>(break_str);
-    ir_instructions.push_back(std::move(jump_to_break));
+  std::string break_str = "break_" + label->name;
+  auto jump_to_break = std::make_unique<IRJumpNode>(break_str);
+  ir_instructions.push_back(std::move(jump_to_break));
 
-    return ir_instructions;
+  return ir_instructions;
 }
 
 std::vector<std::unique_ptr<IRInstructionNode>> ContinueNode::generateIR() {
-    std::vector<std::unique_ptr<IRInstructionNode>> ir_instructions;
+  std::vector<std::unique_ptr<IRInstructionNode>> ir_instructions;
 
-    std::string continue_str = "continue_" + label->name;
-    auto jump_to_continue = std::make_unique<IRJumpNode>(continue_str);
-    ir_instructions.push_back(std::move(jump_to_continue));
+  std::string continue_str = "continue_" + label->name;
+  auto jump_to_continue = std::make_unique<IRJumpNode>(continue_str);
+  ir_instructions.push_back(std::move(jump_to_continue));
 
-    return ir_instructions;
+  return ir_instructions;
 }
 
 /* ```
@@ -258,31 +263,31 @@ while (<condition>) {
 // break will jump here
 ``` */
 std::vector<std::unique_ptr<IRInstructionNode>> WhileNode::generateIR() {
-    std::vector<std::unique_ptr<IRInstructionNode>> ir_instructions;
+  std::vector<std::unique_ptr<IRInstructionNode>> ir_instructions;
 
-    // start/continue Label
-    std::string start_cont_str = "continue_" + label->name;
-    auto continue_label = std::make_unique<IRLabelNode>(start_cont_str);
-    ir_instructions.push_back(std::move(continue_label));
+  // start/continue Label
+  std::string start_cont_str = "continue_" + label->name;
+  auto continue_label = std::make_unique<IRLabelNode>(start_cont_str);
+  ir_instructions.push_back(std::move(continue_label));
 
-    // condition instructions // jump to break if condition false
-    auto cond_var = condition->generateIR(ir_instructions);
-    std::string break_str = "break_" + label->name;
-    auto jump_if_zero = std::make_unique<IRJumpIfZeroNode>(cond_var, break_str);
-    ir_instructions.push_back(std::move(jump_if_zero));
+  // condition instructions // jump to break if condition false
+  auto cond_var = condition->generateIR(ir_instructions);
+  std::string break_str = "break_" + label->name;
+  auto jump_if_zero = std::make_unique<IRJumpIfZeroNode>(cond_var, break_str);
+  ir_instructions.push_back(std::move(jump_if_zero));
 
-    // body instructions
-    extendInstrFromVector(body->generateIR(), ir_instructions);
+  // body instructions
+  extendInstrFromVector(body->generateIR(), ir_instructions);
 
-    // jump back to start/continue
-    auto jump_to_continue = std::make_unique<IRJumpNode>(start_cont_str);
-    ir_instructions.push_back(std::move(jump_to_continue));
+  // jump back to start/continue
+  auto jump_to_continue = std::make_unique<IRJumpNode>(start_cont_str);
+  ir_instructions.push_back(std::move(jump_to_continue));
 
-    // break label
-    auto break_label = std::make_unique<IRLabelNode>(break_str);
-    ir_instructions.push_back(std::move(break_label));
+  // break label
+  auto break_label = std::make_unique<IRLabelNode>(break_str);
+  ir_instructions.push_back(std::move(break_label));
 
-    return ir_instructions;
+  return ir_instructions;
 }
 
 /* ```
@@ -293,32 +298,33 @@ do {
 // break will jump here
 ```*/
 std::vector<std::unique_ptr<IRInstructionNode>> DoWhileNode::generateIR() {
-    std::vector<std::unique_ptr<IRInstructionNode>> ir_instructions;
+  std::vector<std::unique_ptr<IRInstructionNode>> ir_instructions;
 
-    // start Label
-    std::string start_str = "start_" + label->name;
-    auto start_label = std::make_unique<IRLabelNode>(start_str);
-    ir_instructions.push_back(std::move(start_label));
+  // start Label
+  std::string start_str = "start_" + label->name;
+  auto start_label = std::make_unique<IRLabelNode>(start_str);
+  ir_instructions.push_back(std::move(start_label));
 
-    // body instructions
-    extendInstrFromVector(body->generateIR(), ir_instructions);
+  // body instructions
+  extendInstrFromVector(body->generateIR(), ir_instructions);
 
-    // continue label
-    std::string continue_str = "continue_" + label->name;
-    auto continue_label = std::make_unique<IRLabelNode>(continue_str);
-    ir_instructions.push_back(std::move(continue_label));
+  // continue label
+  std::string continue_str = "continue_" + label->name;
+  auto continue_label = std::make_unique<IRLabelNode>(continue_str);
+  ir_instructions.push_back(std::move(continue_label));
 
-    // condition instructions // jump to start if condition true
-    auto cond_var = condition->generateIR(ir_instructions);
-    auto jump_if_not_zero = std::make_unique<IRJumpIfNotZeroNode>(cond_var, start_str);
-    ir_instructions.push_back(std::move(jump_if_not_zero));
+  // condition instructions // jump to start if condition true
+  auto cond_var = condition->generateIR(ir_instructions);
+  auto jump_if_not_zero =
+      std::make_unique<IRJumpIfNotZeroNode>(cond_var, start_str);
+  ir_instructions.push_back(std::move(jump_if_not_zero));
 
-    // break label
-    std::string break_str = "break_" + label->name;
-    auto break_label = std::make_unique<IRLabelNode>(break_str);
-    ir_instructions.push_back(std::move(break_label));
+  // break label
+  std::string break_str = "break_" + label->name;
+  auto break_label = std::make_unique<IRLabelNode>(break_str);
+  ir_instructions.push_back(std::move(break_label));
 
-    return ir_instructions;
+  return ir_instructions;
 }
 
 /* ```
@@ -332,300 +338,314 @@ for(<init>; <condition>; <post>) {
 <post> --------' break_label    after <post>
 ``` */
 std::vector<std::unique_ptr<IRInstructionNode>> ForNode::generateIR() {
-    std::vector<std::unique_ptr<IRInstructionNode>> ir_instructions;
+  std::vector<std::unique_ptr<IRInstructionNode>> ir_instructions;
 
-    // init
-    extendInstrFromVector(init->generateIR(), ir_instructions);
+  // init
+  extendInstrFromVector(init->generateIR(), ir_instructions);
 
-    // start
-    std::string start_str = "start_" + label->name;
-    auto start_label = std::make_unique<IRLabelNode>(start_str);
-    ir_instructions.push_back(std::move(start_label));
+  // start
+  std::string start_str = "start_" + label->name;
+  auto start_label = std::make_unique<IRLabelNode>(start_str);
+  ir_instructions.push_back(std::move(start_label));
 
-    // condition instructions // jump to break if condition false
-    // else if no condition => always true (use a non-zero constant 69; no jump needed)
-    std::string break_str = "break_" + label->name;
-    if (condition) {
-        auto cond_var = condition->generateIR(ir_instructions);
-        auto jump_if_zero = std::make_unique<IRJumpIfZeroNode>(cond_var, break_str);
-        ir_instructions.push_back(std::move(jump_if_zero));
-    }
+  // condition instructions // jump to break if condition false
+  // else if no condition => always true (use a non-zero constant 69; no jump
+  // needed)
+  std::string break_str = "break_" + label->name;
+  if (condition) {
+    auto cond_var = condition->generateIR(ir_instructions);
+    auto jump_if_zero = std::make_unique<IRJumpIfZeroNode>(cond_var, break_str);
+    ir_instructions.push_back(std::move(jump_if_zero));
+  }
 
-    // body instructions // can have break/continue
-    // if continue is there here, will jump just before post instructions
-    extendInstrFromVector(body->generateIR(), ir_instructions);
+  // body instructions // can have break/continue
+  // if continue is there here, will jump just before post instructions
+  extendInstrFromVector(body->generateIR(), ir_instructions);
 
-    // continue label
-    std::string continue_str = "continue_" + label->name;
-    auto continue_label = std::make_unique<IRLabelNode>(continue_str);
-    ir_instructions.push_back(std::move(continue_label));
+  // continue label
+  std::string continue_str = "continue_" + label->name;
+  auto continue_label = std::make_unique<IRLabelNode>(continue_str);
+  ir_instructions.push_back(std::move(continue_label));
 
-    // post instructions
-    if (post) {
-        auto post_var = post->generateIR(ir_instructions);
-    }
+  // post instructions
+  if (post) {
+    auto post_var = post->generateIR(ir_instructions);
+  }
 
-    // jump
-    auto jump_to_start = std::make_unique<IRJumpNode>(start_str);
-    ir_instructions.push_back(std::move(jump_to_start));
+  // jump
+  auto jump_to_start = std::make_unique<IRJumpNode>(start_str);
+  ir_instructions.push_back(std::move(jump_to_start));
 
-    // break label
-    auto break_label = std::make_unique<IRLabelNode>(break_str);
-    ir_instructions.push_back(std::move(break_label));
+  // break label
+  auto break_label = std::make_unique<IRLabelNode>(break_str);
+  ir_instructions.push_back(std::move(break_label));
 
-    return ir_instructions;
+  return ir_instructions;
 }
 
 void IRJumpNode::dump(int indent) const {
-    printIndent(indent);
-    std::println("jump {}", target_label);
+  printIndent(indent);
+  std::println("jump {}", target_label);
 }
 
 void IRJumpIfZeroNode::dump(int indent) const {
-    printIndent(indent);
-    const std::string cond = condition->dump();
-    std::println("jump_if_false {}, {}", cond, target_label);
+  printIndent(indent);
+  const std::string cond = condition->dump();
+  std::println("jump_if_false {}, {}", cond, target_label);
 }
 
 void IRJumpIfNotZeroNode::dump(int indent) const {
-    printIndent(indent);
-    const std::string cond = condition->dump();
-    std::println("jump_if_true {}, {}", cond, target_label);
+  printIndent(indent);
+  const std::string cond = condition->dump();
+  std::println("jump_if_true {}, {}", cond, target_label);
 }
 
 void IRLabelNode::dump(int indent) const {
-    assert(indent > 0);
-    printIndent(indent - 1);
-    std::println("{}:", label_name);
+  assert(indent > 0);
+  printIndent(indent - 1);
+  std::println("{}:", label_name);
 }
 
 std::vector<std::unique_ptr<IRInstructionNode>> NullNode::generateIR() {
-    return {}; // no-op for null statement
+  return {}; // no-op for null statement
 }
 
 std::vector<std::unique_ptr<IRInstructionNode>> ForInitNode::generateIR() {
-    std::vector<std::unique_ptr<IRInstructionNode>> ir_instructions;
-    if (declaration) {
-        extendInstrFromVector(declaration->generateIR(), ir_instructions);
-    } else if (init_expr) {
-        // we only need the instructions; the result is not used
-        init_expr->generateIR(ir_instructions);
-    }
-    return ir_instructions;
+  std::vector<std::unique_ptr<IRInstructionNode>> ir_instructions;
+  if (declaration) {
+    extendInstrFromVector(declaration->generateIR(), ir_instructions);
+  } else if (init_expr) {
+    // we only need the instructions; the result is not used
+    init_expr->generateIR(ir_instructions);
+  }
+  return ir_instructions;
 }
 
 std::shared_ptr<IRValNode> // return the destination of the expression
-ExprNode::generateIR(std::vector<std::unique_ptr<IRInstructionNode>>& instructions) {
-    assert(left_exprf && "IR Generation Error: Malformed Expression");
-    return left_exprf->generateIR(instructions);
+ExprNode::generateIR(
+    std::vector<std::unique_ptr<IRInstructionNode>>& instructions) {
+  assert(left_exprf && "IR Generation Error: Malformed Expression");
+  return left_exprf->generateIR(instructions);
 }
 
 namespace { // helper functions to handle binary short-circuiting operators
 /// @brief handle non-short-circuiting binary operations
-std::shared_ptr<IRValNode>
-handleOtherBinOps(BinaryNode* binop, // TODO(VachanVY): anyway to NOT use raw pointer here?
-                  std::vector<std::unique_ptr<IRInstructionNode>>& instructions) {
-    auto left_val = binop->left_expr->generateIR(instructions);
-    auto right_val = binop->right_expr->generateIR(instructions);
+std::shared_ptr<IRValNode> handleOtherBinOps(
+    BinaryNode* binop, // TODO(VachanVY): anyway to NOT use raw pointer here?
+    std::vector<std::unique_ptr<IRInstructionNode>>& instructions) {
+  auto left_val = binop->left_expr->generateIR(instructions);
+  auto right_val = binop->right_expr->generateIR(instructions);
 
-    std::string tmp = getUniqueName("tmp");
-    auto val_dest = std::make_shared<IRVariableNode>(tmp);
+  std::string tmp = getUniqueName("tmp");
+  auto val_dest = std::make_shared<IRVariableNode>(tmp);
 
-    auto ir_binary = std::make_unique<IRBinaryNode>(binop->op_type, left_val, right_val, val_dest);
-    instructions.push_back(std::move(ir_binary));
-    return val_dest;
+  auto ir_binary = std::make_unique<IRBinaryNode>(binop->op_type, left_val,
+                                                  right_val, val_dest);
+  instructions.push_back(std::move(ir_binary));
+  return val_dest;
 }
 
 /// @brief handle short-circuiting binary operations (&&, ||)
 /// @param binop
 /// @param instructions
 /// @return result variable holding the final value of the operation
-std::shared_ptr<IRValNode>
-handleShortCircuitOps(BinaryNode* binop,
-                      std::vector<std::unique_ptr<IRInstructionNode>>& instructions) {
-    assert(binop->op_type == "&&" || binop->op_type == "||" && "Not a short-circuit operator");
-    auto result = std::make_shared<IRVariableNode>(getUniqueName("tmp"));
+std::shared_ptr<IRValNode> handleShortCircuitOps(
+    BinaryNode* binop,
+    std::vector<std::unique_ptr<IRInstructionNode>>& instructions) {
+  assert(binop->op_type == "&&" ||
+         binop->op_type == "||" && "Not a short-circuit operator");
+  auto result = std::make_shared<IRVariableNode>(getUniqueName("tmp"));
 
-    std::string short_label = getLabelName("short");
-    std::string end_label = getLabelName("end");
+  std::string short_label = getLabelName("short");
+  std::string end_label = getLabelName("end");
 
-    bool is_and = (binop->op_type == "&&");
+  bool is_and = (binop->op_type == "&&");
 
-    auto left_val = binop->left_expr->generateIR(instructions);
-    // jump to short-circuit if left determines the result
-    if (is_and) {
-        instructions.push_back(std::make_unique<IRJumpIfZeroNode>(left_val, short_label));
-    } else {
-        instructions.push_back(std::make_unique<IRJumpIfNotZeroNode>(left_val, short_label));
-    }
-
-    auto right_val = binop->right_expr->generateIR(instructions);
-    // jump to short-circuit if right determines the result
-    if (is_and) {
-        instructions.push_back(std::make_unique<IRJumpIfZeroNode>(right_val, short_label));
-    } else {
-        instructions.push_back(std::make_unique<IRJumpIfNotZeroNode>(right_val, short_label));
-    }
-
-    // both conditions passed: AND is true, OR is false
+  auto left_val = binop->left_expr->generateIR(instructions);
+  // jump to short-circuit if left determines the result
+  if (is_and) {
     instructions.push_back(
-        std::make_unique<IRCopyNode>(std::make_shared<IRConstNode>(is_and ? "1" : "0"), result));
-    instructions.push_back(std::make_unique<IRJumpNode>(end_label));
-
-    // short-circuit label: AND is false, OR is true
-    instructions.push_back(std::make_unique<IRLabelNode>(short_label));
+        std::make_unique<IRJumpIfZeroNode>(left_val, short_label));
+  } else {
     instructions.push_back(
-        std::make_unique<IRCopyNode>(std::make_shared<IRConstNode>(is_and ? "0" : "1"), result));
+        std::make_unique<IRJumpIfNotZeroNode>(left_val, short_label));
+  }
 
-    instructions.push_back(std::make_unique<IRLabelNode>(end_label));
-    return result;
+  auto right_val = binop->right_expr->generateIR(instructions);
+  // jump to short-circuit if right determines the result
+  if (is_and) {
+    instructions.push_back(
+        std::make_unique<IRJumpIfZeroNode>(right_val, short_label));
+  } else {
+    instructions.push_back(
+        std::make_unique<IRJumpIfNotZeroNode>(right_val, short_label));
+  }
+
+  // both conditions passed: AND is true, OR is false
+  instructions.push_back(std::make_unique<IRCopyNode>(
+      std::make_shared<IRConstNode>(is_and ? "1" : "0"), result));
+  instructions.push_back(std::make_unique<IRJumpNode>(end_label));
+
+  // short-circuit label: AND is false, OR is true
+  instructions.push_back(std::make_unique<IRLabelNode>(short_label));
+  instructions.push_back(std::make_unique<IRCopyNode>(
+      std::make_shared<IRConstNode>(is_and ? "0" : "1"), result));
+
+  instructions.push_back(std::make_unique<IRLabelNode>(end_label));
+  return result;
 }
 } // namespace
 
 // return the destination of the expression
-std::shared_ptr<IRValNode>
-ExprFactorNode::generateIR(std::vector<std::unique_ptr<IRInstructionNode>>& instructions) {
-    if (auto binop = dyn_cast<BinaryNode>(this)) {
-        return binop->generateIR(instructions);
-    } else if (auto assignop = dyn_cast<AssignmentNode>(this)) {
-        return assignop->generateIR(instructions);
-    } else if (auto condop = dyn_cast<ConditionalNode>(this)) {
-        return condop->generateIR(instructions);
-    } else if (var_identifier) {
-        return var_identifier->generateIR(instructions);
-    } else if (constant) {
-        return constant->generateIR(instructions);
-    } else if (unary) {
-        return unary->generateIR(instructions);
-    } else if (expr) {
-        return expr->generateIR(instructions);
-    } else if (func_call) {
-        return func_call->generateIR(instructions);
-    }
-    throw std::runtime_error("IR Generation Error: Malformed Expression Factor");
+std::shared_ptr<IRValNode> ExprFactorNode::generateIR(
+    std::vector<std::unique_ptr<IRInstructionNode>>& instructions) {
+  if (auto binop = dyn_cast<BinaryNode>(this)) {
+    return binop->generateIR(instructions);
+  } else if (auto assignop = dyn_cast<AssignmentNode>(this)) {
+    return assignop->generateIR(instructions);
+  } else if (auto condop = dyn_cast<ConditionalNode>(this)) {
+    return condop->generateIR(instructions);
+  } else if (var_identifier) {
+    return var_identifier->generateIR(instructions);
+  } else if (constant) {
+    return constant->generateIR(instructions);
+  } else if (unary) {
+    return unary->generateIR(instructions);
+  } else if (expr) {
+    return expr->generateIR(instructions);
+  } else if (func_call) {
+    return func_call->generateIR(instructions);
+  }
+  throw std::runtime_error("IR Generation Error: Malformed Expression Factor");
 }
 
-std::shared_ptr<IRValNode>
-ConstantNode::generateIR(std::vector<std::unique_ptr<IRInstructionNode>>& instructions) {
-    return std::make_shared<IRConstNode>(this->val);
+std::shared_ptr<IRValNode> ConstantNode::generateIR(
+    std::vector<std::unique_ptr<IRInstructionNode>>& instructions) {
+  return std::make_shared<IRConstNode>(this->val);
 }
 std::string IRConstNode::dump() const { return val; }
 
-std::shared_ptr<IRValNode>
-VarNode::generateIR(std::vector<std::unique_ptr<IRInstructionNode>>& instructions) {
-    return std::make_shared<IRVariableNode>(var_name->name);
+std::shared_ptr<IRValNode> VarNode::generateIR(
+    std::vector<std::unique_ptr<IRInstructionNode>>& instructions) {
+  return std::make_shared<IRVariableNode>(var_name->name);
 }
 std::string IRVariableNode::dump() const { return var_name; }
 
-std::shared_ptr<IRValNode>
-UnaryNode::generateIR(std::vector<std::unique_ptr<IRInstructionNode>>& instructions) {
-    // get inner most expression's value
-    auto src_val = this->operand->generateIR(instructions);
-    std::string tmp = getUniqueName("tmp");
-    auto dest_var = std::make_shared<IRVariableNode>(tmp);
+std::shared_ptr<IRValNode> UnaryNode::generateIR(
+    std::vector<std::unique_ptr<IRInstructionNode>>& instructions) {
+  // get inner most expression's value
+  auto src_val = this->operand->generateIR(instructions);
+  std::string tmp = getUniqueName("tmp");
+  auto dest_var = std::make_shared<IRVariableNode>(tmp);
 
-    auto ir_unary = std::make_unique<IRUnaryNode>(this->op_type, src_val, dest_var);
-    instructions.push_back(std::move(ir_unary));
-    return dest_var;
+  auto ir_unary =
+      std::make_unique<IRUnaryNode>(this->op_type, src_val, dest_var);
+  instructions.push_back(std::move(ir_unary));
+  return dest_var;
 }
 
 void IRUnaryNode::dump(int indent) const {
-    printIndent(indent);
-    const std::string dest = val_dest->dump();
-    const std::string src = val_src->dump();
-    std::println("{} = {} {}", dest, op_type, src);
+  printIndent(indent);
+  const std::string dest = val_dest->dump();
+  const std::string src = val_src->dump();
+  std::println("{} = {} {}", dest, op_type, src);
 }
 
-std::shared_ptr<IRValNode>
-BinaryNode::generateIR(std::vector<std::unique_ptr<IRInstructionNode>>& instructions) {
-    if (this->op_type == "&&" || this->op_type == "||") {
-        return handleShortCircuitOps(this, instructions);
-    } else {
-        return handleOtherBinOps(this, instructions);
-    }
+std::shared_ptr<IRValNode> BinaryNode::generateIR(
+    std::vector<std::unique_ptr<IRInstructionNode>>& instructions) {
+  if (this->op_type == "&&" || this->op_type == "||") {
+    return handleShortCircuitOps(this, instructions);
+  } else {
+    return handleOtherBinOps(this, instructions);
+  }
 }
 
 void IRBinaryNode::dump(int indent) const {
-    printIndent(indent);
-    const std::string dest = val_dest->dump();
-    const std::string src1 = val_src1->dump();
-    const std::string src2 = val_src2->dump();
-    std::println("{} = {} {} {}", dest, src1, op_type, src2);
+  printIndent(indent);
+  const std::string dest = val_dest->dump();
+  const std::string src1 = val_src1->dump();
+  const std::string src2 = val_src2->dump();
+  std::println("{} = {} {} {}", dest, src1, op_type, src2);
 }
 
 void IRCopyNode::dump(int indent) const {
-    printIndent(indent);
-    const std::string dest = val_dest->dump();
-    const std::string src = val_src->dump();
-    std::println("{} = {}", dest, src);
+  printIndent(indent);
+  const std::string dest = val_dest->dump();
+  const std::string src = val_src->dump();
+  std::println("{} = {}", dest, src);
 }
 
-std::shared_ptr<IRValNode>
-AssignmentNode::generateIR(std::vector<std::unique_ptr<IRInstructionNode>>& instructions) {
-    // evaluate rhs expr, add it's instructions to the list, then
-    // evaluate lhs expr to get the variable to assign to result of rhs. add instructions to
-    // list on the way...
-    auto right_val = this->right_expr->generateIR(instructions); // result of the rhs expr
-    auto left_val = this->left_expr->generateIR(instructions);   // VarNode->generateIR()
+std::shared_ptr<IRValNode> AssignmentNode::generateIR(
+    std::vector<std::unique_ptr<IRInstructionNode>>& instructions) {
+  // evaluate rhs expr, add it's instructions to the list, then
+  // evaluate lhs expr to get the variable to assign to result of rhs. add
+  // instructions to list on the way...
+  auto right_val =
+      this->right_expr->generateIR(instructions); // result of the rhs expr
+  auto left_val =
+      this->left_expr->generateIR(instructions); // VarNode->generateIR()
 
-    auto ir_copy = std::make_unique<IRCopyNode>(right_val, left_val); // left_val <= right_val
-    instructions.push_back(std::move(ir_copy));
+  auto ir_copy = std::make_unique<IRCopyNode>(
+      right_val, left_val); // left_val <= right_val
+  instructions.push_back(std::move(ir_copy));
 
-    return left_val;
+  return left_val;
 }
 
-std::shared_ptr<IRValNode>
-ConditionalNode::generateIR(std::vector<std::unique_ptr<IRInstructionNode>>& instructions) {
-    // result = condition ? true_expr : false_expr
-    auto result = std::make_shared<IRVariableNode>(getUniqueName("tmp"));
+std::shared_ptr<IRValNode> ConditionalNode::generateIR(
+    std::vector<std::unique_ptr<IRInstructionNode>>& instructions) {
+  // result = condition ? true_expr : false_expr
+  auto result = std::make_shared<IRVariableNode>(getUniqueName("tmp"));
 
-    // eval condition
-    auto cond_val = this->condition->generateIR(instructions);
-    std::string else_label = getLabelName("else_branch");
-    instructions.push_back(std::make_unique<IRJumpIfZeroNode>(cond_val, else_label));
+  // eval condition
+  auto cond_val = this->condition->generateIR(instructions);
+  std::string else_label = getLabelName("else_branch");
+  instructions.push_back(
+      std::make_unique<IRJumpIfZeroNode>(cond_val, else_label));
 
-    // if true
-    auto true_val = this->true_expr->generateIR(instructions);
-    instructions.push_back(std::make_unique<IRCopyNode>(true_val, result));
+  // if true
+  auto true_val = this->true_expr->generateIR(instructions);
+  instructions.push_back(std::make_unique<IRCopyNode>(true_val, result));
 
-    std::string end_label = getLabelName("end");
-    instructions.push_back(std::make_unique<IRJumpNode>(end_label));
+  std::string end_label = getLabelName("end");
+  instructions.push_back(std::make_unique<IRJumpNode>(end_label));
 
-    // else branch
-    instructions.push_back(std::make_unique<IRLabelNode>(else_label));
-    auto false_val = this->false_expr->generateIR(instructions);
-    instructions.push_back(std::make_unique<IRCopyNode>(false_val, result));
+  // else branch
+  instructions.push_back(std::make_unique<IRLabelNode>(else_label));
+  auto false_val = this->false_expr->generateIR(instructions);
+  instructions.push_back(std::make_unique<IRCopyNode>(false_val, result));
 
-    // end
-    instructions.push_back(std::make_unique<IRLabelNode>(end_label));
-    return result;
+  // end
+  instructions.push_back(std::make_unique<IRLabelNode>(end_label));
+  return result;
 }
 
-std::shared_ptr<IRValNode>
-FunctionCallNode::generateIR(std::vector<std::unique_ptr<IRInstructionNode>>& instructions) {
-    auto func_name = this->func_identifier->name;
-    std::vector<std::shared_ptr<IRValNode>> args_vals;
-    for (auto& arg : this->arguments) {
-        // `ExprNode::generateIR` returns the destination variable of the expression
-        // we need that to pass as argument to the function call
-        args_vals.push_back(arg->generateIR(instructions));
-    }
-    auto result = std::make_shared<IRVariableNode>(getUniqueName("tmp"));
-    auto ir_func_call = std::make_unique<IRFunctionCallNode>(func_name, args_vals, result);
-    instructions.push_back(std::move(ir_func_call));
-    return result;
+std::shared_ptr<IRValNode> FunctionCallNode::generateIR(
+    std::vector<std::unique_ptr<IRInstructionNode>>& instructions) {
+  auto func_name = this->func_identifier->name;
+  std::vector<std::shared_ptr<IRValNode>> args_vals;
+  for (auto& arg : this->arguments) {
+    // `ExprNode::generateIR` returns the destination variable of the expression
+    // we need that to pass as argument to the function call
+    args_vals.push_back(arg->generateIR(instructions));
+  }
+  auto result = std::make_shared<IRVariableNode>(getUniqueName("tmp"));
+  auto ir_func_call =
+      std::make_unique<IRFunctionCallNode>(func_name, args_vals, result);
+  instructions.push_back(std::move(ir_func_call));
+  return result;
 }
 
 void IRFunctionCallNode::dump(int indent) const {
-    printIndent(indent);
-    std::print("{} = {}(", return_dest->dump(), func_name);
-    for (size_t i = 0; i < arguments.size(); ++i) {
-        std::print("{}", arguments[i]->dump());
-        if (i < arguments.size() - 1) {
-            std::print(", ");
-        }
+  printIndent(indent);
+  std::print("{} = {}(", return_dest->dump(), func_name);
+  for (size_t i = 0; i < arguments.size(); ++i) {
+    std::print("{}", arguments[i]->dump());
+    if (i < arguments.size() - 1) {
+      std::print(", ");
     }
-    std::println(")");
+  }
+  std::println(")");
 }
 
 /*

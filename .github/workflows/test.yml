@@ -1,0 +1,166 @@
+name: Build and Test
+
+on:
+  push:
+  pull_request:
+  issue_comment:
+    types: [created, edited]
+
+jobs:
+  build-and-test:
+    if: |
+      github.event_name != 'issue_comment' ||
+      (github.event.issue.pull_request && startsWith(github.event.comment.body, '/ci'))
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+      issues: read
+    env:
+      CC: gcc-14
+      CXX: g++-14
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          # For PR comments, run CI against the PR head branch.
+          ref: ${{ github.event_name == 'issue_comment' && format('refs/pull/{0}/head', github.event.issue.number) || github.sha }}
+
+      - name: Resolve CI controls
+        id: controls
+        uses: actions/github-script@v7
+        env:
+          DEFAULT_CHAPTER: ${{ vars.NANOCC_DEFAULT_CHAPTER }}
+        with:
+          script: |
+            const trusted = new Set(['OWNER', 'MEMBER', 'COLLABORATOR']);
+            const defaultChapter = process.env.DEFAULT_CHAPTER || '20';
+
+            let enabled = true;
+            let chapter = '';
+            let tests = '';
+            let runCmd = '';
+
+            const parseControls = (body) => {
+              if (!body || !body.startsWith('/ci')) return;
+
+              const chapterMatch = body.match(/\/ci\s+chapter\s*=?\s*(\d+)/);
+              if (chapterMatch) chapter = chapterMatch[1];
+
+              const testsMatch = body.match(/\/ci\s+tests\s*=?\s*([^\n]+)/);
+              if (testsMatch) tests = testsMatch[1].trim();
+
+              const cmdMatch = body.match(/\/ci\s+cmd\s+([^\n]+)/);
+              if (cmdMatch) runCmd = cmdMatch[1].trim();
+            };
+
+            if (context.eventName === 'issue_comment') {
+              const body = context.payload.comment?.body || '';
+              const assoc = context.payload.comment?.author_association || '';
+
+              if (!trusted.has(assoc)) {
+                enabled = false;
+              } else {
+                parseControls(body);
+              }
+            } else if (context.eventName === 'pull_request') {
+              const issueNumber = context.payload.pull_request?.number;
+              if (issueNumber) {
+                const comments = await github.paginate(github.rest.issues.listComments, {
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: issueNumber,
+                  per_page: 100,
+                });
+
+                const ciComments = comments.filter(c =>
+                  trusted.has(c.author_association) &&
+                  typeof c.body === 'string' &&
+                  c.body.startsWith('/ci')
+                );
+
+                if (ciComments.length > 0) {
+                  const latest = ciComments[ciComments.length - 1];
+                  parseControls(latest.body);
+                }
+              }
+            }
+
+            // Only run if a command or chapter was explicitly requested via comments.
+            if (!runCmd && !chapter) {
+              enabled = false;
+            }
+
+            core.setOutput('enabled', String(enabled));
+            core.setOutput('chapter', chapter);
+            core.setOutput('tests', tests);
+            core.setOutput('run_cmd', runCmd);
+
+      - name: Install build tools
+        if: steps.controls.outputs.enabled == 'true'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential cmake gcc-14 g++-14
+
+      - name: Build codebase
+        if: steps.controls.outputs.enabled == 'true'
+        run: |
+          chmod +x ./buildcc.sh
+          ./buildcc.sh compiler
+
+      - name: Configure test build
+        if: steps.controls.outputs.enabled == 'true'
+        run: cmake -S . -B build -DBUILD_NANOCC_TEST=ON
+
+      - name: Build test targets
+        if: steps.controls.outputs.enabled == 'true'
+        run: cmake --build build --parallel
+
+      - name: Prepare external compiler tests
+        if: steps.controls.outputs.enabled == 'true'
+        env:
+          RUN_CMD: ${{ steps.controls.outputs.run_cmd }}
+        run: |
+          set -euo pipefail
+
+          if [ -d "./nanocc_tests/.git" ]; then
+            git -C ./nanocc_tests fetch --depth 1 origin main
+            git -C ./nanocc_tests checkout -B main origin/main
+          else
+            rm -rf ./nanocc_tests
+            git clone --depth 1 --branch main https://github.com/VachanVY/nanocc_tests.git nanocc_tests
+          fi
+
+          chmod +x ./nanocc_tests/test_compiler
+
+          # If exact command mode references test_compiler, it is now guaranteed to exist.
+          if [[ "$RUN_CMD" == *"test_compiler"* ]]; then
+            echo "test_compiler is ready"
+          fi
+
+      - name: Run tests
+        if: steps.controls.outputs.enabled == 'true'
+        env:
+          CHAPTER: ${{ steps.controls.outputs.chapter }}
+          REQUESTED_TESTS: ${{ steps.controls.outputs.tests }}
+          RUN_CMD: ${{ steps.controls.outputs.run_cmd }}
+        run: |
+          set -euo pipefail
+
+          if [ -n "$RUN_CMD" ]; then
+            echo "Running exact CI command: $RUN_CMD"
+            bash -lc "$RUN_CMD"
+            exit 0
+          fi
+
+          cmd="./nanocc_tests/test_compiler ./build/tools/nanocc_codegen -v"
+          if [ -n "$CHAPTER" ]; then
+            cmd="$cmd --chapter $CHAPTER"
+          fi
+          if [ -n "$REQUESTED_TESTS" ]; then
+            cmd="$cmd $REQUESTED_TESTS"
+          fi
+
+          echo "Running nanocc_tests harness: $cmd"
+          bash -lc "$cmd"

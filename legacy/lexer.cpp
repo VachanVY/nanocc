@@ -35,7 +35,8 @@ std::pair<TokenType, std::regex> token_specs[] = {
     {TokenType::AND, std::regex("&&")},
     {TokenType::OR, std::regex("\\|\\|")},
 
-    // assignment operators // comes under binary operators but has less precedence
+    // assignment operators // comes under binary operators but has less
+    // precedence
     {TokenType::ASSIGN, std::regex("=")},
 
     {TokenType::EQUAL, std::regex("==")},
@@ -45,7 +46,8 @@ std::pair<TokenType, std::regex> token_specs[] = {
     {TokenType::LESS_EQUAL, std::regex("<=")},
     {TokenType::GREATER_EQUAL, std::regex(">=")},
 
-    {TokenType::IDENTIFIER, std::regex("[a-zA-Z_]\\w*\\b")}, // variable/function names
+    {TokenType::IDENTIFIER,
+     std::regex("[a-zA-Z_]\\w*\\b")}, // variable/function names
     {TokenType::CONSTANT, std::regex("[0-9]+\\b")},
     {TokenType::LPAREN, std::regex("\\(")},
     {TokenType::RPAREN, std::regex("\\)")},
@@ -58,54 +60,57 @@ std::pair<TokenType, std::regex> token_specs[] = {
 };
 
 std::deque<Token> lexer(const std::string& s, bool debug) {
-    std::deque<Token> tokens;
-    std::size_t pos = 0;
-    while (pos < s.length()) {
-        if (std::isspace(s[pos])) {
-            pos++;
-            continue;
-        }
-
-        std::size_t match_length = 0;
-        std::string match;
-        TokenType class_type;
-        bool matched = false;
-        for (const auto& [tokenClass, regex] : token_specs) {
-            std::smatch tmp_match;
-            std::string remainder = s.substr(pos); // s[pos:]
-            if (std::regex_search(remainder, tmp_match, regex,
-                                  std::regex_constants::match_continuous)) {
-                if (tmp_match.length() > match_length) { // what if they are equal? how to decide
-                                                         // which one? // keep the first one
-                    class_type = tokenClass;
-                    match = tmp_match.str();
-                    match_length = tmp_match.length();
-                    matched = true;
-                }
-            }
-        }
-
-        // throw error if no regex matched
-        if (!matched) {
-            throw std::runtime_error("Unexpected Syntax error at position " + std::to_string(pos));
-        }
-
-        // remove substr of the string now that it is tokenized
-        pos += match_length;
-
-        // add to `tokens`
-        tokens.emplace_back(class_type, match);
+  std::deque<Token> tokens;
+  std::size_t pos = 0;
+  while (pos < s.length()) {
+    if (std::isspace(s[pos])) {
+      pos++;
+      continue;
     }
 
-    if (debug) {
-        std::println("----- Lexical Analysis -----");
-        std::size_t i = 0;
-        for (const auto& [token_type, lexeme] : tokens) {
-            std::println("| {} | {} | {} |", i++, tokenTypeToString(token_type), lexeme);
+    std::size_t match_length = 0;
+    std::string match;
+    TokenType class_type;
+    bool matched = false;
+    for (const auto& [tokenClass, regex] : token_specs) {
+      std::smatch tmp_match;
+      std::string remainder = s.substr(pos); // s[pos:]
+      if (std::regex_search(remainder, tmp_match, regex,
+                            std::regex_constants::match_continuous)) {
+        if (tmp_match.length() >
+            match_length) { // what if they are equal? how to decide
+                            // which one? // keep the first one
+          class_type = tokenClass;
+          match = tmp_match.str();
+          match_length = tmp_match.length();
+          matched = true;
         }
-        std::println("----------------------------");
+      }
     }
-    return tokens;
+
+    // throw error if no regex matched
+    if (!matched) {
+      throw std::runtime_error("Unexpected Syntax error at position " +
+                               std::to_string(pos));
+    }
+
+    // remove substr of the string now that it is tokenized
+    pos += match_length;
+
+    // add to `tokens`
+    tokens.emplace_back(class_type, match);
+  }
+
+  if (debug) {
+    std::println("----- Lexical Analysis -----");
+    std::size_t i = 0;
+    for (const auto& [token_type, lexeme] : tokens) {
+      std::println("| {} | {} | {} |", i++, tokenTypeToString(token_type),
+                   lexeme);
+    }
+    std::println("----------------------------");
+  }
+  return tokens;
 }
 
 /*

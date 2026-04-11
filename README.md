@@ -7,104 +7,127 @@
 ## Build nanocc
 
 ```python
+git clone --recurse-submodules https://github.com/VachanVY/nanocc.git
+
 chmod +x buildcc.sh
+chmod +x nanocc
 
 # build the compiler
 ./buildcc.sh compiler
 ## or to rebuild codebase
 ./buildcc.sh rebuild
 
-# build tools/test_nanocc.cpp for the testing
-./buildcc.sh test
+# build tools/TestX86AsmGen.cpp for the testing
+./buildcc.sh test nanocc_codegen
 ## or rebuild it
-./buildcc.sh rebuild_test
+./buildcc.sh rebuild_test nanocc_codegen
 
 # run tests
-git clone https://github.com/VachanVY/writing-a-c-compiler-tests.git
-writing-a-c-compiler-tests/test_compiler ./build/tools/nanocc_test --chapter 9 -v
+./nanocc_tests/test_compiler ./build/tools/nanocc_codegen --chapter 10 -v
 
 # clang format
-find . -type f \( -name "*.cpp" -o -name "*.cc" -o -name "*.c" -o -name "*.hpp" -o -name "*.hh" -o -name "*.h" \) -exec clang-format -i {} +
+find lib include tools -type f \( -name "*.cpp" -o -name "*.cc" -o -name "*.c" -o -name "*.hpp" -o -name "*.hh" -o -name "*.h" \) -exec clang-format -i {} +
 ```
 
 ## nanocc codebase
 
 nanocc codebase tree directory structure (LLVM style)
 
-```
+```bash
 setopt nullglob && tree -a -L 4 -I '.git' --noreport include lib tools --dirsfirst && echo "" && ls -1 *.cpp *.c *.sh *.md CMakeLists.txt LICENSE nanocc 2>/dev/null | sort
 ```
- 
+
 ```
 include
 └── nanocc
     ├── AST
-    │   └── AST.hpp
+    │   └── AST.hpp
     ├── Codegen
-    │   ├── ASM.hpp
-    │   └── IRToPseudoAsmPass.hpp
+    │   ├── ASM.hpp
+    │   └── IRToPseudoAsmPass.hpp
     ├── IR
-    │   └── IR.hpp
+    │   ├── BasicBlock.hpp
+    │   ├── IRDump.hpp
+    │   └── IR.hpp
     ├── Lexer
-    │   └── Lexer.hpp
+    │   └── Lexer.hpp
     ├── Parser
-    │   └── Parser.hpp
+    │   └── Parser.hpp
     ├── Sema
-    │   └── Sema.hpp
+    │   └── Sema.hpp
     ├── Target
-    │   └── X86
-    │       ├── X86TargetEmitter.hpp
-    │       └── X86TargetInfo.hpp
-    └── Utils.hpp
+    │   └── X86
+    │       ├── X86TargetEmitter.hpp
+    │       └── X86TargetInfo.hpp
+    ├── Transforms
+    │   ├── ConstantFolding.hpp
+    │   ├── CopyPropagation.hpp
+    │   ├── DeadStoreElimination.hpp
+    │   ├── PassManager.hpp
+    │   └── SimplifyCFG.hpp
+    └── Utils
+        ├── tokens.def
+        ├── Tokens.hpp
+        └── Utils.hpp
 lib
 ├── Codegen
-│   ├── CMakeLists.txt
-│   ├── IRToPseudoAsmHelper.hpp
-│   └── IRToPseudoAsmPass.cpp
+│   ├── CMakeLists.txt
+│   ├── IRToPseudoAsmHelper.hpp
+│   └── IRToPseudoAsmPass.cpp
 ├── IR
-│   ├── CMakeLists.txt
-│   ├── IR.cpp
-│   ├── IRDump.cpp
-│   ├── IRGen.cpp
-│   └── IRHelper.hpp
+│   ├── BasicBlock.cpp
+│   ├── CMakeLists.txt
+│   ├── IR.cpp
+│   ├── IRDump.cpp
+│   ├── IRGen.cpp
+│   └── IRHelper.hpp
 ├── Lexer
-│   ├── CAPI
-│   │   ├── lexer.c
-│   │   ├── lexer.h
-│   │   ├── lexer_internal.h
-│   │   ├── regex.c
-│   │   ├── regex.h
-│   │   └── tokens.def
-│   ├── CMakeLists.txt
-│   └── Lexer.cpp
+│   ├── CAPI
+│   │   ├── lexer.c
+│   │   ├── lexer.h
+│   │   ├── lexer_internal.h
+│   │   ├── regex.c
+│   │   └── regex.h
+│   ├── CMakeLists.txt
+│   └── Lexer.cpp
 ├── Parser
-│   ├── CMakeLists.txt
-│   └── Parser.cpp
+│   ├── CMakeLists.txt
+│   └── Parser.cpp
 ├── Sema
-│   ├── CMakeLists.txt
-│   ├── Sema.cpp
-│   ├── SemaDecl.cpp
-│   ├── SemaHelper.hpp
-│   ├── SemaLabel.cpp
-│   └── SemaType.cpp
+│   ├── CMakeLists.txt
+│   ├── Sema.cpp
+│   ├── SemaDecl.cpp
+│   ├── SemaHelper.hpp
+│   ├── SemaLabel.cpp
+│   └── SemaType.cpp
 ├── Target
-│   ├── X86
-│   │   ├── CMakeLists.txt
-│   │   ├── X86InstrFixup.cpp
-│   │   ├── X86PseudoLowering.cpp
-│   │   └── X86TargetEmitter.cpp
-│   └── CMakeLists.txt
+│   ├── X86
+│   │   ├── CMakeLists.txt
+│   │   ├── X86InstrFixup.cpp
+│   │   ├── X86PseudoLowering.cpp
+│   │   └── X86TargetEmitter.cpp
+│   └── CMakeLists.txt
+├── Transforms
+│   ├── CMakeLists.txt
+│   ├── ConstantFolding.cpp
+│   ├── CopyPropagation.cpp
+│   ├── DeadStoreElimination.cpp
+│   ├── PassManager.cpp
+│   └── SimplifyCFG.cpp
+├── Utils
+│   ├── CMakeLists.txt
+│   └── Utils.cpp
 └── CMakeLists.txt
 tools
 ├── test
-│   ├── TestCommon.hpp
-│   ├── TestIR.cpp
-│   ├── TestLexer.cpp
-│   ├── TestParser.cpp
-│   ├── TestSema.cpp
-│   └── TestX86AsmGen.cpp
+│   ├── README.txt
+│   ├── TestCommon.hpp
+│   ├── TestIR.cpp
+│   ├── TestLexer.cpp
+│   ├── TestParser.cpp
+│   ├── TestSema.cpp
+│   └── TestX86AsmGen.cpp
 ├── CMakeLists.txt
-├── CompilerPipeline.hpp
 └── NanoCC.cpp
 
 buildcc.sh
@@ -115,6 +138,135 @@ README.md
 ```
 
 ## nanocc progress
+### IR Optimizations
+```c
+int main(void) { 
+    return (1 || 0) && 0; 
+}
+```
+
+```bash
+./nanocc -fopt-constfold -fopt-unreach -fdump examples/opt_constfold_unreach.c -S && mv opt_constfold_unreach.s examples
+```
+
+<details>
+  <summary>IR Optimization</summary>
+
+```python
+# Constant Folding
+# Unreachable Code Elimination
+# Copy Propagation (TODO)
+# Dead Store Elimination (TODO)
+...
+----------- IR Generation -----------
+Function[
+  name='main'
+  parameters=[]
+  instructions=[
+    jump_if_true 1, short.2
+    jump_if_true 0, short.2
+    tmp.1 = 0
+    jump end.3
+  short.2:
+    tmp.1 = 1
+  end.3:
+    jump_if_false tmp.1, short.0
+    jump_if_false 0, short.0
+    tmp.0 = 1
+    jump end.1
+  short.0:
+    tmp.0 = 0
+  end.1:
+    return tmp.0
+    return 0
+  ]
+]
+-------------------------------------
+---- IR Optimization Iteration 1 ----
+Function[
+  name='main'
+  parameters=[]
+  instructions=[
+    jump short.2
+    tmp.1 = 0
+    jump end.3
+  short.2:
+    tmp.1 = 1
+  end.3:
+    jump_if_false tmp.1, short.0
+    jump short.0
+    tmp.0 = 1
+    jump end.1
+  short.0:
+    tmp.0 = 0
+  end.1:
+    return tmp.0
+    return 0
+  ]
+]
+--------------------------------------
+---- IR Optimization Iteration 1 ----
+Function[
+  name='main'
+  parameters=[]
+  instructions=[
+    tmp.1 = 1
+    jump_if_false tmp.1, short.0
+    tmp.0 = 0
+    return tmp.0
+  ]
+]
+--------------------------------------
+---- IR Optimization Iteration 2 ----
+Function[
+  name='main'
+  parameters=[]
+  instructions=[
+    tmp.1 = 1
+    jump_if_false tmp.1, short.0
+    tmp.0 = 0
+    return tmp.0
+  ]
+]
+--------------------------------------
+---- IR Optimization Iteration 2 ----
+Function[
+  name='main'
+  parameters=[]
+  instructions=[
+    tmp.1 = 1
+    tmp.0 = 0
+    return tmp.0
+  ]
+]
+--------------------------------------
+---- IR Optimization Iteration 3 ----
+Function[
+  name='main'
+  parameters=[]
+  instructions=[
+    tmp.1 = 1
+    tmp.0 = 0
+    return tmp.0
+  ]
+]
+--------------------------------------
+---- IR Optimization Iteration 3 ----
+Function[
+  name='main'
+  parameters=[]
+  instructions=[
+    tmp.1 = 1
+    tmp.0 = 0
+    return tmp.0
+  ]
+]
+--------------------------------------
+```
+
+</details>
+
+### `extern` and `static`
 ```c
 // examples/linkage_fact.c
 int num_times = 10;
@@ -128,6 +280,7 @@ int factorial(int n) {
     return ret;
 }
 ```
+
 <details>
   <summary>assembly output</summary>
  
@@ -174,12 +327,13 @@ factorial:
     .globl num_times
     .data
     .align 4
+
 num_times:
-    .long 10
+.long 10
 
     .section .note.GNU-stack, "",@progbits
 
-```
+````
 
 </details>
 
@@ -201,9 +355,9 @@ int putint(int x) {
 
 int hello_world(void) {
     // "Hello, World!" using only integers
-    putchar(72);    putchar(101);    putchar(108);    
+    putchar(72);    putchar(101);    putchar(108);
     putchar(108);    putchar(111);    putchar(44);
-    putchar(32);    putchar(87);    putchar(111);    
+    putchar(32);    putchar(87);    putchar(111);
     putchar(114);    putchar(108);    putchar(100);
     putchar(33);    putchar(10);
 }
@@ -225,7 +379,8 @@ int init_sys(void) {
     initialized = 1;
     return 1;
 }
-```
+````
+
 <details>
   <summary>assembly output</summary>
  
@@ -283,96 +438,98 @@ putint:
 
     .globl hello_world
     .text
+
 hello_world:
-    pushq %rbp
-    movq %rsp, %rbp
-    subq $64, %rsp
-    movl $72, %edi
-    call putchar@PLT
-    movl %eax, -4(%rbp)
-    movl $101, %edi
-    call putchar@PLT
-    movl %eax, -8(%rbp)
-    movl $108, %edi
-    call putchar@PLT
-    movl %eax, -12(%rbp)
-    movl $108, %edi
-    call putchar@PLT
-    movl %eax, -16(%rbp)
-    movl $111, %edi
-    call putchar@PLT
-    movl %eax, -20(%rbp)
-    movl $44, %edi
-    call putchar@PLT
-    movl %eax, -24(%rbp)
-    movl $32, %edi
-    call putchar@PLT
-    movl %eax, -28(%rbp)
-    movl $87, %edi
-    call putchar@PLT
-    movl %eax, -32(%rbp)
-    movl $111, %edi
-    call putchar@PLT
-    movl %eax, -36(%rbp)
-    movl $114, %edi
-    call putchar@PLT
-    movl %eax, -40(%rbp)
-    movl $108, %edi
-    call putchar@PLT
-    movl %eax, -44(%rbp)
-    movl $100, %edi
-    call putchar@PLT
-    movl %eax, -48(%rbp)
-    movl $33, %edi
-    call putchar@PLT
-    movl %eax, -52(%rbp)
-    movl $10, %edi
-    call putchar@PLT
-    movl %eax, -56(%rbp)
-    movl $0, %eax
-    movq %rbp, %rsp
-    popq %rbp
-    ret
+pushq %rbp
+movq %rsp, %rbp
+subq $64, %rsp
+movl $72, %edi
+call putchar@PLT
+movl %eax, -4(%rbp)
+movl $101, %edi
+call putchar@PLT
+movl %eax, -8(%rbp)
+movl $108, %edi
+call putchar@PLT
+movl %eax, -12(%rbp)
+movl $108, %edi
+call putchar@PLT
+movl %eax, -16(%rbp)
+movl $111, %edi
+call putchar@PLT
+movl %eax, -20(%rbp)
+movl $44, %edi
+call putchar@PLT
+movl %eax, -24(%rbp)
+movl $32, %edi
+call putchar@PLT
+movl %eax, -28(%rbp)
+movl $87, %edi
+call putchar@PLT
+movl %eax, -32(%rbp)
+movl $111, %edi
+call putchar@PLT
+movl %eax, -36(%rbp)
+movl $114, %edi
+call putchar@PLT
+movl %eax, -40(%rbp)
+movl $108, %edi
+call putchar@PLT
+movl %eax, -44(%rbp)
+movl $100, %edi
+call putchar@PLT
+movl %eax, -48(%rbp)
+movl $33, %edi
+call putchar@PLT
+movl %eax, -52(%rbp)
+movl $10, %edi
+call putchar@PLT
+movl %eax, -56(%rbp)
+movl $0, %eax
+movq %rbp, %rsp
+popq %rbp
+ret
 
     .globl init_sys
     .text
-init_sys:
-    pushq %rbp
-    movq %rsp, %rbp
-    subq $32, %rsp
-    cmpl $1, initialized.2(%rip)
-    movl $0, -4(%rbp)
-    sete -4(%rbp)
-    cmpl $0, -4(%rbp)
-    je end.2
-    movl $0, %eax
-    movq %rbp, %rsp
-    popq %rbp
-    ret
 
-  end.2:
-    call hello_world
-    movl %eax, -8(%rbp)
-    movl $73, %edi
-    call putchar@PLT
-    movl %eax, -12(%rbp)
-    movl $78, %edi
-    call putchar@PLT
-    movl %eax, -16(%rbp)
-    movl $73, %edi
-    call putchar@PLT
-    movl %eax, -20(%rbp)
-    movl $84, %edi
-    call putchar@PLT
-    movl %eax, -24(%rbp)
-    movl $10, %edi
-    call putchar@PLT
-    movl %eax, -28(%rbp)
-    movl $1, initialized.2(%rip)
-    movl $1, %eax
-    movq %rbp, %rsp
-    popq %rbp
-    ret
+init_sys:
+pushq %rbp
+movq %rsp, %rbp
+subq $32, %rsp
+cmpl $1, initialized.2(%rip)
+movl $0, -4(%rbp)
+sete -4(%rbp)
+cmpl $0, -4(%rbp)
+je end.2
+movl $0, %eax
+movq %rbp, %rsp
+popq %rbp
+ret
+
+end.2:
+call hello_world
+movl %eax, -8(%rbp)
+movl $73, %edi
+call putchar@PLT
+movl %eax, -12(%rbp)
+movl $78, %edi
+call putchar@PLT
+movl %eax, -16(%rbp)
+movl $73, %edi
+call putchar@PLT
+movl %eax, -20(%rbp)
+movl $84, %edi
+call putchar@PLT
+movl %eax, -24(%rbp)
+movl $10, %edi
+call putchar@PLT
+movl %eax, -28(%rbp)
+movl $1, initialized.2(%rip)
+movl $1, %eax
+movq %rbp, %rsp
+popq %rbp
+ret
 
     movl $0, %eax
     movq %rbp, %rsp
@@ -381,11 +538,13 @@ init_sys:
 
     .bss
     .align 4
+
 initialized.2:
-    .zero 4
+.zero 4
 
     .section .note.GNU-stack, "",@progbits
-```
+
+````
 
 </details>
 
@@ -407,12 +566,13 @@ int main(void){
 
     for (int i = 1; i <= num_times; i = i + 1) {
         int fact = factorial(i);
-        putint(i); /*space*/ putchar(32); 
+        putint(i); /*space*/ putchar(32);
         putint(fact); /*newline*/ putchar(10);
     }
     return 0;
 }
-```
+````
+
 <details>
   <summary>assembly output</summary>
  
@@ -474,20 +634,21 @@ main:
 
 
     .section .note.GNU-stack, "",@progbits
-```
+
+````
 
 </details>
 
 
 ```bash
-chmod +x nanocc
 # our compiler compiles to assembly: asm.s
 # gcc assembler asm.s => executable
 ./nanocc examples/linkage_fact.c examples/linkage_main.c examples/linkage_utils.c -o main
 ./main
-```
+````
 
 Output:
+
 ```
 Hello, World!
 INIT
@@ -503,7 +664,6 @@ INIT
 10 3628800
 ```
 
-
 <details>
   <summary>Notes/Trash</summary>
  
@@ -513,9 +673,10 @@ int foo(int a, int b, int c, int d, int e, int f, int g, int h) {
 }
 
 int caller(int arg) {
-    return arg + foo(1, 2, 3, 4, 5, 6, 7, 8);
+return arg + foo(1, 2, 3, 4, 5, 6, 7, 8);
 }
-```
+
+````
 
 ```asm
     .globl foo
@@ -560,7 +721,7 @@ caller:
     movl $5, %r8d
     movl $6, %r9d
     pushq $8       # pushq takes 64-bit values
-    pushq $7       # that's why "gap" between `7` and `8` will 8 bytes in memory 
+    pushq $7       # that's why "gap" between `7` and `8` will 8 bytes in memory
     call foo
     addq $16, %rsp
     movl %eax, -8(%rbp)
@@ -579,5 +740,6 @@ caller:
     ret
 
     .section .note.GNU-stack, "",@progbits
-```
+````
+
 </details>

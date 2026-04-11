@@ -49,9 +49,35 @@ CTokenSpec token_specs[] = {{INT, int_fsm},
                             {RBRACE, rbrace_fsm},
                             {SEMICOLON, semicolon_fsm},
                             {COMMA, comma_fsm}};
-int NUMFMA = sizeof(token_specs) / sizeof(CTokenSpec);
+const int NUMFMA = sizeof(token_specs) / sizeof(CTokenSpec);
 
-CTokenVec clexer(char *s, size_t slen, bool debug) {
+/* `# <line_num> "<filename>`" ...*/
+size_t parse_filename_lineno(char* s, size_t* lineno, char** filename) {
+  assert(s[0] == '#');
+
+  char* orig = s;
+  s += 2; // skip `# `
+  *lineno = atol(s);
+
+  char* start = strchr(s, '"') + 1;
+  char* end = strchr(start, '"');
+  size_t len = (size_t)(end - start) + 1;
+
+  static size_t capacity = 0;
+  if (len > capacity) {
+    *filename = (char*)realloc(*filename, len);
+    capacity = len;
+    if (!*filename) {
+      perror("`realloc` failed in `parse_filename_lineno`");
+      exit(1);
+    }
+  }
+  memcpy(*filename, start, len - 1);
+  (*filename)[len - 1] = '\0';
+  return (size_t)(strchr(orig, '\n') - orig) + 1;
+}
+
+CTokenVec clexer(char* s, size_t slen, bool debug) {
   // init all members to 0/NULL
   CTokenVec tokens = {0};
   size_t pos = 0;
@@ -59,18 +85,33 @@ CTokenVec clexer(char *s, size_t slen, bool debug) {
   bool matched;
   size_t match_length;
   CTokenType class_type;
+
+  size_t lineno = 1;
+  size_t columnno = 1;
+
+  char* curr_filename = NULL;
   while (pos < slen) {
+    if (s[pos] == '#') {
+      pos += parse_filename_lineno(s + pos, &lineno, &curr_filename);
+      columnno = 1;
+      continue;
+    }
     if (isspace(s[pos])) {
+      if (s[pos] == '\n') {
+        lineno++;
+        columnno = 0;
+      }
+      columnno++;
       pos++;
       continue;
     }
 
-    match_length =
-        0; // store the longest match length // reset for each new position
+    // store the longest match length; reset for each new position
+    match_length = 0;
     class_type = INVALID;
     matched = false;
     for (int i = 0; i < NUMFMA; i++) {
-      char *remainder = s + pos; // s[pos:]
+      char* remainder = s + pos; // s[pos:]
       int curr_match_length;
       if ((curr_match_length = token_specs[i].second(remainder)) != 0) {
         // what if they are equal? how to decide? keep the first one
@@ -90,10 +131,12 @@ CTokenVec clexer(char *s, size_t slen, bool debug) {
     }
 
     // add to `tokens`
-    tokenPushBack(tokens, class_type, s + pos, match_length);
+    CTokenLocation location = {curr_filename, lineno, columnno};
+    tokenPushBack(tokens, class_type, s + pos, match_length, location);
 
     // remove substr of the string now that it is tokenized
     pos += match_length;
+    columnno += match_length;
   }
   if (debug) {
     printf("----- Lexical Analysis -----\n");

@@ -6,7 +6,7 @@
 
 #include "lexer.h"
 
-void LexerRaiseError(const char *fmt, ...) {
+void LexerRaiseError(const char* fmt, ...) {
   va_list args;
   va_start(args, fmt);
   vfprintf(stderr, fmt, args);
@@ -14,19 +14,19 @@ void LexerRaiseError(const char *fmt, ...) {
   exit(1);
 }
 
-static inline char *tokenTypeToString(CTokenType type) {
+static inline char* tokenTypeToString(CTokenType type) {
   switch (type) {
 #define X(name, str)                                                           \
   case name:                                                                   \
     return str;
-#include "tokens.def"
+#include "nanocc/Utils/tokens.def"
 #undef X
   }
   return "";
 }
 
 // "The dynamic array guy video": https://www.youtube.com/watch?v=95M6V3mZgrI
-#define tokenPushBack(tokens, type, start, match_length)                       \
+#define tokenPushBack(tokens, type, start, match_length, location)             \
   do {                                                                         \
     if (tokens.count >= tokens.capacity) {                                     \
       if (tokens.capacity == 0) {                                              \
@@ -35,9 +35,10 @@ static inline char *tokenTypeToString(CTokenType type) {
         tokens.capacity *= 2;                                                  \
       }                                                                        \
       tokens.items =                                                           \
-          (CToken *)realloc(tokens.items, tokens.capacity * sizeof(CToken));   \
+          (CToken*)realloc(tokens.items, tokens.capacity * sizeof(CToken));    \
     }                                                                          \
-    tokens.items[tokens.count++] = (CToken){type, start, match_length};        \
+    tokens.items[tokens.count++] =                                             \
+        (CToken){type, start, match_length, location};                         \
   } while (0)
 
 #define tokensPrint(tokens)                                                    \
@@ -47,7 +48,8 @@ static inline char *tokenTypeToString(CTokenType type) {
                                                                                \
     for (int i = 0; i < tokens.count; i++) {                                   \
       CToken tok = tokens.items[i];                                            \
-      printf("    %-4d %-15s %-15.*s\n", i, tokenTypeToString(tok.type),       \
-             tok.length, tok.start);                                           \
+      printf("    %-4d %-15s %-15.*s (%zu:%zu) %s\n", i,                       \
+             tokenTypeToString(tok.type), tok.length, tok.start,               \
+             tok.location.line, tok.location.column, tok.location.filename);   \
     }                                                                          \
   } while (0)

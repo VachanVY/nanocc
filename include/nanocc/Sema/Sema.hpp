@@ -84,10 +84,10 @@ namespace nanocc {
 /// add suffix @PLT for non defined function
 extern TypeCheckerSymbolTable global_type_checker_map;
 
-void semanticAnalysis(std::unique_ptr<ProgramNode> &ast, bool debug = false);
+void semanticAnalysis(ProgramNode& ast, bool debug = false);
 
-void semaIdentifierResolution(std::unique_ptr<ProgramNode> &program_node);
-void semaCheckTypes(std::unique_ptr<ProgramNode> &ast,
-                    TypeCheckerSymbolTable &global_type_checker_map);
-void semaLoopLabelling(std::unique_ptr<ProgramNode> &ast);
+void semaIdentifierResolution(ProgramNode& program_node);
+void semaCheckTypes(ProgramNode& ast,
+                    TypeCheckerSymbolTable& global_type_checker_map);
+void semaLoopLabelling(ProgramNode& ast);
 } // namespace nanocc

@@ -11,4 +11,5 @@ target_include_directories(nanoccSema PUBLIC
 
 target_link_libraries(nanoccSema PUBLIC
     nanoccParser
+    nanoccUtils
 )

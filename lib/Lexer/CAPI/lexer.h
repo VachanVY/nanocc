@@ -9,28 +9,35 @@ extern "C" {
 
 typedef enum {
 #define X(name, str) name,
-#include "tokens.def"
+#include "nanocc/Utils/tokens.def"
 } CTokenType;
 
 typedef struct {
-  CTokenType type;   // token category produced by the lexer
-  const char *start; // source text matched for that token
-  int length;        // length matched
+  char* filename;
+  size_t line;
+  size_t column;
+} CTokenLocation;
+
+typedef struct {
+  CTokenType type;         // token category produced by the lexer
+  const char* start;       // source text matched for that token
+  int length;              // length matched
+  CTokenLocation location; // location of the token in the source
 } CToken;
 
 // struct with items to hold, size of it, capacity of it
 typedef struct {
-  CToken *items;   // array of Tokens
+  CToken* items;   // array of Tokens
   size_t count;    // number of Tokens in the Vec
   size_t capacity; // actual capacity of Vec
 } CTokenVec;
 
 typedef struct {
   CTokenType first;
-  int (*second)(const char *);
+  int (*second)(const char*);
 } CTokenSpec;
 
-CTokenVec clexer(char *s, size_t slen, bool debug);
+CTokenVec clexer(char* s, size_t slen, bool debug);
 
 #define freeCTokens(tokens)                                                    \
   do {                                                                         \
