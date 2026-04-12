@@ -743,3 +743,8 @@ caller:
 ````
 
 </details>
+
+## Blogs
+* [A Brief Visual Guide to Functions in Assembly (draft)](https://vachanvy.github.io/posts/asmfunccalls/)
+* [Writing a Lexer in Pure C (draft)](https://vachanvy.github.io/posts/clexer/)
+* [Writing IR Optimizations for nanocc (TODO)]()
