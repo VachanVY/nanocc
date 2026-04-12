@@ -4,7 +4,14 @@
 
 <!-- <img width="1101" height="288" alt="image" src="https://github.com/user-attachments/assets/40781b3b-ce70-44c4-9f00-296b379433de" /> -->
 
-## Build nanocc
+* [Build `nanocc`](https://github.com/VachanVY/nanocc/tree/main?tab=readme-ov-file#build-nanocc)
+* [`nanocc` codebase](https://github.com/VachanVY/nanocc/tree/main?tab=readme-ov-file#nanocc-codebase)
+* [`nanocc` progress](https://github.com/VachanVY/nanocc/tree/main?tab=readme-ov-file#nanocc-codebase)
+  * [IR Optimizations](https://github.com/VachanVY/nanocc/tree/main?tab=readme-ov-file#ir-optimizations)
+  * [`extern`, `static`, function calls, etc](https://github.com/VachanVY/nanocc/tree/main?tab=readme-ov-file#extern-and-static)
+* [`nanocc` blogs](https://github.com/VachanVY/nanocc/tree/main?tab=readme-ov-file#blogs)
+
+## Build `nanocc`
 
 ```python
 git clone --recurse-submodules https://github.com/VachanVY/nanocc.git
@@ -29,7 +36,7 @@ chmod +x nanocc
 find lib include tools -type f \( -name "*.cpp" -o -name "*.cc" -o -name "*.c" -o -name "*.hpp" -o -name "*.hh" -o -name "*.h" \) -exec clang-format -i {} +
 ```
 
-## nanocc codebase
+## `nanocc` codebase
 
 nanocc codebase tree directory structure (LLVM style)
 
@@ -137,7 +144,7 @@ nanocc
 README.md
 ```
 
-## nanocc progress
+## `nanocc` progress
 ### IR Optimizations
 ```c
 int main(void) { 
@@ -150,7 +157,7 @@ int main(void) {
 ```
 
 <details>
-  <summary>IR Optimization</summary>
+  <summary>IR Optimization Iterations</summary>
 
 ```python
 # Constant Folding
@@ -744,7 +751,7 @@ caller:
 
 </details>
 
-## Blogs
+## `nanocc` blogs
 * [A Brief Visual Guide to Functions in Assembly (draft)](https://vachanvy.github.io/posts/asmfunccalls/)
 * [Writing a Lexer in Pure C (draft)](https://vachanvy.github.io/posts/clexer/)
 * [Writing IR Optimizations for nanocc (TODO)]()
