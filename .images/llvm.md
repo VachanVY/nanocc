@@ -1,10 +1,140 @@
-<img width="1311" height="715" alt="image" src="https://github.com/user-attachments/assets/d532141e-4eaa-4bca-9846-8edeb40ea996" /># SelectionDAG
+# SelectionDAG
+
+## SelectionDAG TL;DR
+
+SelectionDAG is LLVM's intermediate representation used in the backend before generating machine instructions. Instead of a list of instructions (like LLVM IR), it represents computations as a **Directed Acyclic Graph (DAG)**.
+
+### Core Classes
+
+#### **SDNode**
+
+* Represents an **operation** (ADD, LOAD, STORE, MUL, etc.).
+* Similar to an `Instruction` in LLVM IR.
+
+Example:
+
+```text
+    ADD
+   /   \
+  a     b
+```
+
+---
+
+#### **SDValue**
+
+* Represents **one output of an SDNode**.
+* Internally, it's essentially:
+
+```cpp
+(SDNode*, ResultNumber)
+```
+
+* Needed because one node can have multiple outputs.
+
+Example:
+
+```text
+LOAD
+ ├── Result 0 : Loaded value
+ └── Result 1 : Memory chain
+```
+
+```cpp
+SDValue(loadNode, 0); // loaded value
+SDValue(loadNode, 1); // chain
+```
+
+Most SelectionDAG APIs return `SDValue`, not `SDNode*`.
+
+---
+
+#### **SDUse**
+
+* Represents a use of an `SDValue`.
+* Similar to `Use` in LLVM IR.
+
+---
+
+#### **SelectionDAG**
+
+* Owns the entire DAG.
+* Used to create and manipulate nodes.
+
+Example:
+
+```cpp
+SDValue N = DAG.getNode(ISD::ADD, DL, MVT::i32, A, B);
+```
+
+---
+
+#### **ISD**
+
+* Generic (target-independent) operations.
+* Examples:
+
+```cpp
+ISD::ADD
+ISD::SUB
+ISD::LOAD
+ISD::STORE
+```
+
+These are later converted into target-specific instructions.
+
+---
+
+#### **MachineSDNode**
+
+* Represents a **target-specific machine instruction** after instruction selection.
+
+Example:
+
+```text
+ISD::ADD
+      ↓
+X86::ADD32rr
+```
+
+---
+
+#### **EVT / MVT**
+
+* `MVT` (Machine Value Type): Hardware-supported types (`i8`, `i32`, `v16i8`, etc.).
+* `EVT` (Extended Value Type): General value type used by SelectionDAG; can represent types beyond `MVT`.
+
+---
+
+## LLVM IR vs SelectionDAG
+
+| LLVM IR     | SelectionDAG |
+| ----------- | ------------ |
+| Instruction | SDNode       |
+| Value       | SDValue      |
+| Use         | SDUse        |
+| Type        | EVT / MVT    |
+| BasicBlock  | DAG          |
+
+---
+
+## The one thing to remember
+
+* **SDNode = operation**
+* **SDValue = a specific result produced by that operation**
+
+If you remember only one distinction, remember this one.
+
+---
 
 <img width="1213" height="295" alt="image" src="https://github.com/user-attachments/assets/94e8e357-8c8e-443b-972e-5b975ea86122" />
 <img width="1213" height="295" alt="image" src="https://github.com/user-attachments/assets/f425f537-5904-4240-a0d3-4d1a1523418f" />
 <img width="1319" height="704" alt="image" src="https://github.com/user-attachments/assets/ed939451-c2c9-4d3a-ab4e-141e1c096575" />
 <img width="1311" height="715" alt="image" src="https://github.com/user-attachments/assets/2a99c3ee-96f6-4c30-9a98-78da949fb238" />
 <img width="1319" height="704" alt="image" src="https://github.com/user-attachments/assets/8c1847cb-98a5-4c26-88f4-76eca239ca20" />
+* SDNode: opcode, defines which type; other fields like constant value or flags
+* SDValue: output of an SDNode; have SDNode that defines this value; has an associated EVT
+* SDUse: represents a use of an SDValue
 <img width="1319" height="704" alt="image" src="https://github.com/user-attachments/assets/7f9acc7d-6bff-44b1-88b7-583b38788c17" />
 Arrows represent uses, not dataflow
 <img width="1319" height="704" alt="image" src="https://github.com/user-attachments/assets/b3bcfb6d-242f-418c-b38e-de306b276145" />
