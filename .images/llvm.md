@@ -1,8 +1,9 @@
-# SelectionDAG
+<img width="1311" height="715" alt="image" src="https://github.com/user-attachments/assets/d532141e-4eaa-4bca-9846-8edeb40ea996" /># SelectionDAG
 
 <img width="1213" height="295" alt="image" src="https://github.com/user-attachments/assets/94e8e357-8c8e-443b-972e-5b975ea86122" />
 <img width="1213" height="295" alt="image" src="https://github.com/user-attachments/assets/f425f537-5904-4240-a0d3-4d1a1523418f" />
 <img width="1319" height="704" alt="image" src="https://github.com/user-attachments/assets/ed939451-c2c9-4d3a-ab4e-141e1c096575" />
+<img width="1311" height="715" alt="image" src="https://github.com/user-attachments/assets/2a99c3ee-96f6-4c30-9a98-78da949fb238" />
 <img width="1319" height="704" alt="image" src="https://github.com/user-attachments/assets/8c1847cb-98a5-4c26-88f4-76eca239ca20" />
 <img width="1319" height="704" alt="image" src="https://github.com/user-attachments/assets/7f9acc7d-6bff-44b1-88b7-583b38788c17" />
 Arrows represent uses, not dataflow
